@@ -7,6 +7,8 @@ import rocks.frieler.kraftsql.queries.Select
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.ResultSet
+import kotlin.reflect.KType
+import kotlin.reflect.full.starProjectedType
 
 // TODO: Should we separate "engine" and "connection"?
 class H2InMemoryEngine(
@@ -18,6 +20,19 @@ class H2InMemoryEngine(
     override fun close() {
         connection.close()
     }
+
+    override fun getTypeFor(type: KType) =
+        when (type) {
+            String::class.starProjectedType -> CHARACTER_VARYING()
+            Boolean::class.starProjectedType -> BOOLEAN
+            Byte::class.starProjectedType -> TINYINT
+            Short::class.starProjectedType -> SMALLINT
+            Int::class.starProjectedType -> INTEGER
+            Long::class.starProjectedType -> BIGINT
+            Float::class.starProjectedType -> REAL
+            Double::class.starProjectedType -> DOUBLE_PRECISION
+            else -> throw NotImplementedError("Unsupported Kotlin type $type")
+        }
 
     override fun <T : Any> execute(select: Select<H2InMemoryEngine, T>): ResultSet {
         return connection.createStatement().executeQuery(select.sql())

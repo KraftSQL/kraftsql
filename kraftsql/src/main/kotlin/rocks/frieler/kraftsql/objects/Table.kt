@@ -5,7 +5,6 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.models.Model
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.starProjectedType
 
 open class Table<E: Engine<E>, T : Any>(
     engine: E,
@@ -17,13 +16,7 @@ open class Table<E: Engine<E>, T : Any>(
         engine,
         name,
         type.memberProperties.map { field ->
-            ColumnDefinition(
-                field.name,
-                when (field.returnType) {
-                    String::class.starProjectedType -> "CHARACTER VARYING"
-                    else -> throw NotImplementedError("Unsupported field type ${field.returnType}")
-                }
-            )
+            ColumnDefinition(field.name, engine.getTypeFor(field.returnType))
         }
     )
 

@@ -10,17 +10,17 @@ import rocks.frieler.kraftsql.h2.objects.Table
 import rocks.frieler.kraftsql.queries.execute
 
 fun main() {
-    val entities = Table("entity", Entity::class)
+    val products = Table("product", Product::class)
         .apply { create() }
 
     ConstantModel(
-        Entity("foo", "bar"),
-        Entity("K", "Kotlin"),
+        Product(1, "Chocolate", "Food"),
+        Product(2, "Pants", "Clothes"),
     )
-        .apply { insertInto(entities) }
+        .apply { insertInto(products) }
 
     val count = Select.invoke(
-        from = entities,
+        from = products,
         columns = listOf(ColumnExpression(Count(), "_count")),
     ).execute().single()["_count"]
     println(count)
