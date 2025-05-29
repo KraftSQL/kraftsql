@@ -1,10 +1,11 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    `java-library`
+    application
 }
 
 dependencies {
-    api(libs.kotlin.reflect)
+    implementation(project(":kraftsql"))
+    implementation(libs.h2.database)
 }
 
 java {

@@ -1,2 +1,2 @@
 rootProject.name = "KraftSQL"
-include("kraftsql")
+include("kraftsql", "sandbox")

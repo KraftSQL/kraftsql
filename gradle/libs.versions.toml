@@ -1,7 +1,10 @@
 [versions]
 kotlin = "2.1.21"
+h2 = "2.3.232"
 
 [libraries]
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+h2-database = { group = "com.h2database", name = "h2", version.ref = "h2" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
