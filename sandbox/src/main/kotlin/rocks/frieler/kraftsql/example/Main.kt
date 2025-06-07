@@ -7,6 +7,7 @@ import rocks.frieler.kraftsql.h2.queries.Select
 import rocks.frieler.kraftsql.expressions.ColumnExpression
 import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.h2.objects.Table
+import rocks.frieler.kraftsql.models.Row
 import rocks.frieler.kraftsql.queries.execute
 
 fun main() {
@@ -19,7 +20,7 @@ fun main() {
     )
         .apply { insertInto(products) }
 
-    val count = Select.invoke(
+    val count = Select<Row>(
         from = products,
         columns = listOf(ColumnExpression(Count(), "_count")),
     ).execute().single()["_count"]

@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.starProjectedType
 
 open class Select<E : Engine<E>, T : Any>(
-    val from: Model<E, T>,
+    val from: Model<E, *>,
     val columns: List<ColumnExpression<E, *>>? = null,
 ) : Model<E, T>(from.engine) {
 
@@ -42,10 +42,6 @@ open class Select<E : Engine<E>, T : Any>(
             )
         }
         return result
-    }
-
-    companion object {
-        operator fun <E: Engine<E>> invoke(from: Model<E, *>, columns: List<ColumnExpression<E, *>>? = null) = Select(from.asRows(), columns)
     }
 }
 
