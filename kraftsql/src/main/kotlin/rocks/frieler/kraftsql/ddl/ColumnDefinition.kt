@@ -4,8 +4,8 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.engine.Type
 
 class ColumnDefinition<E : Engine<E>>(
-    private val name: String,
-    private val type: Type,
+    val name: String,
+    val type: Type,
 ) {
     fun sql() : String {
         return "`$name` ${type.sql()}"
