@@ -22,3 +22,5 @@ val BIGINT = object : Type { override fun sql() = "BIGINT" }
 val REAL = object : Type { override fun sql() = "REAL" }
 
 val DOUBLE_PRECISION = object : Type { override fun sql() = "DOUBLE PRECISION" }
+
+val TIMESTAMP_WITH_TIME_ZONE = object : Type { override fun sql() = "TIMESTAMP WITH TIME ZONE" }
