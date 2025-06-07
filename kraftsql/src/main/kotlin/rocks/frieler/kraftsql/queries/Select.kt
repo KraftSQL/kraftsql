@@ -10,13 +10,13 @@ import kotlin.reflect.full.starProjectedType
 open class Select<E : Engine<E>, T : Any>(
     val from: Model<E, *>,
     val columns: List<ColumnExpression<E, *>>? = null,
-) : Model<E, T>(from.engine) {
+) : Model<E, T>(from.connection) {
 
     override fun sql() =
         "SELECT ${columns?.joinToString(", ") { it.sql() } ?: "*"} FROM ${from.sql()}"
 
     fun execute(type: KClass<T>): List<T> {
-        val resultSet = engine.execute(this)
+        val resultSet = connection.execute(this)
 
         val result = mutableListOf<T>()
         while (resultSet.next()) {

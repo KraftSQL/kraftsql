@@ -13,7 +13,7 @@ class InsertInto<E : Engine<E>, T : Any>(
     }
 
     fun execute() =
-        table.engine.execute(this)
+        table.connection.execute(this)
 }
 
 fun <E : Engine<E>, T : Any> Model<E, T>.insertInto(table: Table<E, T>) =
