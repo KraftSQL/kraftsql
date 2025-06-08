@@ -16,7 +16,7 @@ open class ConstantModel<E : Engine<E>, T : Any> : Model<E, T> {
     constructor(connection: Connection<E>, vararg items: T) : this(connection, items.toList())
 
     override fun sql(): String {
-        return items.joinToString(separator = " UNION ALL ", postfix = ";") { item -> """
+        return items.joinToString(separator = " UNION ALL ") { item -> """
             SELECT ${(item::class as KClass<T>).memberProperties.joinToString(", ") { "${
             ConstantExpression<E, Any?>(
                 it.get(

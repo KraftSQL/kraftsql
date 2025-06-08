@@ -23,9 +23,9 @@ open class Table<E: Engine<E>, T : Any>(
         }
     )
 
-    operator fun <V> get(property: KProperty1<T, V>) : Column<E, V> {
+    override operator fun <V> get(property: KProperty1<T, V>) : Column<E, V> {
         check(columns.any { it.name == property.name }) { "no column '${property.name}' in table '$name'" }
-        return Column.forProperty(property)
+        return super[property]
     }
 
     override fun sql() = "`$name`"

@@ -2,12 +2,13 @@ package rocks.frieler.kraftsql.models
 
 import rocks.frieler.kraftsql.engine.Connection
 import rocks.frieler.kraftsql.engine.Engine
+import rocks.frieler.kraftsql.queries.Queryable
 
 abstract class Model<E : Engine<E>, T : Any>(
-    val connection: Connection<E>,
-) {
+    override val connection: Connection<E>,
+) : Queryable<E>, HasColumns<E, T> {
     @Suppress("UNCHECKED_CAST")
     fun asRows() = this as Model<E, Row>
 
-    abstract fun sql(): String
+    abstract override fun sql(): String
 }

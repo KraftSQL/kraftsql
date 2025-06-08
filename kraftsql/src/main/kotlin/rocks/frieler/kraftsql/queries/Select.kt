@@ -8,12 +8,20 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.starProjectedType
 
 open class Select<E : Engine<E>, T : Any>(
-    val from: Model<E, *>,
+    val from: Queryable<E>,
+    val joins: List<Join<E>> = emptyList(),
     val columns: List<ColumnExpression<E, *>>? = null,
 ) : Model<E, T>(from.connection) {
 
-    override fun sql() =
-        "SELECT ${columns?.joinToString(", ") { it.sql() } ?: "*"} FROM ${from.sql()}"
+    init {
+        require(joins.all { it.data.connection == from.connection }) { "cannot join data from different connections" }
+    }
+
+    override fun sql() = """
+        SELECT ${columns?.joinToString(", ") { it.sql() } ?: "*"}
+        FROM ${from.sql()}
+        ${joins.joinToString("\n") { it.sql() }}
+    """.trimIndent()
 
     fun execute(type: KClass<T>): List<T> {
         val resultSet = connection.execute(this)

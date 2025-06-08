@@ -2,13 +2,15 @@ package rocks.frieler.kraftsql.example
 
 import rocks.frieler.kraftsql.ddl.create
 import rocks.frieler.kraftsql.dml.insertInto
-import rocks.frieler.kraftsql.expressions.Column
+import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.h2.models.ConstantModel
 import rocks.frieler.kraftsql.h2.queries.Select
 import rocks.frieler.kraftsql.expressions.ColumnExpression
 import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.h2.objects.Table
+import rocks.frieler.kraftsql.models.AliasedModel
 import rocks.frieler.kraftsql.models.Row
+import rocks.frieler.kraftsql.queries.InnerJoin
 import rocks.frieler.kraftsql.queries.execute
 import java.time.Instant
 import java.time.LocalDateTime
@@ -43,6 +45,10 @@ fun main() {
 
     val totalAmount = Select<Row>(
         from = sales,
+        joins = listOf(
+            AliasedModel(products, "p").let { p -> InnerJoin(p, sales[Sale::productId] `=` p[Product::id]) },
+            AliasedModel(stores, "s").let { s -> InnerJoin(s, sales[Sale::storeId] `=` s[Store::id]) },
+        ),
         columns = listOf(ColumnExpression(Sum(sales[Sale::amount]), "_totalAmount")),
     ).execute().single()["_totalAmount"]
     println(totalAmount)
