@@ -1,7 +1,6 @@
 package rocks.frieler.kraftsql.queries
 
 import rocks.frieler.kraftsql.engine.Engine
-import rocks.frieler.kraftsql.expressions.ColumnExpression
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.models.Model
 import rocks.frieler.kraftsql.models.Row
@@ -11,8 +10,9 @@ import kotlin.reflect.full.starProjectedType
 open class Select<E : Engine<E>, T : Any>(
     val source: Queryable<E>,
     val joins: List<Join<E>> = emptyList(),
-    val columns: List<ColumnExpression<E, *>>? = null,
+    val columns: List<Expression<E, *>>? = null,
     val filter: Expression<E, Boolean>? = null,
+    val grouping: List<Expression<E, *>> = emptyList(),
 ) : Model<E, T>(source.connection) {
 
     init {
@@ -24,6 +24,7 @@ open class Select<E : Engine<E>, T : Any>(
         FROM ${source.sql()}
         ${joins.joinToString("\n") { it.sql() }}
         ${if (filter != null) "WHERE ${filter.sql()}" else ""}
+        ${if (grouping.isNotEmpty()) "GROUP BY ${grouping.joinToString(",") { it.sql() }}" else ""}
     """.trimIndent()
 
     fun execute(type: KClass<T>): List<T> {

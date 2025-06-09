@@ -29,10 +29,12 @@ fun main() {
     }
 
     val store1 = Store(1, "DE")
+    val store2 = Store(2, "NL")
     val stores = Table("store", Store::class).apply {
         create()
         ConstantModel(
             store1,
+            store2,
         ).insertInto(this)
     }
 
@@ -41,17 +43,21 @@ fun main() {
         ConstantModel(
             Sale(chocolate, store1, Instant.from(ZonedDateTime.of(LocalDateTime.of(2025, 1, 3, 8, 22, 14), ZoneId.of("CET"))), 2),
             Sale(pants, store1, Instant.from(ZonedDateTime.of(LocalDateTime.of(2025, 1, 3, 8, 22, 14), ZoneId.of("CET"))), 1),
+            Sale(chocolate, store2, Instant.from(ZonedDateTime.of(LocalDateTime.of(2025, 1, 3, 9, 1, 33), ZoneId.of("CET"))), 1),
         ).insertInto(this)
     }
 
-    val totalAmount = Select<Row>(
+    Select<Row>(
         source = sales,
         joins = listOf(
             AliasedModel(products, "p").let { p -> InnerJoin(p, sales[Sale::productId] `=` p[Product::id]) },
             AliasedModel(stores, "s").let { s -> InnerJoin(s, sales[Sale::storeId] `=` s[Store::id]) },
         ),
-        columns = listOf(ColumnExpression(Sum(sales[Sale::amount]), "_totalAmount")),
-        filter = products[Product::category] `=` ConstantExpression("Food")
-    ).execute().single()["_totalAmount"]
-    println(totalAmount)
+        columns = listOf(
+            stores[Store::country],
+            ColumnExpression(Sum(sales[Sale::amount]), "_totalAmount"),
+        ),
+        filter = products[Product::category] `=` ConstantExpression("Food"),
+        grouping = listOf(stores[Store::country]),
+    ).execute().forEach { println("${it[Store::country.name]}: ${it["_totalAmount"]}") }
 }
