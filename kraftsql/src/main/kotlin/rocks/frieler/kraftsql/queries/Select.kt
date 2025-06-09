@@ -2,25 +2,28 @@ package rocks.frieler.kraftsql.queries
 
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.ColumnExpression
+import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.models.Model
 import rocks.frieler.kraftsql.models.Row
 import kotlin.reflect.KClass
 import kotlin.reflect.full.starProjectedType
 
 open class Select<E : Engine<E>, T : Any>(
-    val from: Queryable<E>,
+    val source: Queryable<E>,
     val joins: List<Join<E>> = emptyList(),
     val columns: List<ColumnExpression<E, *>>? = null,
-) : Model<E, T>(from.connection) {
+    val filter: Expression<E, Boolean>? = null,
+) : Model<E, T>(source.connection) {
 
     init {
-        require(joins.all { it.data.connection == from.connection }) { "cannot join data from different connections" }
+        require(joins.all { it.data.connection == source.connection }) { "cannot join data from different connections" }
     }
 
     override fun sql() = """
         SELECT ${columns?.joinToString(", ") { it.sql() } ?: "*"}
-        FROM ${from.sql()}
+        FROM ${source.sql()}
         ${joins.joinToString("\n") { it.sql() }}
+        ${if (filter != null) "WHERE ${filter.sql()}" else ""}
     """.trimIndent()
 
     fun execute(type: KClass<T>): List<T> {

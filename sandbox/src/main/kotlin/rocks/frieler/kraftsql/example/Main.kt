@@ -6,6 +6,7 @@ import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.h2.models.ConstantModel
 import rocks.frieler.kraftsql.h2.queries.Select
 import rocks.frieler.kraftsql.expressions.ColumnExpression
+import rocks.frieler.kraftsql.expressions.ConstantExpression
 import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.h2.objects.Table
 import rocks.frieler.kraftsql.models.AliasedModel
@@ -44,12 +45,13 @@ fun main() {
     }
 
     val totalAmount = Select<Row>(
-        from = sales,
+        source = sales,
         joins = listOf(
             AliasedModel(products, "p").let { p -> InnerJoin(p, sales[Sale::productId] `=` p[Product::id]) },
             AliasedModel(stores, "s").let { s -> InnerJoin(s, sales[Sale::storeId] `=` s[Store::id]) },
         ),
         columns = listOf(ColumnExpression(Sum(sales[Sale::amount]), "_totalAmount")),
+        filter = products[Product::category] `=` ConstantExpression("Food")
     ).execute().single()["_totalAmount"]
     println(totalAmount)
 }
