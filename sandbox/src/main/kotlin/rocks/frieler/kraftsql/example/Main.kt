@@ -5,7 +5,7 @@ import rocks.frieler.kraftsql.dml.insertInto
 import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.h2.models.ConstantModel
 import rocks.frieler.kraftsql.h2.queries.Select
-import rocks.frieler.kraftsql.expressions.ColumnExpression
+import rocks.frieler.kraftsql.expressions.AliasedExpression
 import rocks.frieler.kraftsql.expressions.ConstantExpression
 import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.h2.objects.Table
@@ -55,7 +55,7 @@ fun main() {
         ),
         columns = listOf(
             stores[Store::country],
-            ColumnExpression(Sum(sales[Sale::amount]), "_totalAmount"),
+            AliasedExpression(Sum(sales[Sale::amount]), "_totalAmount"),
         ),
         filter = products[Product::category] `=` ConstantExpression("Food"),
         grouping = listOf(stores[Store::country]),

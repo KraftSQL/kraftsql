@@ -10,7 +10,7 @@ import kotlin.reflect.full.starProjectedType
 open class Select<E : Engine<E>, T : Any>(
     val source: Queryable<E>,
     val joins: List<Join<E>> = emptyList(),
-    val columns: List<Expression<E, *>>? = null,
+    val columns: List<Selectable<E>>? = null,
     val filter: Expression<E, Boolean>? = null,
     val grouping: List<Expression<E, *>> = emptyList(),
 ) : Model<E, T>(source.connection) {
