@@ -6,4 +6,8 @@ interface Expression<E: Engine<E>, T> {
     fun sql(): String
 
     fun defaultColumnName(): String
+
+    override fun equals(other: Any?) : Boolean
+
+    override fun hashCode(): Int
 }

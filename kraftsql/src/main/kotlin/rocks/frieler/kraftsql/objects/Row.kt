@@ -8,6 +8,8 @@ class Row(
         return values[field]
     }
 
+    operator fun plus(other: Row) = Row(this.values + other.values)
+
     override fun toString(): String {
         return "Row(${values.entries.joinToString(", ") { "${it.key}=${it.value}" }})"
     }

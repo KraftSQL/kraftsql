@@ -17,4 +17,8 @@ class Column<E: Engine<E>, T>(
     override fun defaultColumnName() = qualifiedName
 
     fun withQualifier(qualifier: String) = Column<E, T>(listOf(qualifier) + qualifiers, name)
+
+    override fun equals(other: Any?) = other is Column<*, *> && qualifiedName == other.qualifiedName
+
+    override fun hashCode(): Int = qualifiedName.hashCode()
 }
