@@ -1,18 +1,18 @@
 package rocks.frieler.kraftsql.example
 
-import rocks.frieler.kraftsql.ddl.create
-import rocks.frieler.kraftsql.dml.insertInto
 import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.h2.models.ConstantModel
 import rocks.frieler.kraftsql.h2.queries.Select
 import rocks.frieler.kraftsql.expressions.AliasedExpression
 import rocks.frieler.kraftsql.expressions.ConstantExpression
 import rocks.frieler.kraftsql.expressions.Sum
+import rocks.frieler.kraftsql.h2.ddl.create
+import rocks.frieler.kraftsql.h2.dml.insertInto
 import rocks.frieler.kraftsql.h2.objects.Table
+import rocks.frieler.kraftsql.h2.queries.execute
 import rocks.frieler.kraftsql.models.AliasedModel
 import rocks.frieler.kraftsql.models.Row
 import rocks.frieler.kraftsql.queries.InnerJoin
-import rocks.frieler.kraftsql.queries.execute
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId

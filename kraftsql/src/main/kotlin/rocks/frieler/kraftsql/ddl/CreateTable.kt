@@ -17,6 +17,6 @@ class CreateTable<E : Engine<E>>(
     }
 }
 
-fun <E : Engine<E>, T : Any> Table<E, T>.create() {
+fun <E : Engine<E>, T : Any> Table<E, T>.create(connection: Connection<E>) {
     CreateTable(connection, this).execute()
 }

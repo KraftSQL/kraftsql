@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.queries
 
+import rocks.frieler.kraftsql.engine.Connection
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.models.Model
@@ -13,11 +14,7 @@ open class Select<E : Engine<E>, T : Any>(
     val columns: List<Selectable<E>>? = null,
     val filter: Expression<E, Boolean>? = null,
     val grouping: List<Expression<E, *>> = emptyList(),
-) : Model<E, T>(source.connection) {
-
-    init {
-        require(joins.all { it.data.connection == source.connection }) { "cannot join data from different connections" }
-    }
+) : Model<E, T>() {
 
     override fun sql() = """
         SELECT ${columns?.joinToString(", ") { it.sql() } ?: "*"}
@@ -27,7 +24,7 @@ open class Select<E : Engine<E>, T : Any>(
         ${if (grouping.isNotEmpty()) "GROUP BY ${grouping.joinToString(",") { it.sql() }}" else ""}
     """.trimIndent()
 
-    fun execute(type: KClass<T>): List<T> {
+    fun execute(connection: Connection<E>, type: KClass<T>): List<T> {
         val resultSet = connection.execute(this)
 
         val result = mutableListOf<T>()
@@ -57,4 +54,4 @@ open class Select<E : Engine<E>, T : Any>(
     }
 }
 
-inline fun <reified T : Any> Select<*, T>.execute() = execute(T::class)
+inline fun <E : Engine<E>, reified T : Any> Select<E, T>.execute(connection: Connection<E>) = execute(connection, T::class)

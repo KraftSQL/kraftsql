@@ -1,10 +1,12 @@
 package rocks.frieler.kraftsql.dml
 
+import rocks.frieler.kraftsql.engine.Connection
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.models.Model
 import rocks.frieler.kraftsql.objects.Table
 
 class InsertInto<E : Engine<E>, T : Any>(
+    private val connection: Connection<E>,
     private val table: Table<E, T>,
     private val values: Model<E, T>,
 ) {
@@ -13,8 +15,8 @@ class InsertInto<E : Engine<E>, T : Any>(
     }
 
     fun execute() =
-        table.connection.execute(this)
+        connection.execute(this)
 }
 
-fun <E : Engine<E>, T : Any> Model<E, T>.insertInto(table: Table<E, T>) =
-    InsertInto(table, this).execute()
+fun <E : Engine<E>, T : Any> Model<E, T>.insertInto(table: Table<E, T>, connection: Connection<E>) =
+    InsertInto(connection, table, this).execute()
