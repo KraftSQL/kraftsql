@@ -5,7 +5,7 @@ import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.queries.Select
 import java.sql.ResultSet
 
-interface Connection<E: Engine<E>> {
+interface Session<E: Engine<E>> {
     fun <T : Any> execute(select: Select<E, T>): ResultSet
 
     fun execute(createTable: CreateTable<E>)

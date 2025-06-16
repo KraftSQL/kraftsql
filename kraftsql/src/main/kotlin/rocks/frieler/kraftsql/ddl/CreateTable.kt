@@ -1,11 +1,11 @@
 package rocks.frieler.kraftsql.ddl
 
-import rocks.frieler.kraftsql.engine.Connection
+import rocks.frieler.kraftsql.engine.Session
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.objects.Table
 
 class CreateTable<E : Engine<E>>(
-    private val connection: Connection<E>,
+    private val session: Session<E>,
     private val table: Table<E, *>,
 ) {
     fun sql() : String {
@@ -13,10 +13,10 @@ class CreateTable<E : Engine<E>>(
     }
 
     fun execute() {
-        connection.execute(this)
+        session.execute(this)
     }
 }
 
-fun <E : Engine<E>, T : Any> Table<E, T>.create(connection: Connection<E>) {
-    CreateTable(connection, this).execute()
+fun <E : Engine<E>, T : Any> Table<E, T>.create(session: Session<E>) {
+    CreateTable(session, this).execute()
 }

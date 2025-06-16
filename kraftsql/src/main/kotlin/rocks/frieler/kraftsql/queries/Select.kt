@@ -1,6 +1,6 @@
 package rocks.frieler.kraftsql.queries
 
-import rocks.frieler.kraftsql.engine.Connection
+import rocks.frieler.kraftsql.engine.Session
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.models.Model
@@ -24,8 +24,8 @@ open class Select<E : Engine<E>, T : Any>(
         ${if (grouping.isNotEmpty()) "GROUP BY ${grouping.joinToString(",") { it.sql() }}" else ""}
     """.trimIndent()
 
-    fun execute(connection: Connection<E>, type: KClass<T>): List<T> {
-        val resultSet = connection.execute(this)
+    fun execute(session: Session<E>, type: KClass<T>): List<T> {
+        val resultSet = session.execute(this)
 
         val result = mutableListOf<T>()
         while (resultSet.next()) {
@@ -54,4 +54,4 @@ open class Select<E : Engine<E>, T : Any>(
     }
 }
 
-inline fun <E : Engine<E>, reified T : Any> Select<E, T>.execute(connection: Connection<E>) = execute(connection, T::class)
+inline fun <E : Engine<E>, reified T : Any> Select<E, T>.execute(session: Session<E>) = execute(session, T::class)

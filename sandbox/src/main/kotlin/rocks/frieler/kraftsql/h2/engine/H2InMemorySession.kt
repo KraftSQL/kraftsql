@@ -7,9 +7,9 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.ResultSet
 
-class H2InMemoryConnection(
+class H2InMemorySession(
     database: String,
-) : rocks.frieler.kraftsql.engine.Connection<H2Engine>, AutoCloseable {
+) : rocks.frieler.kraftsql.engine.Session<H2Engine>, AutoCloseable {
     private val connection: Connection = DriverManager.getConnection("jdbc:h2:mem:$database")
 
     @Suppress("kotlin:S6514")
@@ -30,12 +30,12 @@ class H2InMemoryConnection(
     }
 
     object AutoInstance {
-        private lateinit var instance : H2InMemoryConnection
+        private lateinit var instance : H2InMemorySession
 
-        operator fun invoke(): H2InMemoryConnection {
+        operator fun invoke(): H2InMemorySession {
             if (!::instance.isInitialized) {
                 val database = System.getenv("H2_DATABASE_NAME") ?: throw IllegalStateException("H2_DATABASE_NAME is not set")
-                instance = H2InMemoryConnection(database)
+                instance = H2InMemorySession(database)
             }
 
             return instance
