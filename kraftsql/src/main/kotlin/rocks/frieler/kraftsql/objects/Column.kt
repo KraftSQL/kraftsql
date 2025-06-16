@@ -1,9 +1,9 @@
-package rocks.frieler.kraftsql.ddl
+package rocks.frieler.kraftsql.objects
 
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.engine.Type
 
-class ColumnDefinition<E : Engine<E>>(
+class Column<E : Engine<E>>(
     val name: String,
     val type: Type,
 ) {
