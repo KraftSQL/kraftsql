@@ -24,34 +24,7 @@ open class Select<E : Engine<E>, T : Any>(
         ${if (grouping.isNotEmpty()) "GROUP BY ${grouping.joinToString(",") { it.sql() }}" else ""}
     """.trimIndent()
 
-    fun execute(session: Session<E>, type: KClass<T>): List<T> {
-        val resultSet = session.execute(this)
-
-        val result = mutableListOf<T>()
-        while (resultSet.next()) {
-            result.add(
-                if (type != Row::class) {
-                    val constructor = type.constructors.first()
-                    constructor.callBy(constructor.parameters.associateWith { param ->
-                        when (param.type) {
-                            Integer::class.starProjectedType -> resultSet.getInt(param.name)
-                            Long::class.starProjectedType -> resultSet.getLong(param.name)
-                            String::class.starProjectedType -> resultSet.getString(param.name)
-                            else -> throw NotImplementedError("Unsupported field type ${param.type}")
-                        }
-                    })
-                } else {
-                    @Suppress("UNCHECKED_CAST")
-                    Row(
-                        (1..resultSet.metaData.columnCount)
-                        .map { resultSet.metaData.getColumnName(it) }
-                        .associateWith { resultSet.getObject(it) }
-                    ) as T
-                }
-            )
-        }
-        return result
-    }
+    fun execute(session: Session<E>, type: KClass<T>) = session.execute(this, type)
 }
 
 inline fun <E : Engine<E>, reified T : Any> Select<E, T>.execute(session: Session<E>) = execute(session, T::class)
