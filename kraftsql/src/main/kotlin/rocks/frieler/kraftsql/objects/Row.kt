@@ -1,4 +1,4 @@
-package rocks.frieler.kraftsql.models
+package rocks.frieler.kraftsql.objects
 
 class Row(
     val values: Map<String, Any?>

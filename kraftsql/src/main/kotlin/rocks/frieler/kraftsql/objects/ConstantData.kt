@@ -1,11 +1,11 @@
-package rocks.frieler.kraftsql.models
+package rocks.frieler.kraftsql.objects
 
 import rocks.frieler.kraftsql.engine.Engine
-import rocks.frieler.kraftsql.expressions.ConstantExpression
+import rocks.frieler.kraftsql.expressions.Constant
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
-open class ConstantModel<E : Engine<E>, T : Any> : Model<E, T> {
+open class ConstantData<E : Engine<E>, T : Any> : Data<E, T> {
     val items: Iterable<T>
 
     constructor(items: Iterable<T>) : super() {
@@ -17,7 +17,7 @@ open class ConstantModel<E : Engine<E>, T : Any> : Model<E, T> {
     override fun sql(): String {
         return items.joinToString(separator = " UNION ALL ") { item -> """
             SELECT ${(item::class as KClass<T>).memberProperties.joinToString(", ") { "${
-            ConstantExpression<E, Any?>(
+            Constant<E, Any?>(
                 it.get(
                     item
                 )

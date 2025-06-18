@@ -2,10 +2,9 @@ package rocks.frieler.kraftsql.engine
 
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.dml.InsertInto
-import rocks.frieler.kraftsql.models.Row
+import rocks.frieler.kraftsql.objects.Row
 import rocks.frieler.kraftsql.queries.Select
 import java.sql.Connection
-import java.sql.ResultSet
 import kotlin.reflect.KClass
 import kotlin.reflect.full.starProjectedType
 

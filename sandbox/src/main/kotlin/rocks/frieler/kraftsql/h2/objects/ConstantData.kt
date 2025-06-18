@@ -1,9 +1,9 @@
-package rocks.frieler.kraftsql.h2.models
+package rocks.frieler.kraftsql.h2.objects
 
 import rocks.frieler.kraftsql.h2.engine.H2Engine
-import rocks.frieler.kraftsql.models.ConstantModel
+import rocks.frieler.kraftsql.objects.ConstantData
 
-class ConstantModel<T : Any> : ConstantModel<H2Engine, T> {
+class ConstantData<T : Any> : ConstantData<H2Engine, T> {
     constructor(items: Iterable<T>) : super(items)
 
     constructor(vararg items: T) : super(*items)
