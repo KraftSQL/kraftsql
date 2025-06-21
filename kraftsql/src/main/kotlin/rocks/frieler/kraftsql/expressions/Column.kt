@@ -9,6 +9,9 @@ class Column<E: Engine<E>, T>(
 
     constructor(name: String) : this(emptyList(), name)
 
+    val qualifiedName: String
+        get() = "${qualifiers.joinToString { "$it." }}$name"
+
     override fun sql() = "${qualifiers.joinToString { "\"$it\"." }}\"$name\""
 
     fun withQualifier(qualifier: String) = Column<E, T>(listOf(qualifier) + qualifiers, name)
