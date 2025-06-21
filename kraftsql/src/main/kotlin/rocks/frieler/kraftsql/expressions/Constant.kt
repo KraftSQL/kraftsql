@@ -3,7 +3,7 @@ package rocks.frieler.kraftsql.expressions
 import rocks.frieler.kraftsql.engine.Engine
 
 class Constant<E : Engine<E>, T : Any?>(
-    private val value: T,
+    val value: T,
 ) : Expression<E, T> {
     override fun sql(): String {
         return when (value) {

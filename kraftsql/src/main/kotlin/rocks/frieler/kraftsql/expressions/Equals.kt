@@ -3,8 +3,8 @@ package rocks.frieler.kraftsql.expressions
 import rocks.frieler.kraftsql.engine.Engine
 
 class Equals<E : Engine<E>>(
-    private val left: Expression<E, *>,
-    private val right: Expression<E, *>,
+    val left: Expression<E, *>,
+    val right: Expression<E, *>,
 ) : Expression<E, Boolean> {
     override fun sql() = "(${left.sql()})=(${right.sql()})"
 }

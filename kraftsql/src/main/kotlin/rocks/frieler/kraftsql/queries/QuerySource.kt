@@ -5,8 +5,8 @@ import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.HasColumns
 
 class QuerySource<E: Engine<E>, T : Any>(
-    private val data: Data<E, T>,
-    private val alias: String?,
+    val data: Data<E, T>,
+    val alias: String?,
 ) : HasColumns<E, T> {
     fun sql() = "(${data.sql()}) AS \"${alias}\""
 
