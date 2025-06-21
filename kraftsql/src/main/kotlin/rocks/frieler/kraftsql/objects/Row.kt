@@ -7,4 +7,8 @@ class Row(
         check(field in values.keys) { "no field '$field' in Row; did you mean one of ${values.keys}?" }
         return values[field]
     }
+
+    override fun toString(): String {
+        return "Row(${values.entries.joinToString(", ") { "${it.key}=${it.value}" }})"
+    }
 }
