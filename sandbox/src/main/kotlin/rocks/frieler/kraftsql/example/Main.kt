@@ -47,17 +47,19 @@ fun main() {
         ).insertInto(this)
     }
 
+    val p = QuerySource(products, "p")
+    val s = QuerySource(stores, "s")
     Select<Row>(
         source = sales,
         joins = listOf(
-            QuerySource(products, "p").let { p -> InnerJoin(p, sales[Sale::productId] `=` p[Product::id]) },
-            QuerySource(stores, "s").let { s -> InnerJoin(s, sales[Sale::storeId] `=` s[Store::id]) },
+            p.let { p -> InnerJoin(p, sales[Sale::productId] `=` p[Product::id]) },
+            s.let { s -> InnerJoin(s, sales[Sale::storeId] `=` s[Store::id]) },
         ),
         columns = listOf(
-            Projection(stores[Store::country]),
+            Projection(s[Store::country]),
             Projection(Sum(sales[Sale::amount]), "_totalAmount"),
         ),
-        filter = products[Product::category] `=` Constant("Food"),
-        grouping = listOf(stores[Store::country]),
-    ).execute().forEach { println("${it[Store::country.name]}: ${it["_totalAmount"]}") }
+        filter = p[Product::category] `=` Constant("Food"),
+        grouping = listOf(s[Store::country]),
+    ).execute().forEach { println("${it[s[Store::country].name]}: ${it["_totalAmount"]}") }
 }
