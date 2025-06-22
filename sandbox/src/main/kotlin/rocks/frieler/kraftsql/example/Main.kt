@@ -8,17 +8,23 @@ import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.h2.ddl.create
 import rocks.frieler.kraftsql.h2.dml.insertInto
+import rocks.frieler.kraftsql.h2.engine.H2InMemorySession
 import rocks.frieler.kraftsql.h2.objects.Table
 import rocks.frieler.kraftsql.h2.queries.execute
 import rocks.frieler.kraftsql.queries.QuerySource
 import rocks.frieler.kraftsql.objects.Row
 import rocks.frieler.kraftsql.queries.InnerJoin
+import rocks.frieler.kraftsql.testing.engine.SimulatorSession
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
 fun main() {
+    if (System.getenv("SIMULATE_ENGINE").toBoolean()) {
+        H2InMemorySession.Default.set(SimulatorSession())
+    }
+
     val chocolate = Product(1, "Chocolate", "Food")
     val pants = Product(2, "Pants", "Clothes")
     val products = Table("product", Product::class).apply {

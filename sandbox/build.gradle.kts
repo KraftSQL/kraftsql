@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation(project(":kraftsql"))
+    implementation(project(":kraftsql-testing"))
     implementation(libs.h2.database)
 }
 
