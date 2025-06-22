@@ -20,4 +20,4 @@ class Select<T : Any> : Select<H2Engine, T> {
 }
 
 inline fun <reified T : Any> Select<H2Engine, T>.execute() =
-    execute(H2InMemorySession.AutoInstance())
+    execute(H2InMemorySession.Default.get())

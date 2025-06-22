@@ -3,7 +3,6 @@ package rocks.frieler.kraftsql.engine
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.queries.Select
-import java.sql.ResultSet
 import kotlin.reflect.KClass
 
 interface Session<E: Engine<E>> {
@@ -14,4 +13,20 @@ interface Session<E: Engine<E>> {
     fun execute(insertInto: InsertInto<E, *>) : Int
 }
 
-inline fun <E : Engine<E>, reified T : Any> Session<E>.execute(select: Select<E, T>) = execute(select, T::class)
+abstract class DefaultSession<E : Engine<E>> {
+    private lateinit var instance : Session<E>
+
+    fun get(): Session<E> {
+        if (!::instance.isInitialized) {
+            instance = instantiate()
+        }
+
+        return instance
+    }
+
+    protected abstract fun instantiate(): Session<E>
+
+    fun set(instance: Session<E>) {
+        this.instance = instance
+    }
+}

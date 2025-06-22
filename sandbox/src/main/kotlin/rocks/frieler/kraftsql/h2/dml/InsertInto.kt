@@ -7,4 +7,4 @@ import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.Table
 
 fun <T : Any> Data<H2Engine, T>.insertInto(table: Table<H2Engine, T>) =
-    insertInto(table, H2InMemorySession.AutoInstance())
+    insertInto(table, H2InMemorySession.Default.get())
