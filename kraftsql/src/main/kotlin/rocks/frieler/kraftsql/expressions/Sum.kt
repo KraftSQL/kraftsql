@@ -6,4 +6,6 @@ class Sum<E : Engine<E>, T : Number>(
     val column: Expression<E, T>,
 ) : Aggregation<E, T> {
     override fun sql() = "SUM(${column.sql()})"
+
+    override fun defaultColumnName() = "SUM(${column.defaultColumnName()})"
 }

@@ -12,4 +12,6 @@ class Constant<E : Engine<E>, T : Any?>(
             else -> "'$value'"
         }
     }
+
+    override fun defaultColumnName() = sql()
 }

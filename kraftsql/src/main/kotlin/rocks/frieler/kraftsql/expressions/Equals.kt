@@ -7,6 +7,8 @@ class Equals<E : Engine<E>>(
     val right: Expression<E, *>,
 ) : Expression<E, Boolean> {
     override fun sql() = "(${left.sql()})=(${right.sql()})"
+
+    override fun defaultColumnName() = "${left.defaultColumnName()} = ${right.defaultColumnName()}"
 }
 
 infix fun <E : Engine<E>> Expression<E, *>.`=`(other: Expression<E, *>): Equals<E> = Equals(this, other)

@@ -56,10 +56,10 @@ fun main() {
             s.let { s -> InnerJoin(s, sales[Sale::storeId] `=` s[Store::id]) },
         ),
         columns = listOf(
-            Projection(s[Store::country]),
+            Projection(s[Store::country], Store::country.name),
             Projection(Sum(sales[Sale::amount]), "_totalAmount"),
         ),
         filter = p[Product::category] `=` Constant("Food"),
         grouping = listOf(s[Store::country]),
-    ).execute().forEach { println("${it[s[Store::country].name]}: ${it["_totalAmount"]}") }
+    ).execute().forEach { println("${it[Store::country.name]}: ${it["_totalAmount"]}") }
 }

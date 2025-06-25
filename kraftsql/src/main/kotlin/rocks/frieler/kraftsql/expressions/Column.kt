@@ -14,5 +14,7 @@ class Column<E: Engine<E>, T>(
 
     override fun sql() = "${qualifiers.joinToString { "\"$it\"." }}\"$name\""
 
+    override fun defaultColumnName() = qualifiedName
+
     fun withQualifier(qualifier: String) = Column<E, T>(listOf(qualifier) + qualifiers, name)
 }
