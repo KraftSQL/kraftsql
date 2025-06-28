@@ -10,6 +10,8 @@ import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Sum
+import rocks.frieler.kraftsql.expressions.SumAsDouble
+import rocks.frieler.kraftsql.expressions.SumAsLong
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.Row
@@ -145,9 +147,13 @@ open class SimulatorSession<E : Engine<E>> : Session<E> {
                 @Suppress("UNCHECKED_CAST")
                 rows.count() as T
             }
-            is Sum<E, T> -> { rows : List<Row> ->
-                @Suppress("UNCHECKED_CAST") // subsequent issue of Sum's return type...
-                rows.map { row -> simulateExpression(expression.column).invoke(row) as Number }.reduceOrNull { a, b -> a.toLong() + b.toLong() } as T
+            is SumAsLong<E> -> { rows : List<Row> ->
+                @Suppress("UNCHECKED_CAST")
+                rows.map { row -> simulateExpression(expression.expression).invoke(row) as Number }.reduceOrNull { a, b -> a.toLong() + b.toLong() } as T
+            }
+            is SumAsDouble<E> -> { rows : List<Row> ->
+                @Suppress("UNCHECKED_CAST")
+                rows.map { row -> simulateExpression(expression.expression).invoke(row) as Number }.reduceOrNull { a, b -> a.toDouble() + b.toDouble() } as T
             }
             else -> throw NotImplementedError("Simulation of a ${expression::class.qualifiedName} is not implemented.")
         }
