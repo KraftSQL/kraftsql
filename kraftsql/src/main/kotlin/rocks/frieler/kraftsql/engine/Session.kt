@@ -14,19 +14,17 @@ interface Session<E: Engine<E>> {
 }
 
 abstract class DefaultSession<E : Engine<E>> {
-    private lateinit var instance : Session<E>
+    private var instance : Session<E>? = null
 
-    fun get(): Session<E> {
-        if (!::instance.isInitialized) {
-            instance = instantiate()
-        }
-
-        return instance
-    }
+    fun get(): Session<E> = (instance ?: instantiate()).also { instance = it }
 
     protected abstract fun instantiate(): Session<E>
 
     fun set(instance: Session<E>) {
         this.instance = instance
+    }
+
+    fun unset() {
+        this.instance = null
     }
 }
