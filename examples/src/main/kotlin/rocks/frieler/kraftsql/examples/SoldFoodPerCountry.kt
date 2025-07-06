@@ -14,20 +14,14 @@ import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.h2.ddl.create
 import rocks.frieler.kraftsql.h2.dml.insertInto
 import rocks.frieler.kraftsql.h2.engine.H2Engine
-import rocks.frieler.kraftsql.h2.engine.H2InMemorySession
 import rocks.frieler.kraftsql.h2.queries.execute
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.queries.QuerySource
 import rocks.frieler.kraftsql.objects.Row
 import rocks.frieler.kraftsql.queries.InnerJoin
-import rocks.frieler.kraftsql.testing.engine.SimulatorSession
 import java.time.Instant
 
 fun main() {
-    if (System.getenv("SIMULATE_ENGINE").toBoolean()) {
-        H2InMemorySession.Default.set(SimulatorSession())
-    }
-
     products.create()
     val chocolate = Product(1, "Chocolate", "Food").also { it.insertInto(products) }
     val pants = Product(2, "Pants", "Clothes").also { it.insertInto(products) }
