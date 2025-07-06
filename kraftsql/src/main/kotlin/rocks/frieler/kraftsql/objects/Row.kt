@@ -17,6 +17,10 @@ class Row(
         return "Row(${values.entries.joinToString(", ") { "${it.key}=${it.value}" }})"
     }
 
+    override fun equals(other: Any?) = other is Row && values == other.values
+
+    override fun hashCode() = values.hashCode()
+
     companion object {
         fun from(obj: Any) =
             obj as? Row ?: Row(
