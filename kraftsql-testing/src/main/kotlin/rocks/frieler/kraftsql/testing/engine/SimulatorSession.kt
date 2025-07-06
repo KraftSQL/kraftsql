@@ -92,7 +92,7 @@ open class SimulatorSession<E : Engine<E>> : Session<E> {
         val table = tables[insertInto.table.name] ?: throw IllegalStateException("Table '${insertInto.table.name}' does not exist.")
         val rows = insertInto.values.let { values ->
             when (values) {
-                is ConstantData -> values.items.map { value -> value as? Row ?: Row((value::class as KClass<Any>).memberProperties.associate { field -> field.name to field.get(value) }) }
+                is ConstantData -> values.items.map { value -> Row.from(value) }
                 else -> throw NotImplementedError("Inserting ${values::class.qualifiedName} is not implemented.")
             }
         }
@@ -106,6 +106,9 @@ open class SimulatorSession<E : Engine<E>> : Session<E> {
             is Select<E, *> -> {
                 @Suppress("UNCHECKED_CAST")
                 execute(data as Select<E, Row>, Row::class)
+            }
+            is ConstantData<E, *> -> {
+                data.items.map { item -> Row.from(item) }
             }
             else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
         }

@@ -1,5 +1,8 @@
 package rocks.frieler.kraftsql.objects
 
+import kotlin.reflect.KClass
+import kotlin.reflect.full.memberProperties
+
 class Row(
     val values: Map<String, Any?>
 ) {
@@ -12,5 +15,13 @@ class Row(
 
     override fun toString(): String {
         return "Row(${values.entries.joinToString(", ") { "${it.key}=${it.value}" }})"
+    }
+
+    companion object {
+        fun from(obj: Any) =
+            obj as? Row ?: Row(
+                (obj::class as KClass<Any>)
+                    .memberProperties
+                    .associate { field -> field.name to field.get(obj) })
     }
 }
