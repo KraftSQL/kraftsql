@@ -1,4 +1,4 @@
-package rocks.frieler.kraftsql.example
+package rocks.frieler.kraftsql.examples.entities
 
 data class Product(
     val id: Long,

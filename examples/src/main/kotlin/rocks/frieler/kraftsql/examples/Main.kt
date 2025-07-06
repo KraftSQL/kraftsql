@@ -1,5 +1,8 @@
-package rocks.frieler.kraftsql.example
+package rocks.frieler.kraftsql.examples
 
+import rocks.frieler.kraftsql.examples.entities.Product
+import rocks.frieler.kraftsql.examples.entities.Sale
+import rocks.frieler.kraftsql.examples.entities.Store
 import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.h2.objects.ConstantData
 import rocks.frieler.kraftsql.h2.queries.Select
@@ -47,9 +50,24 @@ fun main() {
     val sales = Table("sales", Sale::class).apply {
         create()
         ConstantData(
-            Sale(chocolate, store1, Instant.from(ZonedDateTime.of(LocalDateTime.of(2025, 1, 3, 8, 22, 14), ZoneId.of("CET"))), 2),
-            Sale(pants, store1, Instant.from(ZonedDateTime.of(LocalDateTime.of(2025, 1, 3, 8, 22, 14), ZoneId.of("CET"))), 1),
-            Sale(chocolate, store2, Instant.from(ZonedDateTime.of(LocalDateTime.of(2025, 1, 3, 9, 1, 33), ZoneId.of("CET"))), 1),
+            Sale(
+                chocolate,
+                store1,
+                Instant.from(ZonedDateTime.of(LocalDateTime.of(2025, 1, 3, 8, 22, 14), ZoneId.of("CET"))),
+                2
+            ),
+            Sale(
+                pants,
+                store1,
+                Instant.from(ZonedDateTime.of(LocalDateTime.of(2025, 1, 3, 8, 22, 14), ZoneId.of("CET"))),
+                1
+            ),
+            Sale(
+                chocolate,
+                store2,
+                Instant.from(ZonedDateTime.of(LocalDateTime.of(2025, 1, 3, 9, 1, 33), ZoneId.of("CET"))),
+                1
+            ),
         ).insertInto(this)
     }
 
