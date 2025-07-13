@@ -7,18 +7,16 @@ import rocks.frieler.kraftsql.examples.data.products
 import rocks.frieler.kraftsql.examples.data.sales
 import rocks.frieler.kraftsql.examples.data.shops
 import rocks.frieler.kraftsql.expressions.`=`
-import rocks.frieler.kraftsql.h2.queries.Select
-import rocks.frieler.kraftsql.queries.Projection
 import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.h2.ddl.create
 import rocks.frieler.kraftsql.h2.dml.insertInto
+import rocks.frieler.kraftsql.h2.dsl.Select
 import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.h2.queries.execute
 import rocks.frieler.kraftsql.objects.Data
-import rocks.frieler.kraftsql.queries.QuerySource
 import rocks.frieler.kraftsql.objects.Row
-import rocks.frieler.kraftsql.queries.InnerJoin
+import rocks.frieler.kraftsql.dsl.`as`
 import java.time.Instant
 
 fun main() {
@@ -45,21 +43,14 @@ fun calculateSoldFoodPerCountry(
     products: Data<H2Engine, Product>,
     shops: Data<H2Engine, Shop>,
     sales: Data<H2Engine, Sale>
-): Select<Row> {
-    val p = QuerySource(products, "p")
-    val s = QuerySource(shops, "s")
-    val soldFoodPerCountry = Select<Row>(
-        source = sales,
-        joins = listOf(
-            p.let { p -> InnerJoin(p, sales[Sale::productId] `=` p[Product::id]) },
-            s.let { s -> InnerJoin(s, sales[Sale::storeId] `=` s[Shop::id]) },
-        ),
-        columns = listOf(
-            Projection(s[Shop::country], Shop::country.name),
-            Projection(Sum.Companion(sales[Sale::amount]), "_totalAmount"),
-        ),
-        filter = p[Product::category] `=` Constant("Food"),
-        grouping = listOf(s[Shop::country]),
+) = Select<Row> {
+    from(sales)
+    val p = innerJoin(products `as` "p") { this[Product::id] `=` sales[Sale::productId] }
+    val s = innerJoin(shops `as` "s") { this[Shop::id] `=` sales[Sale::storeId] }
+    columns(
+        s[Shop::country] `as` Shop::country.name,
+        Sum.Companion(sales[Sale::amount]) `as` "_totalAmount",
     )
-    return soldFoodPerCountry
+    where(p[Product::category] `=` Constant("Food"))
+    groupBy(s[Shop::country])
 }
