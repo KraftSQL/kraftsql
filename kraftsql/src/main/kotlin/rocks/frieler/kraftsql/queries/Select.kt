@@ -7,7 +7,7 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.Data
 
 open class Select<E : Engine<E>, T : Any>(
-    val source: Data<E, *>,
+    val source: QuerySource<E, *>,
     val joins: List<Join<E>> = emptyList(),
     val columns: List<Projection<E, *>>? = null,
     val filter: Expression<E, Boolean>? = null,

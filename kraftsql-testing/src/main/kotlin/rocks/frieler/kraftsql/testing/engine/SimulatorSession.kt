@@ -9,19 +9,17 @@ import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
-import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.expressions.SumAsDouble
 import rocks.frieler.kraftsql.expressions.SumAsLong
 import rocks.frieler.kraftsql.objects.ConstantData
-import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.Row
 import rocks.frieler.kraftsql.objects.Table
 import rocks.frieler.kraftsql.queries.InnerJoin
 import rocks.frieler.kraftsql.queries.Projection
+import rocks.frieler.kraftsql.queries.QuerySource
 import rocks.frieler.kraftsql.queries.Select
 import java.sql.SQLSyntaxErrorException
 import kotlin.reflect.KClass
-import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
 open class SimulatorSession<E : Engine<E>> : Session<E> {
@@ -31,12 +29,7 @@ open class SimulatorSession<E : Engine<E>> : Session<E> {
         var rows = fetchData(select.source)
 
         for (join in select.joins) {
-            var dataToJoin = fetchData(join.data.data)
-            if (join.data.alias != null) {
-                dataToJoin = dataToJoin.map { row ->
-                    Row(row.values.mapKeys { (field, _) -> "${join.data.alias}.$field" })
-                }
-            }
+            val dataToJoin = fetchData(join.data)
             val joinCondition = simulateExpression(join.condition)
             when (join) {
                 is InnerJoin<E> -> {
@@ -100,8 +93,8 @@ open class SimulatorSession<E : Engine<E>> : Session<E> {
         return rows.count()
     }
 
-    protected open fun fetchData(data: Data<E, *>) : List<Row> {
-        return when (data) {
+    protected open fun fetchData(source: QuerySource<E, *>) : List<Row> {
+        var rows = source.data.let { data -> when (data) {
             is Table<E, *> -> (tables[data.name] ?: throw IllegalStateException("Table '${data.name}' does not exist.")).second
             is Select<E, *> -> {
                 @Suppress("UNCHECKED_CAST")
@@ -111,7 +104,15 @@ open class SimulatorSession<E : Engine<E>> : Session<E> {
                 data.items.map { item -> Row.from(item) }
             }
             else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
+        }}
+
+        if (source.alias != null) {
+            rows = rows.map { row ->
+                Row(row.values.mapKeys { (field, _) -> "${source.alias}.$field" })
+            }
         }
+
+        return rows
     }
 
     protected open fun <T> simulateExpression(expression: Expression<E, T>): (Row) -> T {
