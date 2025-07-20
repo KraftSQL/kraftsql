@@ -3,7 +3,7 @@ package rocks.frieler.kraftsql.testing.engine
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.engine.Engine
-import rocks.frieler.kraftsql.engine.Session
+import rocks.frieler.kraftsql.engine.Connection
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Count
@@ -22,7 +22,7 @@ import java.sql.SQLSyntaxErrorException
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 
-open class SimulatorSession<E : Engine<E>> : Session<E> {
+open class SimulatorConnection<E : Engine<E>> : Connection<E> {
     private val tables: MutableMap<String, Pair<Table<E, *>, MutableList<Row>>> = mutableMapOf()
 
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> {

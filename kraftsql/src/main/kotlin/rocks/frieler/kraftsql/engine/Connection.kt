@@ -5,7 +5,7 @@ import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.queries.Select
 import kotlin.reflect.KClass
 
-interface Session<E: Engine<E>> {
+interface Connection<E: Engine<E>> {
     fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T>
 
     fun execute(createTable: CreateTable<E>)
@@ -13,14 +13,14 @@ interface Session<E: Engine<E>> {
     fun execute(insertInto: InsertInto<E, *>) : Int
 }
 
-abstract class DefaultSession<E : Engine<E>> {
-    private var instance : Session<E>? = null
+abstract class DefaultConnection<E : Engine<E>> {
+    private var instance : Connection<E>? = null
 
-    fun get(): Session<E> = (instance ?: instantiate()).also { instance = it }
+    fun get(): Connection<E> = (instance ?: instantiate()).also { instance = it }
 
-    protected abstract fun instantiate(): Session<E>
+    protected abstract fun instantiate(): Connection<E>
 
-    fun set(instance: Session<E>) {
+    fun set(instance: Connection<E>) {
         this.instance = instance
     }
 

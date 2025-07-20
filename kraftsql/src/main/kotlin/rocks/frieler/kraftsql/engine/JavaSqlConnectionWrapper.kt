@@ -4,13 +4,12 @@ import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.objects.Row
 import rocks.frieler.kraftsql.queries.Select
-import java.sql.Connection
 import kotlin.reflect.KClass
 import kotlin.reflect.full.starProjectedType
 
-open class SqlConnectionSession<E : Engine<E>>(
-    private val connection: Connection,
-) : Session<E>, AutoCloseable by connection {
+open class JavaSqlConnectionWrapper<E : Engine<E>>(
+    private val connection: java.sql.Connection,
+) : Connection<E>, AutoCloseable by connection {
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> {
         val resultSet = connection.createStatement().executeQuery(select.sql())
 

@@ -7,11 +7,11 @@ import rocks.frieler.kraftsql.examples.data.Sale
 import rocks.frieler.kraftsql.examples.data.Shop
 import rocks.frieler.kraftsql.h2.objects.ConstantData
 import rocks.frieler.kraftsql.h2.queries.execute
-import rocks.frieler.kraftsql.testing.h2.WithH2SimulatorSession
+import rocks.frieler.kraftsql.testing.h2.WithH2Simulator
 import rocks.frieler.kraftsql.testing.matchers.collections.shouldContainExactlyOne
 import java.time.Instant
 
-@WithH2SimulatorSession
+@WithH2Simulator
 class SoldFoodPerCountryTest {
     private val chocolate = Product(1, "Chocolate", "Food")
     private val pants = Product(2, "Pants", "Clothes")

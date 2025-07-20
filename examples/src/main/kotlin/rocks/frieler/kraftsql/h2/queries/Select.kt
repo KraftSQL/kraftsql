@@ -2,7 +2,7 @@ package rocks.frieler.kraftsql.h2.queries
 
 import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.expressions.Expression
-import rocks.frieler.kraftsql.h2.engine.H2InMemorySession
+import rocks.frieler.kraftsql.h2.engine.H2InMemoryConnection
 import rocks.frieler.kraftsql.queries.Join
 import rocks.frieler.kraftsql.queries.Projection
 import rocks.frieler.kraftsql.queries.QuerySource
@@ -20,4 +20,4 @@ class Select<T : Any> : Select<H2Engine, T> {
 }
 
 inline fun <reified T : Any> Select<H2Engine, T>.execute() =
-    execute(H2InMemorySession.Default.get())
+    execute(H2InMemoryConnection.Default.get())

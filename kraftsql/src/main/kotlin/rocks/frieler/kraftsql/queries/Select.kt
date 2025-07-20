@@ -1,7 +1,7 @@
 package rocks.frieler.kraftsql.queries
 
 import rocks.frieler.kraftsql.commands.Command
-import rocks.frieler.kraftsql.engine.Session
+import rocks.frieler.kraftsql.engine.Connection
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.Data
@@ -23,5 +23,5 @@ open class Select<E : Engine<E>, T : Any>(
     """.trimIndent()
 }
 
-inline fun <E : Engine<E>, reified T : Any> Select<E, T>.execute(session: Session<E>) =
-    session.execute(this, T::class)
+inline fun <E : Engine<E>, reified T : Any> Select<E, T>.execute(connection: Connection<E>) =
+    connection.execute(this, T::class)
