@@ -8,7 +8,9 @@ class QuerySource<E: Engine<E>, T : Any>(
     val data: Data<E, T>,
     val alias: String? = null,
 ) : HasColumns<E, T> {
-    fun sql() = if (alias != null) "(${data.sql()}) AS \"${alias}\"" else data.sql()
+    fun sql() = data.sql()
+        .let { sql -> if (sql.contains(" ")) "($sql)" else sql }
+        .let { sql -> if (alias != null) "$sql AS \"$alias\"" else sql }
 
     override operator fun <V> get(field: String) = super.get<V>(field)
         .let { if (alias != null) it.withQualifier(alias) else it }
