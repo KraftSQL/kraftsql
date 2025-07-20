@@ -12,7 +12,7 @@ class Column<E: Engine<E>, T>(
     val qualifiedName: String
         get() = "${qualifiers.joinToString { "$it." }}$name"
 
-    override fun sql() = "${qualifiers.joinToString { "\"$it\"." }}\"$name\""
+    override fun sql() = "${qualifiers.joinToString { "`$it`." }}`$name`"
 
     override fun defaultColumnName() = qualifiedName
 
