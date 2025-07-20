@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.expressions
 
 import rocks.frieler.kraftsql.engine.Engine
+import java.time.Instant
 
 class Constant<E : Engine<E>, T : Any?>(
     val value: T,
@@ -9,6 +10,7 @@ class Constant<E : Engine<E>, T : Any?>(
         return when (value) {
             null -> "NULL"
             is Number -> value.toString()
+            is Instant -> "TIMESTAMP '$value'"
             else -> "'$value'"
         }
     }
