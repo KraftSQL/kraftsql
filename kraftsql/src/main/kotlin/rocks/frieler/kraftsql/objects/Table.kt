@@ -12,7 +12,7 @@ open class Table<E: Engine<E>, T : Any>(
     constructor(engine: E, name: String, type: KClass<T>) : this(
         name,
         type.memberProperties.map { field ->
-            Column(field.name, engine.getTypeFor(field.returnType))
+            Column<E>(field.name, engine.getTypeFor(field.returnType))
         }
     )
 
