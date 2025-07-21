@@ -6,7 +6,7 @@ import rocks.frieler.kraftsql.objects.Table
 import kotlin.reflect.KClass
 
 class Table<T : Any> : Table<H2Engine, T> {
-    constructor(name: String, columns: List<Column<H2Engine>>) : super(name, columns)
+    constructor(database: String? = null, schema: String? = null, name: String, columns: List<Column<H2Engine>>) : super(database, schema, name, columns)
 
-    constructor(name: String, type: KClass<T>) : super(H2Engine, name, type)
+    constructor(database: String? = null, schema: String? = null, name: String, type: KClass<T>) : super(H2Engine, database, schema, name, type)
 }

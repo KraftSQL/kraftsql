@@ -77,12 +77,12 @@ open class SimulatorConnection<E : Engine<E>> : Connection<E> {
     }
 
     override fun execute(createTable: CreateTable<E>) {
-        check(createTable.table.name !in tables) { "Table '${createTable.table.name}' already exists." }
-        tables[createTable.table.name] = createTable.table to mutableListOf()
+        check(createTable.table.qualifiedName !in tables) { "Table '${createTable.table.qualifiedName}' already exists." }
+        tables[createTable.table.qualifiedName] = createTable.table to mutableListOf()
     }
 
     override fun execute(insertInto: InsertInto<E, *>): Int {
-        val table = tables[insertInto.table.name] ?: throw IllegalStateException("Table '${insertInto.table.name}' does not exist.")
+        val table = tables[insertInto.table.qualifiedName] ?: throw IllegalStateException("Table '${insertInto.table.qualifiedName}' does not exist.")
         val rows = insertInto.values.let { values ->
             when (values) {
                 is ConstantData -> values.items.map { value -> Row.from(value) }
@@ -95,7 +95,7 @@ open class SimulatorConnection<E : Engine<E>> : Connection<E> {
 
     protected open fun fetchData(source: QuerySource<E, *>) : List<Row> {
         var rows = source.data.let { data -> when (data) {
-            is Table<E, *> -> (tables[data.name] ?: throw IllegalStateException("Table '${data.name}' does not exist.")).second
+            is Table<E, *> -> (tables[data.qualifiedName] ?: throw IllegalStateException("Table '${data.qualifiedName}' does not exist.")).second
             is Select<E, *> -> {
                 @Suppress("UNCHECKED_CAST")
                 execute(data as Select<E, Row>, Row::class)

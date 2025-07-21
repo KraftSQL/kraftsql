@@ -8,4 +8,4 @@ data class Product(
     val category: String,
 )
 
-val products = Table("products", Product::class)
+val products = Table(name = "products", type = Product::class)

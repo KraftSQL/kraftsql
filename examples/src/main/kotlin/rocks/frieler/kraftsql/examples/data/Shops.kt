@@ -7,4 +7,4 @@ data class Shop(
     val country: String,
 )
 
-val shops = Table("shops", Shop::class)
+val shops = Table(name = "shops", type = Shop::class)

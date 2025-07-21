@@ -12,4 +12,4 @@ data class Sale(
     constructor(product: Product, shop: Shop, time: Instant, amount: Int) : this(product.id, shop.id, time, amount)
 }
 
-val sales = Table("sales", Sale::class)
+val sales = Table(name = "sales", type = Sale::class)
