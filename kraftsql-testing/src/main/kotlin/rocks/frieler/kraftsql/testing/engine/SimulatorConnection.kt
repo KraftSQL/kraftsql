@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.testing.engine
 
 import rocks.frieler.kraftsql.ddl.CreateTable
+import rocks.frieler.kraftsql.ddl.DropTable
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.engine.Connection
@@ -79,6 +80,13 @@ open class SimulatorConnection<E : Engine<E>> : Connection<E> {
     override fun execute(createTable: CreateTable<E>) {
         check(createTable.table.qualifiedName !in tables) { "Table '${createTable.table.qualifiedName}' already exists." }
         tables[createTable.table.qualifiedName] = createTable.table to mutableListOf()
+    }
+
+    override fun execute(dropTable: DropTable<E>) {
+        if (!dropTable.ifExists) {
+            check(dropTable.table.qualifiedName in tables) { "Table '${dropTable.table.qualifiedName}' does not exist." }
+        }
+        tables.remove(dropTable.table.qualifiedName)
     }
 
     override fun execute(insertInto: InsertInto<E, *>): Int {

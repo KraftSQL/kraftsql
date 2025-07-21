@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.engine
 
 import rocks.frieler.kraftsql.ddl.CreateTable
+import rocks.frieler.kraftsql.ddl.DropTable
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.objects.Row
 import rocks.frieler.kraftsql.dql.Select
@@ -41,6 +42,10 @@ open class JavaSqlConnectionWrapper<E : Engine<E>>(
 
     override fun execute(createTable: CreateTable<E>) {
         connection.createStatement().execute(createTable.sql())
+    }
+
+    override fun execute(dropTable: DropTable<E>) {
+        connection.createStatement().execute(dropTable.sql())
     }
 
     override fun execute(insertInto: InsertInto<E, *>): Int {

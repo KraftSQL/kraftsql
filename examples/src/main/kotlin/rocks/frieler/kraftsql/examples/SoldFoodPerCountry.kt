@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.examples
 
+import rocks.frieler.kraftsql.ddl.drop
 import rocks.frieler.kraftsql.examples.data.Product
 import rocks.frieler.kraftsql.examples.data.Sale
 import rocks.frieler.kraftsql.examples.data.Shop
@@ -17,26 +18,33 @@ import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.Row
 import rocks.frieler.kraftsql.dsl.`as`
+import rocks.frieler.kraftsql.h2.ddl.drop
 import java.time.Instant
 
 fun main() {
-    products.create()
-    val chocolate = Product(1, "Chocolate", "Food").also { it.insertInto(products) }
-    val pants = Product(2, "Pants", "Clothes").also { it.insertInto(products) }
+    try {
+        products.create()
+        val chocolate = Product(1, "Chocolate", "Food").also { it.insertInto(products) }
+        val pants = Product(2, "Pants", "Clothes").also { it.insertInto(products) }
 
-    shops.create()
-    val shop1 = Shop(1, "DE").also { it.insertInto(shops) }
-    val shop2 = Shop(2, "NL").also { it.insertInto(shops) }
+        shops.create()
+        val shop1 = Shop(1, "DE").also { it.insertInto(shops) }
+        val shop2 = Shop(2, "NL").also { it.insertInto(shops) }
 
-    sales.create()
-    Sale(chocolate, shop1, Instant.parse("2025-01-03T08:22:14+01:00"), 2).insertInto(sales)
-    Sale(pants, shop1, Instant.parse("2025-01-03T08:22:14+01:00"), 1).insertInto(sales)
-    Sale(chocolate, shop2, Instant.parse("2025-01-03T09:01:33+01:00"), 1).insertInto(sales)
+        sales.create()
+        Sale(chocolate, shop1, Instant.parse("2025-01-03T08:22:14+01:00"), 2).insertInto(sales)
+        Sale(pants, shop1, Instant.parse("2025-01-03T08:22:14+01:00"), 1).insertInto(sales)
+        Sale(chocolate, shop2, Instant.parse("2025-01-03T09:01:33+01:00"), 1).insertInto(sales)
 
-    calculateSoldFoodPerCountry(products, shops, sales)
-        .execute().forEach {
-            println("${it[Shop::country.name]}: ${it["_totalAmount"]}")
-        }
+        calculateSoldFoodPerCountry(products, shops, sales)
+            .execute().forEach {
+                println("${it[Shop::country.name]}: ${it["_totalAmount"]}")
+            }
+    } finally {
+        sales.drop(ifExists = true)
+        shops.drop(ifExists = true)
+        products.drop(ifExists = true)
+    }
 }
 
 fun calculateSoldFoodPerCountry(
