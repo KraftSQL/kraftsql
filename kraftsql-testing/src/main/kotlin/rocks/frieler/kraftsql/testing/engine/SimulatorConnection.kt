@@ -14,10 +14,10 @@ import rocks.frieler.kraftsql.expressions.SumAsLong
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.Row
 import rocks.frieler.kraftsql.objects.Table
-import rocks.frieler.kraftsql.queries.InnerJoin
-import rocks.frieler.kraftsql.queries.Projection
-import rocks.frieler.kraftsql.queries.QuerySource
-import rocks.frieler.kraftsql.queries.Select
+import rocks.frieler.kraftsql.dql.InnerJoin
+import rocks.frieler.kraftsql.dql.Projection
+import rocks.frieler.kraftsql.dql.QuerySource
+import rocks.frieler.kraftsql.dql.Select
 import java.sql.SQLSyntaxErrorException
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor

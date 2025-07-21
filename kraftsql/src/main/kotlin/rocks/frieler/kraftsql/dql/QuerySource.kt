@@ -1,4 +1,4 @@
-package rocks.frieler.kraftsql.queries
+package rocks.frieler.kraftsql.dql
 
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.objects.Data

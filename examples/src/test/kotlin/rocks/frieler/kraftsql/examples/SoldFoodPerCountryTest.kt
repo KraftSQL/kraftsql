@@ -6,7 +6,7 @@ import rocks.frieler.kraftsql.examples.data.Product
 import rocks.frieler.kraftsql.examples.data.Sale
 import rocks.frieler.kraftsql.examples.data.Shop
 import rocks.frieler.kraftsql.h2.objects.ConstantData
-import rocks.frieler.kraftsql.h2.queries.execute
+import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.testing.h2.WithH2Simulator
 import rocks.frieler.kraftsql.testing.matchers.collections.shouldContainExactlyOne
 import java.time.Instant

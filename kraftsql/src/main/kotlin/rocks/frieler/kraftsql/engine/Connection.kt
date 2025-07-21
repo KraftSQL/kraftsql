@@ -2,7 +2,7 @@ package rocks.frieler.kraftsql.engine
 
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.dml.InsertInto
-import rocks.frieler.kraftsql.queries.Select
+import rocks.frieler.kraftsql.dql.Select
 import kotlin.reflect.KClass
 
 interface Connection<E: Engine<E>> {

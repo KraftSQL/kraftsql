@@ -1,10 +1,10 @@
 package rocks.frieler.kraftsql.examples
 
 import rocks.frieler.kraftsql.h2.objects.ConstantData
-import rocks.frieler.kraftsql.h2.queries.Select
-import rocks.frieler.kraftsql.h2.queries.execute
+import rocks.frieler.kraftsql.h2.dql.Select
+import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.objects.Row
-import rocks.frieler.kraftsql.queries.QuerySource
+import rocks.frieler.kraftsql.dql.QuerySource
 
 fun main() {
     Select<Row>(

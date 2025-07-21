@@ -4,11 +4,11 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.HasColumns
-import rocks.frieler.kraftsql.queries.InnerJoin
-import rocks.frieler.kraftsql.queries.Join
-import rocks.frieler.kraftsql.queries.Projection
-import rocks.frieler.kraftsql.queries.QuerySource
-import rocks.frieler.kraftsql.queries.Select
+import rocks.frieler.kraftsql.dql.InnerJoin
+import rocks.frieler.kraftsql.dql.Join
+import rocks.frieler.kraftsql.dql.Projection
+import rocks.frieler.kraftsql.dql.QuerySource
+import rocks.frieler.kraftsql.dql.Select
 
 fun <E : Engine<E>, T : Any> Select(configurator: @SqlDsl SelectBuilder<E, T>.() -> Unit) : Select<E, T> {
     return SelectBuilder<E, T>().apply { configurator() }.build()

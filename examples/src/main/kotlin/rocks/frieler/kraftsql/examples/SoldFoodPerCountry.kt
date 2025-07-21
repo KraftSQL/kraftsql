@@ -13,7 +13,7 @@ import rocks.frieler.kraftsql.h2.ddl.create
 import rocks.frieler.kraftsql.h2.dml.insertInto
 import rocks.frieler.kraftsql.h2.dsl.Select
 import rocks.frieler.kraftsql.h2.engine.H2Engine
-import rocks.frieler.kraftsql.h2.queries.execute
+import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.Row
 import rocks.frieler.kraftsql.dsl.`as`
