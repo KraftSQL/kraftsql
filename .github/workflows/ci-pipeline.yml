@@ -25,3 +25,23 @@ jobs:
             examples-test-report examples/build/reports/tests/test/**/*
       - id: provide_version
         run: echo "version=$(cat build/version.txt)" >> "$GITHUB_OUTPUT"
+
+  deploy_snapshot:
+    needs: ['build']
+    if: github.ref_name == 'main' && endsWith(needs.build.outputs.version, '-SNAPSHOT')
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+      - name: Deploy to Github Packages
+        uses: christopherfrieler/gradle-wrapper-action@v0.6.0
+        env:
+          ORG_GRADLE_PROJECT_github_packages_publishing_user: ${{ github.actor }}
+          ORG_GRADLE_PROJECT_github_packages_publishing_password: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          arguments: publishMavenPublicationToGitHubPackagesRepository
