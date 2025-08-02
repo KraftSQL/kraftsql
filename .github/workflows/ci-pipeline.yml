@@ -5,6 +5,8 @@ on: [ push, pull_request ]
 jobs:
   build:
     runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.provide_version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -16,7 +18,10 @@ jobs:
         with:
           arguments: |
             check assemble generatePomFileForMavenPublication kotlinSourcesJar
+            versionFile
           artifacts: |
             core-build kraftsql/build/publications/maven/pom-default.xml kraftsql/build/libs/kraftsql-*.jar
             testing-build kraftsql-testing/build/publications/maven/pom-default.xml kraftsql/build/libs/kraftsql-*.jar
             examples-test-report examples/build/reports/tests/test/**/*
+      - id: provide_version
+        run: echo "version=$(cat build/version.txt)" >> "$GITHUB_OUTPUT"
