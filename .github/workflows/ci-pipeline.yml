@@ -21,7 +21,7 @@ jobs:
             versionFile
           artifacts: |
             core-build kraftsql/build/publications/maven/pom-default.xml kraftsql/build/libs/kraftsql-*.jar
-            testing-build kraftsql-testing/build/publications/maven/pom-default.xml kraftsql/build/libs/kraftsql-*.jar
+            testing-build kraftsql-testing/build/publications/maven/pom-default.xml kraftsql-testing/build/libs/kraftsql-testing-*.jar
             examples-test-report examples/build/reports/tests/test/**/*
       - id: provide_version
         run: echo "version=$(cat build/version.txt)" >> "$GITHUB_OUTPUT"
