@@ -1,6 +1,5 @@
 package rocks.frieler.kraftsql.examples
 
-import rocks.frieler.kraftsql.ddl.drop
 import rocks.frieler.kraftsql.examples.data.Product
 import rocks.frieler.kraftsql.examples.data.Sale
 import rocks.frieler.kraftsql.examples.data.Shop
