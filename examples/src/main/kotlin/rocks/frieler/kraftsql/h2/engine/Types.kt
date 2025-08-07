@@ -5,7 +5,7 @@ import rocks.frieler.kraftsql.engine.Type
 class CHARACTER(private val length: Int = 1) : Type<H2Engine> { override fun sql(): String = "CHARACTER($length)" }
 
 @Suppress("ClassName")
-class CHARACTER_VARYING(private val length: Int? = null) : Type<H2Engine> { override fun sql() = "CHARACTER VARYING${ if (length != null) "(length: $length)" else ""}" }
+class CHARACTER_VARYING(private val length: Int? = null) : Type<H2Engine> { override fun sql() = "CHARACTER VARYING${ if (length != null) "($length)" else ""}" }
 
 val CHARACTER_LARGE_OBJECT = object : Type<H2Engine> { override fun sql() = "CHARACTER LARGE OBJECT" }
 
