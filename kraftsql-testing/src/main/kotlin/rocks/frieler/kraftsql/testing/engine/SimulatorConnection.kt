@@ -21,9 +21,10 @@ import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
 import java.sql.SQLSyntaxErrorException
 import kotlin.reflect.KClass
-import kotlin.reflect.full.primaryConstructor
 
-open class SimulatorConnection<E : Engine<E>> : Connection<E> {
+open class SimulatorConnection<E : Engine<E>>(
+    private val orm: SimulatorORMapping<E> = SimulatorORMapping()
+) : Connection<E> {
     private val tables: MutableMap<String, Pair<Table<E, *>, MutableList<Row>>> = mutableMapOf()
 
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> {
@@ -66,15 +67,7 @@ open class SimulatorConnection<E : Engine<E>> : Connection<E> {
             }
         }
 
-        if (type == Row::class) {
-            @Suppress("UNCHECKED_CAST")
-            return rows as List<T>
-        } else {
-            return rows.map { row ->
-                val constructor = type.primaryConstructor ?: throw IllegalStateException("No primary constructor for ${type.simpleName}.")
-                constructor.callBy(constructor.parameters.associateWith { param -> row[param.name!!]})
-            }
-        }
+        return orm.deserializeQueryResult(rows, type)
     }
 
     override fun execute(createTable: CreateTable<E>) {
@@ -144,7 +137,7 @@ open class SimulatorConnection<E : Engine<E>> : Connection<E> {
         return if (groupExpressions.contains(expression)) {
             { rows -> simulateExpression(expression).invoke(rows.first()) }
         } else when (expression) {
-            is Constant<E, T> -> { rows ->
+            is Constant<E, T> -> { _ ->
                 expression.value
             }
             is Column<E, T> -> throw SQLSyntaxErrorException("'${expression.sql()}' is neither in the GROUP BY list nor wrapped in an aggregation.")
