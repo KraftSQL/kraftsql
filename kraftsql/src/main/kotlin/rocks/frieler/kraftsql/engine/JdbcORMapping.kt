@@ -31,8 +31,20 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                         @Suppress("UNCHECKED_CAST")
                         Row(
                             (1..queryResult.metaData.columnCount)
-                                .map { queryResult.metaData.getColumnName(it) }
-                                .associateWith { queryResult.getObject(it) }
+                                .map { queryResult.metaData.getColumnName(it) to queryResult.metaData.getColumnTypeName(it) }
+                                .associate { (name, sqlType) -> name to
+                                    when (val value = queryResult.getObject(name)) {
+                                        is java.sql.Array -> {
+                                            val elements = (value.array as Array<*>)
+                                            val elementType = getKTypeFor(types.parseType(sqlType)).arguments.single().type!!.jvmErasure.java
+                                            @Suppress("UNCHECKED_CAST")
+                                            (java.lang.reflect.Array.newInstance(elementType, elements.size) as Array<Any?>).also { array ->
+                                                elements.copyInto(array)
+                                            }
+                                        }
+                                        else -> value
+                                    }
+                                }
                         ) as T
                     }
                     else -> {
@@ -42,6 +54,14 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                 Integer::class.starProjectedType -> queryResult.getInt(param.name)
                                 Long::class.starProjectedType -> queryResult.getLong(param.name)
                                 String::class.starProjectedType -> queryResult.getString(param.name)
+                                Array::class.starProjectedType -> {
+                                    val elementType = param.type.arguments.single().type!!.jvmErasure
+                                    val elements = deserializeQueryResult(queryResult.getArray(param.name).resultSet, elementType)
+                                    @Suppress("UNCHECKED_CAST")
+                                    val array = java.lang.reflect.Array.newInstance(elementType.java, elements.size) as Array<Any?>
+                                    elements.forEachIndexed { index, element -> array[index] = element }
+                                    return@associateWith array
+                                }
                                 else -> throw NotImplementedError("Unsupported field type ${param.type}")
                             }
                         })

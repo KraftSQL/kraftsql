@@ -4,6 +4,9 @@ import rocks.frieler.kraftsql.engine.JdbcORMapping
 import rocks.frieler.kraftsql.engine.Type
 import java.time.Instant
 import kotlin.reflect.KType
+import kotlin.reflect.KTypeProjection
+import kotlin.reflect.KVariance
+import kotlin.reflect.full.createType
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.typeOf
@@ -20,6 +23,7 @@ object H2ORMapping : JdbcORMapping<H2Engine>(Types) {
             Float::class.starProjectedType -> Types.REAL
             Double::class.starProjectedType -> Types.DOUBLE_PRECISION
             Instant::class.starProjectedType -> Types.TIMESTAMP_WITH_TIME_ZONE
+            Array::class.starProjectedType -> Types.ARRAY(getTypeFor(type.arguments.single().type ?: Any::class.starProjectedType))
             else -> throw NotImplementedError("Unsupported Kotlin type $type")
         }
 
@@ -36,6 +40,7 @@ object H2ORMapping : JdbcORMapping<H2Engine>(Types) {
             Types.REAL -> typeOf<Float>()
             Types.DOUBLE_PRECISION -> typeOf<Double>()
             Types.TIMESTAMP_WITH_TIME_ZONE -> typeOf<Instant>()
+            is Types.ARRAY -> Array::class.createType(listOf(KTypeProjection(KVariance.INVARIANT, getKTypeFor(sqlType.contentType))))
             else -> throw NotImplementedError("Unsupported SQL type $sqlType")
         }
 }
