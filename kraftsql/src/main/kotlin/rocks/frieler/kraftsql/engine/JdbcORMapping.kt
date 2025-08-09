@@ -6,7 +6,9 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.jvmErasure
 
-abstract class JdbcORMapping<E : JdbcEngine<E>> : ORMapping<E, ResultSet> {
+abstract class JdbcORMapping<E : JdbcEngine<E>>(
+    protected val types: Types<E>,
+): ORMapping<E, ResultSet> {
 
     override fun <T : Any> deserializeQueryResult(queryResult: ResultSet, type: KClass<T>): List<T> {
         val result = mutableListOf<T>()

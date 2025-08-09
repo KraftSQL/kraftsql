@@ -13,6 +13,10 @@ open class SimulatorORMapping<E : Engine<E>> : ORMapping<E, List<Row>> {
         throw NotImplementedError("Simulated Engines don't use a SQL Type system.")
     }
 
+    override fun getKTypeFor(sqlType: Type<E>): KType {
+        throw NotImplementedError("Simulated Engines don't use a SQL Type system.")
+    }
+
     override fun <T : Any> deserializeQueryResult(queryResult: List<Row>, type: KClass<T>): List<T> {
         if (type == Row::class) {
             @Suppress("UNCHECKED_CAST")

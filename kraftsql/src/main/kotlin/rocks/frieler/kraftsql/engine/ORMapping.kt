@@ -10,6 +10,8 @@ import kotlin.reflect.full.memberProperties
 interface ORMapping<E : Engine<E>, R : Any> {
     fun getTypeFor(type: KType): Type<E>
 
+    fun getKTypeFor(sqlType: Type<E>): KType
+
     fun getSchemaFor(type:  KClass<*>): List<Column<E>> =
         type.memberProperties.map { field ->
             Column(field.name, getTypeFor(field.returnType))
