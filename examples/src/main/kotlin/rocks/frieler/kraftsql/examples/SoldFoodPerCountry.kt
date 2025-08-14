@@ -15,7 +15,7 @@ import rocks.frieler.kraftsql.h2.dsl.Select
 import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.objects.Data
-import rocks.frieler.kraftsql.objects.Row
+import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.dsl.`as`
 import rocks.frieler.kraftsql.h2.ddl.drop
 import java.time.Instant
@@ -50,7 +50,7 @@ fun calculateSoldFoodPerCountry(
     products: Data<H2Engine, Product>,
     shops: Data<H2Engine, Shop>,
     sales: Data<H2Engine, Sale>
-) = Select<Row> {
+) = Select<DataRow> {
     from(sales)
     val p = innerJoin(products `as` "p") { this[Product::id] `=` sales[Sale::productId] }
     val s = innerJoin(shops `as` "s") { this[Shop::id] `=` sales[Sale::storeId] }

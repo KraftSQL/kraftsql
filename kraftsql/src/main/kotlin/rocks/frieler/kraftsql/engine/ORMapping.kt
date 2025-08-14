@@ -2,7 +2,7 @@ package rocks.frieler.kraftsql.engine
 
 import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.objects.Column
-import rocks.frieler.kraftsql.objects.Row
+import rocks.frieler.kraftsql.objects.DataRow
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
@@ -18,7 +18,7 @@ interface ORMapping<E : Engine<E>, R : Any> {
         }
 
     fun <T : Any> serialize(value: T): Map<String, Constant<E, *>> =
-        if (value is Row) {
+        if (value is DataRow) {
             value.values
         } else {
             @Suppress("UNCHECKED_CAST")

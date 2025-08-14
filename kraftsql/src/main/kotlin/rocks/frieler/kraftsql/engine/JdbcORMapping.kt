@@ -1,6 +1,6 @@
 package rocks.frieler.kraftsql.engine
 
-import rocks.frieler.kraftsql.objects.Row
+import rocks.frieler.kraftsql.objects.DataRow
 import java.sql.ResultSet
 import kotlin.reflect.KClass
 import kotlin.reflect.full.starProjectedType
@@ -27,9 +27,9 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                         @Suppress("UNCHECKED_CAST")
                         queryResult.getString(2) as T
                     }
-                    Row::class -> {
+                    DataRow::class -> {
                         @Suppress("UNCHECKED_CAST")
-                        Row(
+                        DataRow(
                             (1..queryResult.metaData.columnCount)
                                 .map { queryResult.metaData.getColumnName(it) to queryResult.metaData.getColumnTypeName(it) }
                                 .associate { (name, sqlType) -> name to

@@ -3,12 +3,12 @@ package rocks.frieler.kraftsql.testing.engine
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.engine.ORMapping
 import rocks.frieler.kraftsql.engine.Type
-import rocks.frieler.kraftsql.objects.Row
+import rocks.frieler.kraftsql.objects.DataRow
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.primaryConstructor
 
-open class SimulatorORMapping<E : Engine<E>> : ORMapping<E, List<Row>> {
+open class SimulatorORMapping<E : Engine<E>> : ORMapping<E, List<DataRow>> {
     override fun getTypeFor(type: KType): Type<E> {
         throw NotImplementedError("Simulated Engines don't use a SQL Type system.")
     }
@@ -17,8 +17,8 @@ open class SimulatorORMapping<E : Engine<E>> : ORMapping<E, List<Row>> {
         throw NotImplementedError("Simulated Engines don't use a SQL Type system.")
     }
 
-    override fun <T : Any> deserializeQueryResult(queryResult: List<Row>, type: KClass<T>): List<T> {
-        if (type == Row::class) {
+    override fun <T : Any> deserializeQueryResult(queryResult: List<DataRow>, type: KClass<T>): List<T> {
+        if (type == DataRow::class) {
             @Suppress("UNCHECKED_CAST")
             return queryResult as List<T>
         } else {

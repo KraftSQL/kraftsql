@@ -10,7 +10,7 @@ import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.dsl.Select
 import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.objects.Data
-import rocks.frieler.kraftsql.objects.Row
+import rocks.frieler.kraftsql.objects.DataRow
 
 fun main() {
     try {
@@ -30,8 +30,8 @@ fun main() {
     }
 }
 
-fun countTags(productsOfInterest: Data<H2Engine, Product>): MutableMap<String, Long> {
-    val tagCounts = Select<Row> {
+fun countTags(productsOfInterest: Data<H2Engine, Product>): Map<String, Long> {
+    val tagCounts = Select<DataRow> {
         from(productsOfInterest)
         columns(Projection(productsOfInterest[Product::tags]))
     }.execute()
