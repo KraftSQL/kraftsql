@@ -13,7 +13,7 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.SumAsDouble
 import rocks.frieler.kraftsql.expressions.SumAsLong
 import rocks.frieler.kraftsql.objects.ConstantData
-import rocks.frieler.kraftsql.objects.Row
+import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.objects.Table
 import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.Projection
@@ -25,7 +25,7 @@ import kotlin.reflect.KClass
 open class SimulatorConnection<E : Engine<E>>(
     private val orm: SimulatorORMapping<E> = SimulatorORMapping()
 ) : Connection<E> {
-    private val tables: MutableMap<String, Pair<Table<E, *>, MutableList<Row>>> = mutableMapOf()
+    private val tables: MutableMap<String, Pair<Table<E, *>, MutableList<DataRow>>> = mutableMapOf()
 
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> {
         var rows = fetchData(select.source)
@@ -57,13 +57,13 @@ open class SimulatorConnection<E : Engine<E>>(
             val projections = (select.columns ?: select.grouping.map { Projection<E, _>(it) })
                 .associate { (it.alias ?: it.value.defaultColumnName()) to simulateAggregation(it.value, select.grouping) }
             rows = rowGroups.map { rowGroup ->
-                Row(projections.mapValues { (_, expression) -> expression.invoke(rowGroup) })
+                DataRow(projections.mapValues { (_, expression) -> expression.invoke(rowGroup) })
             }
         } else {
             val projections = (select.columns ?: throw NotImplementedError("Simulation of 'SELECT *' is not implemented."))
                 .associate { (it.alias ?: it.value.defaultColumnName()) to simulateExpression(it.value) }
             rows = rows.map { row ->
-                Row(projections.mapValues { (_, expression) -> expression.invoke(row) })
+                DataRow(projections.mapValues { (_, expression) -> expression.invoke(row) })
             }
         }
 
@@ -86,7 +86,7 @@ open class SimulatorConnection<E : Engine<E>>(
         val table = tables[insertInto.table.qualifiedName] ?: throw IllegalStateException("Table '${insertInto.table.qualifiedName}' does not exist.")
         val rows = insertInto.values.let { values ->
             when (values) {
-                is ConstantData -> values.items.map { value -> Row.from(value) }
+                is ConstantData -> values.items.map { value -> DataRow.from(value) }
                 else -> throw NotImplementedError("Inserting ${values::class.qualifiedName} is not implemented.")
             }
         }
@@ -94,29 +94,29 @@ open class SimulatorConnection<E : Engine<E>>(
         return rows.count()
     }
 
-    protected open fun fetchData(source: QuerySource<E, *>) : List<Row> {
+    protected open fun fetchData(source: QuerySource<E, *>) : List<DataRow> {
         var rows = source.data.let { data -> when (data) {
             is Table<E, *> -> (tables[data.qualifiedName] ?: throw IllegalStateException("Table '${data.qualifiedName}' does not exist.")).second
             is Select<E, *> -> {
                 @Suppress("UNCHECKED_CAST")
-                execute(data as Select<E, Row>, Row::class)
+                execute(data as Select<E, DataRow>, DataRow::class)
             }
             is ConstantData<E, *> -> {
-                data.items.map { item -> Row.from(item) }
+                data.items.map { item -> DataRow.from(item) }
             }
             else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
         }}
 
         if (source.alias != null) {
             rows = rows.map { row ->
-                Row(row.values.mapKeys { (field, _) -> "${source.alias}.$field" })
+                DataRow(row.values.mapKeys { (field, _) -> "${source.alias}.$field" })
             }
         }
 
         return rows
     }
 
-    protected open fun <T> simulateExpression(expression: Expression<E, T>): (Row) -> T? {
+    protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? {
         return when (expression) {
             is Constant<E, T> -> { _ ->
                 expression.value
@@ -125,7 +125,7 @@ open class SimulatorConnection<E : Engine<E>>(
                 @Suppress("UNCHECKED_CAST")
                 row[expression.qualifiedName] as T
             }
-            is Equals<E> -> { row : Row ->
+            is Equals<E> -> { row : DataRow ->
                 @Suppress("UNCHECKED_CAST") // because T must be Boolean in case of Equals
                 (simulateExpression(expression.left).invoke(row) == simulateExpression(expression.right).invoke(row)) as T
             }
@@ -133,7 +133,7 @@ open class SimulatorConnection<E : Engine<E>>(
         }
     }
 
-    protected open fun <T> simulateAggregation(expression: Expression<E, T>, groupExpressions: List<Expression<E, *>>): (List<Row>) -> T? {
+    protected open fun <T> simulateAggregation(expression: Expression<E, T>, groupExpressions: List<Expression<E, *>>): (List<DataRow>) -> T? {
         return if (groupExpressions.contains(expression)) {
             { rows -> simulateExpression(expression).invoke(rows.first()) }
         } else when (expression) {
@@ -152,11 +152,11 @@ open class SimulatorConnection<E : Engine<E>>(
                 @Suppress("UNCHECKED_CAST")
                 rows.count() as T
             }
-            is SumAsLong<E> -> { rows : List<Row> ->
+            is SumAsLong<E> -> { rows : List<DataRow> ->
                 @Suppress("UNCHECKED_CAST")
                 rows.map { row -> simulateExpression(expression.expression).invoke(row) as Number }.reduceOrNull { a, b -> a.toLong() + b.toLong() } as T
             }
-            is SumAsDouble<E> -> { rows : List<Row> ->
+            is SumAsDouble<E> -> { rows : List<DataRow> ->
                 @Suppress("UNCHECKED_CAST")
                 rows.map { row -> simulateExpression(expression.expression).invoke(row) as Number }.reduceOrNull { a, b -> a.toDouble() + b.toDouble() } as T
             }
