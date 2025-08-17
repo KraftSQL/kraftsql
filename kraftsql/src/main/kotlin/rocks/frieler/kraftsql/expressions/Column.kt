@@ -2,7 +2,7 @@ package rocks.frieler.kraftsql.expressions
 
 import rocks.frieler.kraftsql.engine.Engine
 
-class Column<E: Engine<E>, T>(
+class Column<E: Engine<E>, T : Any>(
     val qualifiers: List<String>,
     val name: String,
 ) : Expression<E, T> {

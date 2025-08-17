@@ -3,15 +3,15 @@ package rocks.frieler.kraftsql.expressions
 import rocks.frieler.kraftsql.engine.Engine
 import java.time.Instant
 
-open class Constant<E : Engine<E>, T : Any?>(
-    val value: T,
+open class Constant<E : Engine<E>, T : Any>(
+    val value: T?,
 ) : Expression<E, T> {
     override fun sql(): String {
         return when (value) {
             null -> "NULL"
             is Number -> value.toString()
             is Instant -> "TIMESTAMP '$value'"
-            is Array<*> -> "ARRAY [${value.joinToString(",") { Constant<E, Any?>(it).sql() }}]"
+            is Array<*> -> "ARRAY [${value.joinToString(",") { Constant<E, Any>(it).sql() }}]"
             else -> "'$value'"
         }
     }

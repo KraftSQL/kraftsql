@@ -38,7 +38,7 @@ open class SimulatorConnection<E : Engine<E>>(
                     rows = rows.flatMap { row ->
                         dataToJoin
                             .map { rowToJoin -> row + rowToJoin }
-                            .filter { row -> joinCondition.invoke(row) }
+                            .filter { row -> joinCondition.invoke(row) ?: false }
                     }
                 }
                 else -> NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")
@@ -47,7 +47,7 @@ open class SimulatorConnection<E : Engine<E>>(
 
         select.filter?.let { filter ->
             val filterCondition = simulateExpression(filter)
-            rows = rows.filter { row -> filterCondition.invoke(row) }
+            rows = rows.filter { row -> filterCondition.invoke(row) ?: false }
         }
 
         if (select.grouping.isNotEmpty()) {
@@ -116,7 +116,7 @@ open class SimulatorConnection<E : Engine<E>>(
         return rows
     }
 
-    protected open fun <T> simulateExpression(expression: Expression<E, T>): (Row) -> T {
+    protected open fun <T> simulateExpression(expression: Expression<E, T>): (Row) -> T? {
         return when (expression) {
             is Constant<E, T> -> { _ ->
                 expression.value
@@ -133,7 +133,7 @@ open class SimulatorConnection<E : Engine<E>>(
         }
     }
 
-    protected open fun <T> simulateAggregation(expression: Expression<E, T>, groupExpressions: List<Expression<E, *>>): (List<Row>) -> T {
+    protected open fun <T> simulateAggregation(expression: Expression<E, T>, groupExpressions: List<Expression<E, *>>): (List<Row>) -> T? {
         return if (groupExpressions.contains(expression)) {
             { rows -> simulateExpression(expression).invoke(rows.first()) }
         } else when (expression) {

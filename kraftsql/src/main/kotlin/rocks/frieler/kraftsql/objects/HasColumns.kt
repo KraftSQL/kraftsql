@@ -6,7 +6,7 @@ import kotlin.reflect.KProperty1
 
 interface HasColumns<E : Engine<E>, T : Any> {
 
-    operator fun <V> get(field: String) = Column<E, V>(field)
+    operator fun <V : Any> get(field: String) = Column<E, V>(field)
 
-    operator fun <V> get(property: KProperty1<T, V>) : Column<E, V> = this[property.name]
+    operator fun <V : Any> get(property: KProperty1<T, V>) : Column<E, V> = this[property.name]
 }
