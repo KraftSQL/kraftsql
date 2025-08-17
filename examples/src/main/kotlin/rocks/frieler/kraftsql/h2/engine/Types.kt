@@ -25,6 +25,21 @@ object Types : Types<H2Engine> {
 
     val DOUBLE_PRECISION = object : Type<H2Engine> { override fun sql() = "DOUBLE PRECISION" }
 
+    class NUMERIC(val precision: Int, val scale: Int) : Type<H2Engine> {
+        override fun sql() = "NUMERIC($precision, $scale)"
+
+        companion object {
+            val matcher = "^NUMERIC(\\((\\d+), ?(\\d+)\\))?$".toRegex()
+
+            fun parse(numericType: String) : NUMERIC {
+                val match = matcher.matchEntire(numericType)!!
+                return NUMERIC(
+                    match.groupValues[2].let { if (it.isNotEmpty()) it.toInt() else 100 },
+                    match.groupValues[3].let { if (it.isNotEmpty()) it.toInt() else 50 })
+            }
+        }
+    }
+
     val TIMESTAMP_WITH_TIME_ZONE = object : Type<H2Engine> { override fun sql() = "TIMESTAMP WITH TIME ZONE" }
 
     class ARRAY(val contentType: Type<H2Engine>) : Type<H2Engine> { override fun sql() = "${contentType.sql()} ARRAY" }
@@ -48,6 +63,7 @@ object Types : Types<H2Engine> {
         type == BIGINT.sql() -> BIGINT
         type == REAL.sql() -> REAL
         type == DOUBLE_PRECISION.sql() -> DOUBLE_PRECISION
+        type.matches(NUMERIC.matcher) -> NUMERIC.parse(type)
         type == TIMESTAMP_WITH_TIME_ZONE.sql() -> TIMESTAMP_WITH_TIME_ZONE
         type.matches("^.+ ARRAY$".toRegex()) -> ARRAY(parseType(type.dropLast(6)))
         type.matches(ROW.matcher) -> ROW(type.removePrefix("ROW(").removeSuffix(")").split(",").associate {

@@ -2,6 +2,7 @@ package rocks.frieler.kraftsql.engine
 
 import rocks.frieler.kraftsql.objects.Column
 import rocks.frieler.kraftsql.objects.DataRow
+import java.math.BigDecimal
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
 import java.time.Instant
@@ -30,6 +31,18 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                     type == Long::class -> {
                         @Suppress("UNCHECKED_CAST")
                         queryResult.getLong(columnOffset + 1) as T
+                    }
+                    type == Float::class -> {
+                        @Suppress("UNCHECKED_CAST")
+                        queryResult.getFloat(columnOffset + 1) as T
+                    }
+                    type == Double::class -> {
+                        @Suppress("UNCHECKED_CAST")
+                        queryResult.getDouble(columnOffset + 1) as T
+                    }
+                    type == BigDecimal::class -> {
+                        @Suppress("UNCHECKED_CAST")
+                        queryResult.getBigDecimal(columnOffset + 1).stripTrailingZeros() as T
                     }
                     type == String::class -> {
                         @Suppress("UNCHECKED_CAST")

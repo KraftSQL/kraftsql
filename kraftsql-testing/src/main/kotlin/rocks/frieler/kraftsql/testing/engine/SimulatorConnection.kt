@@ -21,6 +21,8 @@ import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.Row
+import rocks.frieler.kraftsql.expressions.SumAsBigDecimal
+import java.math.BigDecimal
 import java.sql.SQLSyntaxErrorException
 import kotlin.reflect.KClass
 import kotlin.reflect.full.allSuperclasses
@@ -191,6 +193,10 @@ open class SimulatorConnection<E : Engine<E>>(
             is SumAsDouble<E> -> { rows : List<DataRow> ->
                 @Suppress("UNCHECKED_CAST")
                 rows.map { row -> simulateExpression(expression.expression).invoke(row) as Number }.reduceOrNull { a, b -> a.toDouble() + b.toDouble() } as T
+            }
+            is SumAsBigDecimal<E> -> { rows: List<DataRow> ->
+                @Suppress("UNCHECKED_CAST")
+                rows.map { row -> simulateExpression(expression.expression).invoke(row) as BigDecimal }.reduceOrNull(BigDecimal::plus) as T
             }
             else -> throw NotImplementedError("Simulation of a ${expression::class.qualifiedName} is not implemented.")
         }

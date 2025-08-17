@@ -7,6 +7,7 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.h2.expressions.Constant
 import rocks.frieler.kraftsql.h2.expressions.Row
 import rocks.frieler.kraftsql.objects.DataRow
+import java.math.BigDecimal
 import java.time.Instant
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
@@ -27,6 +28,7 @@ object H2ORMapping : JdbcORMapping<H2Engine>(Types) {
             type == typeOf<Long>() -> Types.BIGINT
             type == typeOf<Float>() -> Types.REAL
             type == typeOf<Double>() -> Types.DOUBLE_PRECISION
+            type == typeOf<BigDecimal>() -> Types.NUMERIC(100, 50)
             type == typeOf<Instant>() -> Types.TIMESTAMP_WITH_TIME_ZONE
             type.jvmErasure.starProjectedType == typeOf<Array<*>>() -> Types.ARRAY(getTypeFor(type.arguments.single().type ?: Any::class.starProjectedType))
             type.jvmErasure.isData -> Types.ROW(type.jvmErasure.ensuredPrimaryConstructor().parameters.associate { param -> param.name!! to getTypeFor(param.type) })
@@ -45,6 +47,7 @@ object H2ORMapping : JdbcORMapping<H2Engine>(Types) {
             Types.BIGINT -> typeOf<Long>()
             Types.REAL -> typeOf<Float>()
             Types.DOUBLE_PRECISION -> typeOf<Double>()
+            Types.NUMERIC -> typeOf<BigDecimal>()
             Types.TIMESTAMP_WITH_TIME_ZONE -> typeOf<Instant>()
             is Types.ARRAY -> Array::class.createType(listOf(KTypeProjection(KVariance.INVARIANT, getKTypeFor(sqlType.contentType))))
             is Types.ROW -> typeOf<DataRow>()
