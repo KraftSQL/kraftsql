@@ -2,9 +2,9 @@ package rocks.frieler.kraftsql.examples.data
 
 import rocks.frieler.kraftsql.h2.objects.Table
 
-data class Shop(
+data class Customer(
     val id: Long,
-    val country: String,
+    val country: Country,
 )
 
-val shops = Table(name = "shops", type = Shop::class)
+val customers = Table(name = "customers", type = Customer::class)
