@@ -19,6 +19,7 @@ import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
+import rocks.frieler.kraftsql.expressions.Row
 import java.sql.SQLSyntaxErrorException
 import kotlin.reflect.KClass
 
@@ -86,7 +87,7 @@ open class SimulatorConnection<E : Engine<E>>(
         val table = tables[insertInto.table.qualifiedName] ?: throw IllegalStateException("Table '${insertInto.table.qualifiedName}' does not exist.")
         val rows = insertInto.values.let { values ->
             when (values) {
-                is ConstantData -> values.items.map { value -> DataRow.from(value) }
+                is ConstantData -> values.items.map { item -> simulateExpression(orm.serialize(item)).invoke(DataRow(emptyMap())) as DataRow }
                 else -> throw NotImplementedError("Inserting ${values::class.qualifiedName} is not implemented.")
             }
         }
@@ -102,7 +103,7 @@ open class SimulatorConnection<E : Engine<E>>(
                 execute(data as Select<E, DataRow>, DataRow::class)
             }
             is ConstantData<E, *> -> {
-                data.items.map { item -> DataRow.from(item) }
+                data.items.map { item -> simulateExpression(orm.serialize(item)).invoke(DataRow(emptyMap())) as DataRow }
             }
             else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
         }}
@@ -128,6 +129,14 @@ open class SimulatorConnection<E : Engine<E>>(
             is Equals<E> -> { row : DataRow ->
                 @Suppress("UNCHECKED_CAST") // because T must be Boolean in case of Equals
                 (simulateExpression(expression.left).invoke(row) == simulateExpression(expression.right).invoke(row)) as T
+            }
+            is Row<E, *> -> { row ->
+                @Suppress("UNCHECKED_CAST")
+                if (expression.values == null) {
+                    null
+                } else {
+                    DataRow(expression.values!!.mapValues { (_, value) -> simulateExpression(value).invoke(row) })
+                } as T
             }
             else -> throw NotImplementedError("Simulation of a ${expression::class.qualifiedName} is not implemented.")
         }

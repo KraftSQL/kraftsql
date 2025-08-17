@@ -2,6 +2,7 @@ package rocks.frieler.kraftsql.examples
 
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import rocks.frieler.kraftsql.examples.data.Category
 import rocks.frieler.kraftsql.examples.data.Product
 import rocks.frieler.kraftsql.examples.data.Sale
 import rocks.frieler.kraftsql.examples.data.Shop
@@ -13,8 +14,11 @@ import java.time.Instant
 
 @WithH2Simulator
 class SoldFoodPerCountryTest {
-    private val chocolate = Product(1, "Chocolate", "Food")
-    private val pants = Product(2, "Pants", "Clothes")
+    private val food = Category(1, "Food")
+    private val clothes = Category(2, "Clothes")
+
+    private val chocolate = Product(1, "Chocolate", food)
+    private val pants = Product(2, "Pants", clothes)
 
     private val shop1 = Shop(1, "DE")
     private val shop2 = Shop(2, "NL")
@@ -66,7 +70,7 @@ class SoldFoodPerCountryTest {
 
     @Test
     fun `calculateSoldFoodPerCountry() ignores unknown products`() {
-        val apple = Product(666, "Apple", "Food")
+        val apple = Product(666, "Apple", food)
 
         val soldFoodPerCountry = calculateSoldFoodPerCountry(
             ConstantData(chocolate),

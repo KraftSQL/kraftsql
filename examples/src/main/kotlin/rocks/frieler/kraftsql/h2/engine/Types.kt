@@ -29,6 +29,14 @@ object Types : Types<H2Engine> {
 
     class ARRAY(val contentType: Type<H2Engine>) : Type<H2Engine> { override fun sql() = "${contentType.sql()} ARRAY" }
 
+    class ROW(val fields: Map<String, Type<H2Engine>>) : Type<H2Engine> {
+        override fun sql() = "ROW(${fields.entries.joinToString(", ") { (name, type) -> "\"${name}\" ${type.sql()}" }})"
+        
+        companion object {
+            val matcher = "^ROW\\(.+\\)$".toRegex()
+        }
+    }
+
     override fun parseType(type: String) : Type<H2Engine> = when {
         type.matches("^CHARACTER(\\(\\d+\\))?$".toRegex()) -> CHARACTER(if (type.contains('(')) type.substring(10, type.length - 1).toInt() else 1)
         type.matches("^CHARACTER VARYING(\\(\\d+\\))?$".toRegex()) -> CHARACTER_VARYING(if (type.contains('(')) type.substring(18, type.length - 1).toInt() else null)
@@ -42,6 +50,10 @@ object Types : Types<H2Engine> {
         type == DOUBLE_PRECISION.sql() -> DOUBLE_PRECISION
         type == TIMESTAMP_WITH_TIME_ZONE.sql() -> TIMESTAMP_WITH_TIME_ZONE
         type.matches("^.+ ARRAY$".toRegex()) -> ARRAY(parseType(type.dropLast(6)))
+        type.matches(ROW.matcher) -> ROW(type.removePrefix("ROW(").removeSuffix(")").split(",").associate {
+            val match = "\"([^\"]+)\" ([^,]+)".toRegex().matchEntire(it.trim())!!
+            match.groupValues[1] to parseType(match.groupValues[2])
+        })
         else -> error("unknown h2 type: '$type'")
     }
 }

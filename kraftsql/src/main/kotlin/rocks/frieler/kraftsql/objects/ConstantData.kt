@@ -2,6 +2,7 @@ package rocks.frieler.kraftsql.objects
 
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.engine.ORMapping
+import rocks.frieler.kraftsql.expressions.Row
 
 open class ConstantData<E : Engine<E>, T : Any> : Data<E, T> {
     val orm: ORMapping<E, *>
@@ -16,7 +17,12 @@ open class ConstantData<E : Engine<E>, T : Any> : Data<E, T> {
 
     override fun sql(): String {
         return items.joinToString(separator = " UNION ALL ") { item ->
-            "(SELECT ${orm.serialize(item).entries.joinToString(", ") { "${it.value.sql()} AS `${it.key}`" }})"
+            val serializedItem = orm.serialize(item)
+            if (serializedItem is Row && serializedItem.values != null) {
+                "SELECT ${serializedItem.values.entries.joinToString(", ") { (name, expression) -> "${expression.sql()} AS `$name`" }}"
+            } else {
+                "SELECT ${serializedItem.sql()}"
+            }
         }
     }
 }

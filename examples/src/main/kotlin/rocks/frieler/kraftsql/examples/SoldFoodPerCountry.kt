@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.examples
 
+import rocks.frieler.kraftsql.dsl.`as`
 import rocks.frieler.kraftsql.examples.data.Product
 import rocks.frieler.kraftsql.examples.data.Sale
 import rocks.frieler.kraftsql.examples.data.Shop
@@ -16,15 +17,19 @@ import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
-import rocks.frieler.kraftsql.dsl.`as`
+import rocks.frieler.kraftsql.examples.data.Category
 import rocks.frieler.kraftsql.h2.ddl.drop
+import rocks.frieler.kraftsql.h2.dsl.`as`
 import java.time.Instant
 
 fun main() {
     try {
+        val food = Category(1, "Food")
+        val clothes = Category(2, "Clothes")
+
         products.create()
-        val chocolate = Product(1, "Chocolate", "Food").also { it.insertInto(products) }
-        val pants = Product(2, "Pants", "Clothes").also { it.insertInto(products) }
+        val chocolate = Product(1, "Chocolate", food).also { it.insertInto(products) }
+        val pants = Product(2, "Pants", clothes).also { it.insertInto(products) }
 
         shops.create()
         val shop1 = Shop(1, "DE").also { it.insertInto(shops) }
@@ -58,6 +63,6 @@ fun calculateSoldFoodPerCountry(
         s[Shop::country] `as` Shop::country.name,
         Sum.Companion(sales[Sale::amount]) `as` "_totalAmount",
     )
-    where(p[Product::category] `=` Constant("Food"))
+    where(p[Product::category][Category::name] `=` Constant("Food"))
     groupBy(s[Shop::country])
 }

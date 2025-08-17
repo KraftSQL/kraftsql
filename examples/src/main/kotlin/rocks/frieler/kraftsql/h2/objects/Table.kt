@@ -10,4 +10,9 @@ class Table<T : Any> : Table<H2Engine, T> {
     constructor(database: String? = null, schema: String? = null, name: String, columns: List<Column<H2Engine>>) : super(database, schema, name, columns)
 
     constructor(database: String? = null, schema: String? = null, name: String, type: KClass<T>) : super(H2ORMapping, database, schema, name, type)
+
+    override fun <V : Any> get(field: String): rocks.frieler.kraftsql.h2.expressions.Column<V> {
+        check(columns.any { it.name == field }) { "no column '${field}' in table '$name'" }
+        return rocks.frieler.kraftsql.h2.expressions.Column(field)
+    }
 }
