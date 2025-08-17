@@ -4,6 +4,7 @@ import rocks.frieler.kraftsql.objects.Column
 import rocks.frieler.kraftsql.objects.DataRow
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
+import java.time.Instant
 import kotlin.reflect.KClass
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.jvmErasure
@@ -33,6 +34,10 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                     type == String::class -> {
                         @Suppress("UNCHECKED_CAST")
                         queryResult.getString(columnOffset + 1) as T
+                    }
+                    type == Instant::class -> {
+                        @Suppress("UNCHECKED_CAST")
+                        queryResult.getTimestamp(columnOffset + 1).toInstant() as T
                     }
                     type.starProjectedType == typeOf<Array<*>>() -> {
                         val jdbcArray = queryResult.getArray(columnOffset + 1)
