@@ -10,9 +10,9 @@ class Column<E: Engine<E>, T>(
     constructor(name: String) : this(emptyList(), name)
 
     val qualifiedName: String
-        get() = "${qualifiers.joinToString { "$it." }}$name"
+        get() = "${qualifiers.joinToString("") { "$it." }}$name"
 
-    override fun sql() = "${qualifiers.joinToString { "`$it`." }}`$name`"
+    override fun sql(): String = "${qualifiers.joinToString("") { "`$it`." }}`$name`"
 
     override fun defaultColumnName() = qualifiedName
 
