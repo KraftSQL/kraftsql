@@ -39,7 +39,8 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
             .also { joins.add(InnerJoin(it, condition(data))) }
     }
 
-    fun <J : Any> innerJoin(data: Data<E, J>, condition: @SqlDsl (QuerySource<E, J>) -> Expression<E, Boolean>) = innerJoin(QuerySource(data), condition)
+    fun <J : Any> innerJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) =
+        innerJoin(QuerySource(data), condition)
 
     fun where(filter: Expression<E, Boolean>) {
         check(!::filter.isInitialized) { "SELECT already has a WHERE-filter." }
