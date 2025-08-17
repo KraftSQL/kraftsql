@@ -11,7 +11,6 @@ open class Constant<E : Engine<E>, T : Any>(
             null -> "NULL"
             is Number -> value.toString()
             is Instant -> "TIMESTAMP '$value'"
-            is Array<*> -> "ARRAY [${value.joinToString(",") { Constant<E, Any>(it).sql() }}]"
             else -> "'$value'"
         }
     }

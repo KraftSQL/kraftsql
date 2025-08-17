@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.engine
 
+import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Row
@@ -44,7 +45,10 @@ interface ORMapping<E : Engine<E>, R : Any> {
             value is String -> Constant(value)
             value is Number -> Constant(value)
             value is Instant -> Constant(value)
-            value is Array<*> -> Constant(value)
+            value is kotlin.Array<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                Array(value.map { serialize(it) }.toTypedArray()) as Expression<E, T>
+            }
             value is DataRow -> Row(value.values.mapValues { serialize(it.value) })
             value::class.isData -> {
                 val fields = value::class.ensuredPrimaryConstructor().parameters

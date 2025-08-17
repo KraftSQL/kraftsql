@@ -19,9 +19,12 @@ import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
+import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.Row
 import java.sql.SQLSyntaxErrorException
 import kotlin.reflect.KClass
+import kotlin.reflect.full.allSuperclasses
+import kotlin.reflect.full.isSubclassOf
 
 open class SimulatorConnection<E : Engine<E>>(
     private val orm: SimulatorORMapping<E> = SimulatorORMapping()
@@ -103,7 +106,11 @@ open class SimulatorConnection<E : Engine<E>>(
                 execute(data as Select<E, DataRow>, DataRow::class)
             }
             is ConstantData<E, *> -> {
-                data.items.map { item -> simulateExpression(orm.serialize(item)).invoke(DataRow(emptyMap())) as DataRow }
+                data.items.map { item ->
+                    val expression = orm.serialize(item)
+                    val value = simulateExpression(expression).invoke(DataRow(emptyMap()))
+                    value as? DataRow ?: DataRow(mapOf(expression.defaultColumnName() to value))
+                }
             }
             else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
         }}
@@ -129,6 +136,22 @@ open class SimulatorConnection<E : Engine<E>>(
             is Equals<E> -> { row : DataRow ->
                 @Suppress("UNCHECKED_CAST") // because T must be Boolean in case of Equals
                 (simulateExpression(expression.left).invoke(row) == simulateExpression(expression.right).invoke(row)) as T
+            }
+            is Array<E, *> -> { row ->
+                @Suppress("UNCHECKED_CAST")
+                if (expression.elements == null) {
+                    null
+                } else {
+                    val elements = expression.elements!!.map { simulateExpression(it).invoke(row) }
+                    val commonSuperType = elements.filterNotNull()
+                        .map { setOf(it::class) + it::class.allSuperclasses }
+                        .run { reduceOrNull { classes1, classes2 -> classes1.intersect(classes2) } ?: emptySet() }
+                        .let { candidates -> candidates.filter { candidate -> !candidates.all { other -> other != candidate && other.isSubclassOf(candidate) } } }
+                        .firstOrNull() ?: Any::class
+                    java.lang.reflect.Array.newInstance(commonSuperType.java, elements.size).also { array ->
+                        elements.forEachIndexed { index, element -> (array as kotlin.Array<Any?>)[index] = element }
+                    }
+                } as T
             }
             is Row<E, *> -> { row ->
                 @Suppress("UNCHECKED_CAST")

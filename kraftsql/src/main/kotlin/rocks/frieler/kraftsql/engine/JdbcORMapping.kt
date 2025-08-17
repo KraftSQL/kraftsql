@@ -34,23 +34,35 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                         @Suppress("UNCHECKED_CAST")
                         queryResult.getString(columnOffset + 1) as T
                     }
+                    type.starProjectedType == typeOf<Array<*>>() -> {
+                        val jdbcArray = queryResult.getArray(columnOffset + 1)
+                        val elementType = getKTypeFor(types.parseType(jdbcArray.baseTypeName)).arguments.single().type!!
+                        val elements = deserializeQueryResultInternal(jdbcArray.resultSet, elementType.jvmErasure, 1)
+                        val array = java.lang.reflect.Array.newInstance(elementType.jvmErasure.java, elements.size)
+                        @Suppress("UNCHECKED_CAST")
+                        elements.forEachIndexed { index, element -> (array as Array<Any?>)[index] = element }
+                        @Suppress("UNCHECKED_CAST")
+                        array as T
+                    }
                     type == DataRow::class -> {
                         @Suppress("UNCHECKED_CAST")
                         DataRow(
                             (columnOffset + 1..queryResult.metaData.columnCount)
-                                .map { queryResult.metaData.getColumnLabel(it) to queryResult.metaData.getColumnTypeName(it) }
-                                .associate { (name, sqlType) -> name to
-                                    when (val value = queryResult.getObject(name)) {
-                                        is java.sql.Array -> {
-                                            val elements = (value.array as Array<*>)
-                                            val elementType = getKTypeFor(types.parseType(sqlType)).arguments.single().type!!.jvmErasure.java
-                                            @Suppress("UNCHECKED_CAST")
-                                            (java.lang.reflect.Array.newInstance(elementType, elements.size) as Array<Any?>).also { array ->
-                                                elements.copyInto(array)
+                                .map { queryResult.metaData.getColumnLabel(it) to getKTypeFor(types.parseType(queryResult.metaData.getColumnTypeName(it))) }
+                                .associate { (name, valueColumnType) -> name to
+                                    when {
+                                        valueColumnType == typeOf<Int>() -> queryResult.getInt(name)
+                                        valueColumnType == typeOf<Long>() -> queryResult.getLong(name)
+                                        valueColumnType == typeOf<String>() -> queryResult.getString(name)
+                                        valueColumnType.jvmErasure.starProjectedType == typeOf<Array<*>>() -> {
+                                            val elementType = valueColumnType.arguments.single().type!!.jvmErasure
+                                            val elements = deserializeQueryResultInternal(queryResult.getArray(name).resultSet, elementType, 1)
+                                            java.lang.reflect.Array.newInstance(elementType.java, elements.size).also { array ->
+                                                elements.forEachIndexed { index, element -> (array as Array<Any?>)[index] = element }
                                             }
                                         }
-                                        is ResultSet -> deserializeQueryResult(value, DataRow::class)
-                                        else -> value
+                                        valueColumnType == typeOf<DataRow>() -> deserializeQueryResultInternal(queryResult.getObject(name) as ResultSet, DataRow::class)
+                                        else -> throw IllegalArgumentException("Unsupported value type $valueColumnType.")
                                     }
                                 }
                         ) as T
