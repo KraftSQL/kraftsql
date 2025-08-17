@@ -11,26 +11,30 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
 ): ORMapping<E, ResultSet> {
 
     override fun <T : Any> deserializeQueryResult(queryResult: ResultSet, type: KClass<T>): List<T> {
+        return deserializeQueryResultInternal(queryResult, type)
+    }
+
+    private fun <T : Any> deserializeQueryResultInternal(queryResult: ResultSet, type: KClass<T>, columnOffset: Int = 0): MutableList<T> {
         val result = mutableListOf<T>()
         while (queryResult.next()) {
             result.add(
                 when (type) {
                     Integer::class -> {
                         @Suppress("UNCHECKED_CAST")
-                        queryResult.getInt(2) as T
+                        queryResult.getInt(columnOffset + 1) as T
                     }
                     Long::class -> {
                         @Suppress("UNCHECKED_CAST")
-                        queryResult.getLong(2) as T
+                        queryResult.getLong(columnOffset + 1) as T
                     }
                     String::class -> {
                         @Suppress("UNCHECKED_CAST")
-                        queryResult.getString(2) as T
+                        queryResult.getString(columnOffset + 1) as T
                     }
                     Row::class -> {
                         @Suppress("UNCHECKED_CAST")
                         Row(
-                            (1..queryResult.metaData.columnCount)
+                            (columnOffset + 1..queryResult.metaData.columnCount)
                                 .map { queryResult.metaData.getColumnName(it) to queryResult.metaData.getColumnTypeName(it) }
                                 .associate { (name, sqlType) -> name to
                                     when (val value = queryResult.getObject(name)) {
@@ -56,7 +60,7 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                 String::class.starProjectedType -> queryResult.getString(param.name)
                                 Array::class.starProjectedType -> {
                                     val elementType = param.type.arguments.single().type!!.jvmErasure
-                                    val elements = deserializeQueryResult(queryResult.getArray(param.name).resultSet, elementType)
+                                    val elements = deserializeQueryResultInternal(queryResult.getArray(param.name).resultSet, elementType, 1)
                                     @Suppress("UNCHECKED_CAST")
                                     val array = java.lang.reflect.Array.newInstance(elementType.java, elements.size) as Array<Any?>
                                     elements.forEachIndexed { index, element -> array[index] = element }
