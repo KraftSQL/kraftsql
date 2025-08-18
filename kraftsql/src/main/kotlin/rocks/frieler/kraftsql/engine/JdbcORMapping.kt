@@ -35,7 +35,7 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                         @Suppress("UNCHECKED_CAST")
                         Row(
                             (columnOffset + 1..queryResult.metaData.columnCount)
-                                .map { queryResult.metaData.getColumnName(it) to queryResult.metaData.getColumnTypeName(it) }
+                                .map { queryResult.metaData.getColumnLabel(it) to queryResult.metaData.getColumnTypeName(it) }
                                 .associate { (name, sqlType) -> name to
                                     when (val value = queryResult.getObject(name)) {
                                         is java.sql.Array -> {
