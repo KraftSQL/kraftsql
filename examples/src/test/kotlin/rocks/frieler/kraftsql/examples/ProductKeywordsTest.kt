@@ -15,7 +15,7 @@ import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.expressions.Column
 import rocks.frieler.kraftsql.h2.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
-import rocks.frieler.kraftsql.testing.h2.WithH2Simulator
+import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
 
 @WithH2Simulator
 class ProductKeywordsTest {

@@ -1,12 +1,11 @@
 package rocks.frieler.kraftsql.examples
 
-import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import rocks.frieler.kraftsql.examples.data.Country
 import rocks.frieler.kraftsql.examples.data.Customer
 import rocks.frieler.kraftsql.examples.data.Purchase
-import rocks.frieler.kraftsql.testing.h2.WithH2Simulator
+import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
 import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.objects.ConstantData
 import rocks.frieler.kraftsql.testing.matchers.collections.shouldContainExactlyOne
