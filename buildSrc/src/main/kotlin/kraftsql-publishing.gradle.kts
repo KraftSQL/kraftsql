@@ -6,6 +6,7 @@ publishing {
     publications {
         create<MavenPublication>("maven") {
             from(components["java"])
+            artifact(tasks["kotlinSourcesJar"])
         }
     }
     repositories {
