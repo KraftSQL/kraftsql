@@ -5,7 +5,7 @@ import rocks.frieler.kraftsql.h2.objects.Table
 data class Product(
     val id: Long,
     val name: String,
-    val category: String,
+    val category: Category,
     val tags: Array<String> = arrayOf(),
 ) {
 

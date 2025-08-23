@@ -1,4 +1,4 @@
-package rocks.frieler.kraftsql.testing.h2
+package rocks.frieler.kraftsql.h2.testing
 
 import org.junit.jupiter.api.extension.ExtendWith
 import rocks.frieler.kraftsql.engine.DefaultConnection

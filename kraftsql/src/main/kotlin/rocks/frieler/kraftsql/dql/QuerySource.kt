@@ -4,7 +4,7 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.HasColumns
 
-class QuerySource<E: Engine<E>, T : Any>(
+open class QuerySource<E: Engine<E>, T : Any>(
     val data: Data<E, T>,
     val alias: String? = null,
 ) : HasColumns<E, T> {

@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.expressions
 
 import rocks.frieler.kraftsql.engine.Engine
+import java.math.BigDecimal
 
 abstract class Sum<E : Engine<E>, T : Number> protected constructor(
     val expression: Expression<E, *>,
@@ -32,9 +33,14 @@ abstract class Sum<E : Engine<E>, T : Number> protected constructor(
 
         @JvmName("SumOfDoubles")
         operator fun <E : Engine<E>> invoke(expression: Expression<E, Double>) = SumAsDouble(expression)
+
+        @JvmName("SumOfBigDecimals")
+        operator fun <E : Engine<E>> invoke(expression: Expression<E, BigDecimal>) = SumAsBigDecimal(expression)
     }
 }
 
 open class SumAsLong<E : Engine<E>>(expression: Expression<E, *>) : Sum<E, Long>(expression)
 
-open class SumAsDouble<E : Engine<E>>(expression: Expression<E, *>) : Sum<E, Long>(expression)
+open class SumAsDouble<E : Engine<E>>(expression: Expression<E, *>) : Sum<E, Double>(expression)
+
+open class SumAsBigDecimal<E : Engine<E>>(expression: Expression<E, *>) : Sum<E, BigDecimal>(expression)
