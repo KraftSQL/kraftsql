@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     `java-library`
+    id("kraftsql-javadoc")
     id("kraftsql-publishing")
 }
 
