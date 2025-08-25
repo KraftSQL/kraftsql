@@ -19,5 +19,9 @@ publishing {
                 password = findProperty("github_packages_publishing_password")?.toString()
             }
         }
+        maven {
+            name = "Staging"
+            url = uri(layout.buildDirectory.dir("staging-deployment"))
+        }
     }
 }
