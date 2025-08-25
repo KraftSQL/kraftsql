@@ -60,6 +60,6 @@ jobs:
         env:
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          MAVEN_CENTRAL_PUBLISHER_TOKEN: ${{ secrets.MAVEN_CENTRAL_USER_TOKEN }}
         with:
-          arguments: publishMavenPublicationToStagingRepository
-          artifacts: deployment kraftsql/build/staging-deployment/ kraftsql-testing/build/staging-deployment/
+          arguments: publishMavenPublicationToStagingRepository uploadToMavenCentral
