@@ -1,5 +1,6 @@
 plugins {
     `maven-publish`
+    signing
 }
 
 publishing {
@@ -24,4 +25,12 @@ publishing {
             url = uri(layout.buildDirectory.dir("staging-deployment"))
         }
     }
+}
+
+signing {
+    sign(publishing.publications["maven"])
+    isRequired = !project.version.toString().endsWith("-SNAPSHOT")
+    useInMemoryPgpKeys(
+        project.properties["signingKey"]?.toString(),
+        project.properties["signingPassword"]?.toString())
 }
