@@ -45,3 +45,23 @@ jobs:
           ORG_GRADLE_PROJECT_github_packages_publishing_password: ${{ secrets.GITHUB_TOKEN }}
         with:
           arguments: publishMavenPublicationToGitHubPackagesRepository
+  deploy:
+    needs: ['build']
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+      - name: Deploy to Maven Central
+        uses: christopherfrieler/gradle-wrapper-action@v0.6.0
+        env:
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_PUBLISHING_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PUBLISHING_PASSWORD }}
+        with:
+          arguments: publishMavenPublicationToMavenCentralRepository

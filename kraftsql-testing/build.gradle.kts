@@ -1,3 +1,5 @@
+project.description = "KrafSQL Core Testing Support"
+
 plugins {
     id(libs.plugins.kotlin.jvm.get().pluginId)
     `java-library`
