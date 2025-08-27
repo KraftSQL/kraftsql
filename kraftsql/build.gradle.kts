@@ -1,7 +1,9 @@
+project.description = "KrafSQL Core Library"
+
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    id(libs.plugins.kotlin.jvm.get().pluginId)
     `java-library`
-    id("kraftsql-javadoc")
+    alias(libs.plugins.dokka.javadoc)
     id("kraftsql-publishing")
 }
 

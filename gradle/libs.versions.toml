@@ -1,13 +1,14 @@
 [versions]
 kotlin = "2.1.21"
 dokka = "2.0.0"
+maven-publish-plugin = "0.34.0"
 h2 = "2.3.232"
 junit = "5.13.3"
 kotest = "5.9.1"
 junit-platform = "1.13.3"
 
 [libraries]
-dokka-javadoc-plugin = { group = "org.jetbrains.dokka-javadoc", name = "org.jetbrains.dokka-javadoc.gradle.plugin", version.ref = "dokka" }
+maven-publish-plugin = { group = "com.vanniktech.maven.publish", name = "com.vanniktech.maven.publish.gradle.plugin", version.ref = "maven-publish-plugin" }
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
 kotlin-test-junit5 = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit5", version.ref = "kotlin" }
 h2-database = { group = "com.h2database", name = "h2", version.ref = "h2" }
@@ -20,3 +21,4 @@ kotest-assertions-core = { group = "io.kotest", name = "kotest-assertions-core-j
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+dokka-javadoc = { id = "org.jetbrains.dokka-javadoc", version.ref = "dokka" }
