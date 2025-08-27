@@ -17,7 +17,7 @@ jobs:
         uses: christopherfrieler/gradle-wrapper-action@v0.6.0
         with:
           arguments: |
-            check assemble generatePomFileForMavenPublication kotlinSourcesJar javadocJar
+            check assemble generatePomFileForMavenPublication kotlinSourcesJar dokkaJavadocJar
             versionFile
           artifacts: |
             core-build kraftsql/build/publications/maven/pom-default.xml kraftsql/build/libs/kraftsql-*.jar
