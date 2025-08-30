@@ -2,6 +2,7 @@ package rocks.frieler.kraftsql.testing.engine
 
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.ddl.DropTable
+import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.engine.Connection
@@ -98,6 +99,18 @@ open class SimulatorConnection<E : Engine<E>>(
         }
         table.second.addAll(rows)
         return rows.count()
+    }
+
+    override fun execute(delete: Delete<E>): Int {
+        val table = tables[delete.table.qualifiedName] ?: throw IllegalStateException("Table '${delete.table.qualifiedName}' does not exist.")
+        val tableSizeBefore = table.second.size
+        val condition = delete.condition?.let { simulateExpression(it) }
+        if (condition == null) {
+            table.second.clear()
+        } else {
+            table.second.removeAll { row -> condition.invoke(row) ?: false }
+        }
+        return tableSizeBefore - table.second.size
     }
 
     protected open fun fetchData(source: QuerySource<E, *>) : List<DataRow> {

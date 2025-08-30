@@ -2,6 +2,7 @@ package rocks.frieler.kraftsql.engine
 
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.ddl.DropTable
+import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dql.Select
 import kotlin.reflect.KClass
@@ -26,5 +27,9 @@ abstract class JdbcConnectionWrapper<E : JdbcEngine<E>>(
 
     override fun execute(insertInto: InsertInto<E, *>): Int {
         return connection.createStatement().executeUpdate(insertInto.sql())
+    }
+
+    override fun execute(delete: Delete<E>): Int {
+        return connection.createStatement().executeUpdate(delete.sql())
     }
 }
