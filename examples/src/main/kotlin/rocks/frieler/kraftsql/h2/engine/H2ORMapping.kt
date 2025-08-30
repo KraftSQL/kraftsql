@@ -9,6 +9,7 @@ import rocks.frieler.kraftsql.h2.expressions.Row
 import rocks.frieler.kraftsql.objects.DataRow
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.KVariance
@@ -30,6 +31,7 @@ object H2ORMapping : JdbcORMapping<H2Engine>(Types) {
             type == typeOf<Double>() -> Types.DOUBLE_PRECISION
             type == typeOf<BigDecimal>() -> Types.NUMERIC(100, 50)
             type == typeOf<Instant>() -> Types.TIMESTAMP_WITH_TIME_ZONE
+            type == typeOf<LocalDate>() -> Types.DATE
             type.jvmErasure.starProjectedType == typeOf<Array<*>>() -> Types.ARRAY(getTypeFor(type.arguments.single().type ?: Any::class.starProjectedType))
             type.jvmErasure.isData -> Types.ROW(type.jvmErasure.ensuredPrimaryConstructor().parameters.associate { param -> param.name!! to getTypeFor(param.type) })
             else -> throw NotImplementedError("Unsupported Kotlin type $type.")
@@ -49,6 +51,7 @@ object H2ORMapping : JdbcORMapping<H2Engine>(Types) {
             Types.DOUBLE_PRECISION -> typeOf<Double>()
             Types.NUMERIC -> typeOf<BigDecimal>()
             Types.TIMESTAMP_WITH_TIME_ZONE -> typeOf<Instant>()
+            Types.DATE -> typeOf<LocalDate>()
             is Types.ARRAY -> Array::class.createType(listOf(KTypeProjection(KVariance.INVARIANT, getKTypeFor(sqlType.contentType))))
             is Types.ROW -> typeOf<DataRow>()
             else -> throw NotImplementedError("Unsupported SQL type $sqlType")

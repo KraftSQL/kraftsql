@@ -6,6 +6,7 @@ import java.math.BigDecimal
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
 import java.time.Instant
+import java.time.LocalDate
 import kotlin.reflect.KClass
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.jvmErasure
@@ -52,6 +53,10 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                         @Suppress("UNCHECKED_CAST")
                         queryResult.getTimestamp(columnOffset + 1).toInstant() as T
                     }
+                    type == LocalDate::class -> {
+                        @Suppress("UNCHECKED_CAST")
+                        queryResult.getDate(columnOffset + 1).toLocalDate() as T
+                    }
                     type.starProjectedType == typeOf<Array<*>>() -> {
                         val jdbcArray = queryResult.getArray(columnOffset + 1)
                         val elementType = getKTypeFor(types.parseType(jdbcArray.baseTypeName)).arguments.single().type!!
@@ -72,6 +77,7 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                         valueColumnType == typeOf<Int>() -> queryResult.getInt(name)
                                         valueColumnType == typeOf<Long>() -> queryResult.getLong(name)
                                         valueColumnType == typeOf<String>() -> queryResult.getString(name)
+                                        valueColumnType == typeOf<LocalDate>() -> queryResult.getDate(name).toLocalDate()
                                         valueColumnType.jvmErasure.starProjectedType == typeOf<Array<*>>() -> {
                                             val elementType = valueColumnType.arguments.single().type!!.jvmErasure
                                             val elements = deserializeQueryResultInternal(queryResult.getArray(name).resultSet, elementType, 1)
@@ -107,6 +113,12 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                         queryResult.getString(param.name)
                                     else
                                         queryResult.getString(columnOffset + param.index + 1)
+                                }
+                                param.type == typeOf<LocalDate>() -> {
+                                    if (resultSchema.any { it.name == param.name })
+                                        queryResult.getDate(param.name).toLocalDate()
+                                    else
+                                        queryResult.getDate(columnOffset + param.index + 1).toLocalDate()
                                 }
                                 param.type.jvmErasure.starProjectedType == typeOf<Array<*>>() -> {
                                     val elementType = param.type.arguments.single().type!!.jvmErasure

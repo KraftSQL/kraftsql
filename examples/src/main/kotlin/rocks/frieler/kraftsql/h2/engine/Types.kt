@@ -42,6 +42,8 @@ object Types : Types<H2Engine> {
 
     val TIMESTAMP_WITH_TIME_ZONE = object : Type<H2Engine> { override fun sql() = "TIMESTAMP WITH TIME ZONE" }
 
+    val DATE = object : Type<H2Engine> { override fun sql() = "DATE" }
+
     class ARRAY(val contentType: Type<H2Engine>) : Type<H2Engine> { override fun sql() = "${contentType.sql()} ARRAY" }
 
     class ROW(val fields: Map<String, Type<H2Engine>>) : Type<H2Engine> {
@@ -65,6 +67,7 @@ object Types : Types<H2Engine> {
         type == DOUBLE_PRECISION.sql() -> DOUBLE_PRECISION
         type.matches(NUMERIC.matcher) -> NUMERIC.parse(type)
         type == TIMESTAMP_WITH_TIME_ZONE.sql() -> TIMESTAMP_WITH_TIME_ZONE
+        type == DATE.sql() -> DATE
         type.matches("^.+ ARRAY$".toRegex()) -> ARRAY(parseType(type.dropLast(6)))
         type.matches(ROW.matcher) -> ROW(type.removePrefix("ROW(").removeSuffix(")").split(",").associate {
             val match = "\"([^\"]+)\" ([^,]+)".toRegex().matchEntire(it.trim())!!

@@ -7,6 +7,7 @@ import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.Column
 import rocks.frieler.kraftsql.objects.DataRow
 import java.time.Instant
+import java.time.LocalDate
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
@@ -45,6 +46,7 @@ interface ORMapping<E : Engine<E>, R : Any> {
             value is String -> Constant(value)
             value is Number -> Constant(value)
             value is Instant -> Constant(value)
+            value is LocalDate -> Constant(value)
             value is kotlin.Array<*> -> {
                 @Suppress("UNCHECKED_CAST")
                 Array(value.map { serialize(it) }.toTypedArray()) as Expression<E, T>

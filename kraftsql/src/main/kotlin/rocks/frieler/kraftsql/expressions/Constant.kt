@@ -2,6 +2,7 @@ package rocks.frieler.kraftsql.expressions
 
 import rocks.frieler.kraftsql.engine.Engine
 import java.time.Instant
+import java.time.LocalDate
 
 open class Constant<E : Engine<E>, T : Any>(
     val value: T?,
@@ -11,6 +12,7 @@ open class Constant<E : Engine<E>, T : Any>(
             null -> "NULL"
             is Number -> value.toString()
             is Instant -> "TIMESTAMP '$value'"
+            is LocalDate -> "DATE '$value'"
             else -> "'$value'"
         }
     }
