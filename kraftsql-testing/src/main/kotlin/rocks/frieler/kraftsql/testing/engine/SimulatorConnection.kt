@@ -184,7 +184,7 @@ open class SimulatorConnection<E : Engine<E>>(
             }
             is Count<E> -> { rows ->
                 @Suppress("UNCHECKED_CAST")
-                rows.count() as T
+                rows.count().toLong() as T
             }
             is SumAsLong<E> -> { rows : List<DataRow> ->
                 @Suppress("UNCHECKED_CAST")
