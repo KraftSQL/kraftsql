@@ -4,6 +4,7 @@ import rocks.frieler.kraftsql.h2.ddl.create
 import rocks.frieler.kraftsql.h2.ddl.drop
 import rocks.frieler.kraftsql.h2.dml.insertInto
 import java.time.Instant
+import java.time.LocalDate
 
 fun withSampleData(action: () -> Unit) {
     try {
@@ -18,9 +19,9 @@ fun withSampleData(action: () -> Unit) {
         customers.create()
         val germany = Country("DE", "Deutschland")
         val austria = Country("AT", "Österreich")
-        val customer1 = Customer(1, germany).also { it.insertInto(customers) }
-        val customer2 = Customer(2, austria).also { it.insertInto(customers) }
-        val customer3 = Customer(3, germany).also { it.insertInto(customers) }
+        val customer1 = Customer(1, germany, LocalDate.of(1987, 5, 17)).also { it.insertInto(customers) }
+        val customer2 = Customer(2, austria, LocalDate.of(1995, 3, 4)).also { it.insertInto(customers) }
+        val customer3 = Customer(3, germany, LocalDate.of(2001, 11, 30)).also { it.insertInto(customers) }
 
         purchases.create()
         purchaseItems.create()

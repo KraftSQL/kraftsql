@@ -14,6 +14,7 @@ import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
 import rocks.frieler.kraftsql.testing.matchers.collections.shouldContainExactlyOne
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 
 @WithH2Simulator
 class SoldFoodPerCountryTest {
@@ -23,8 +24,8 @@ class SoldFoodPerCountryTest {
     private val chocolate = Product(1, "Chocolate", food)
     private val pants = Product(2, "Pants", clothes)
 
-    private val germanCustomer = Customer(1, Country("DE", "Germany"))
-    private val austrianCustomer = Customer(2, Country("AT", "Austria"))
+    private val germanCustomer = Customer(1, Country("DE", "Germany"), LocalDate.EPOCH)
+    private val austrianCustomer = Customer(2, Country("AT", "Austria"), LocalDate.EPOCH)
 
     @Test
     fun `calculateSoldFoodPerCountry() sums up sold amounts`() {
@@ -99,9 +100,8 @@ class SoldFoodPerCountryTest {
 
     @Test
     fun `calculateSoldFoodPerCountry() ignores unknown customers`() {
-        val unknownCustomer = Customer(666, Country("DE", "Germany"))
         val purchase = Purchase(1, germanCustomer, Instant.EPOCH, BigDecimal.ZERO)
-        val purchaseByUnknownCustomer = Purchase(2, unknownCustomer, Instant.EPOCH, BigDecimal.ZERO)
+        val purchaseByUnknownCustomer = Purchase(2, 666, Instant.EPOCH, BigDecimal.ZERO)
 
         val soldFoodPerCountry = calculateSoldFoodPerCountry(
             ConstantData(chocolate),
