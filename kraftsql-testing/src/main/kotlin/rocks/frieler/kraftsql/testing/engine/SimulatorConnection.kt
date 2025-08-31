@@ -2,8 +2,11 @@ package rocks.frieler.kraftsql.testing.engine
 
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.ddl.DropTable
+import rocks.frieler.kraftsql.dml.BeginTransaction
+import rocks.frieler.kraftsql.dml.CommitTransaction
 import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
+import rocks.frieler.kraftsql.dml.RollbackTransaction
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.engine.Connection
 import rocks.frieler.kraftsql.expressions.Column
@@ -24,7 +27,6 @@ import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.expressions.SumAsBigDecimal
 import java.math.BigDecimal
-import java.sql.SQLDataException
 import java.sql.SQLSyntaxErrorException
 import kotlin.reflect.KClass
 import kotlin.reflect.full.allSuperclasses
@@ -34,6 +36,7 @@ open class SimulatorConnection<E : Engine<E>>(
     private val orm: SimulatorORMapping<E> = SimulatorORMapping()
 ) : Connection<E> {
     private val tables: MutableMap<String, Pair<Table<E, *>, MutableList<DataRow>>> = mutableMapOf()
+    private val transactionsOverlayData = mutableListOf<MutableMap<String, Pair<Table<E, *>, MutableList<DataRow>>>>()
 
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> {
         var rows = fetchData(select.source)
@@ -79,11 +82,13 @@ open class SimulatorConnection<E : Engine<E>>(
     }
 
     override fun execute(createTable: CreateTable<E>) {
+        commitAllOpenTransactions()
         check(createTable.table.qualifiedName !in tables) { "Table '${createTable.table.qualifiedName}' already exists." }
         tables[createTable.table.qualifiedName] = createTable.table to mutableListOf()
     }
 
     override fun execute(dropTable: DropTable<E>) {
+        commitAllOpenTransactions()
         if (!dropTable.ifExists) {
             check(dropTable.table.qualifiedName in tables) { "Table '${dropTable.table.qualifiedName}' does not exist." }
         }
@@ -91,7 +96,7 @@ open class SimulatorConnection<E : Engine<E>>(
     }
 
     override fun execute(insertInto: InsertInto<E, *>): Int {
-        val table = tables[insertInto.table.qualifiedName] ?: throw IllegalStateException("Table '${insertInto.table.qualifiedName}' does not exist.")
+        val table = ensureTableCopyInTransactionIfOpen(insertInto.table.qualifiedName)
         val rows = insertInto.values.let { values ->
             when (values) {
                 is ConstantData -> values.items.map { item -> simulateExpression(orm.serialize(item)).invoke(DataRow(emptyMap())) as DataRow }
@@ -108,7 +113,7 @@ open class SimulatorConnection<E : Engine<E>>(
     }
 
     override fun execute(delete: Delete<E>): Int {
-        val table = tables[delete.table.qualifiedName] ?: throw IllegalStateException("Table '${delete.table.qualifiedName}' does not exist.")
+        val table = ensureTableCopyInTransactionIfOpen(delete.table.qualifiedName)
         val tableSizeBefore = table.second.size
         val condition = delete.condition?.let { simulateExpression(it) }
         if (condition == null) {
@@ -119,9 +124,43 @@ open class SimulatorConnection<E : Engine<E>>(
         return tableSizeBefore - table.second.size
     }
 
+    override fun execute(beginTransaction: BeginTransaction<E>) {
+        transactionsOverlayData.add(mutableMapOf())
+    }
+
+    private fun ensureTableCopyInTransactionIfOpen(qualifiedName: String) =
+        if (transactionsOverlayData.isNotEmpty()) {
+            transactionsOverlayData.last().computeIfAbsent(qualifiedName) { findTable(qualifiedName).run { first to second.toMutableList() } }
+        } else {
+            findTable(qualifiedName)
+        }
+
+    override fun execute(commitTransaction: CommitTransaction<E>) {
+        val dataToCommit = transactionsOverlayData.removeLast()
+        val stateToCommitInto = if (transactionsOverlayData.isNotEmpty()) transactionsOverlayData.last() else tables
+        dataToCommit.forEach { (qualifiedName, data) ->
+            stateToCommitInto[qualifiedName] = data.first to data.second
+        }
+    }
+
+    private fun commitAllOpenTransactions() {
+        while (transactionsOverlayData.isNotEmpty()) execute(CommitTransaction())
+    }
+
+    override fun execute(rollbackTransaction: RollbackTransaction<E>) {
+        transactionsOverlayData.removeLast()
+    }
+
+    private fun findTable(name: String): Pair<Table<E, *>, MutableList<DataRow>> {
+        for (state in transactionsOverlayData.reversed()) {
+            state[name]?.let { return it }
+        }
+        return tables[name] ?: throw IllegalStateException("Table '$name' does not exist.")
+    }
+
     protected open fun fetchData(source: QuerySource<E, *>) : List<DataRow> {
         var rows = source.data.let { data -> when (data) {
-            is Table<E, *> -> (tables[data.qualifiedName] ?: throw IllegalStateException("Table '${data.qualifiedName}' does not exist.")).second
+            is Table<E, *> -> findTable(data.qualifiedName).second
             is Select<E, *> -> {
                 @Suppress("UNCHECKED_CAST")
                 execute(data as Select<E, DataRow>, DataRow::class)

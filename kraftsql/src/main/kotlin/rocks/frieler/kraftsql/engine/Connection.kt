@@ -2,8 +2,11 @@ package rocks.frieler.kraftsql.engine
 
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.ddl.DropTable
+import rocks.frieler.kraftsql.dml.BeginTransaction
+import rocks.frieler.kraftsql.dml.CommitTransaction
 import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
+import rocks.frieler.kraftsql.dml.RollbackTransaction
 import rocks.frieler.kraftsql.dql.Select
 import kotlin.reflect.KClass
 
@@ -17,6 +20,12 @@ interface Connection<E: Engine<E>> {
     fun execute(insertInto: InsertInto<E, *>) : Int
 
     fun execute(delete: Delete<E>) : Int
+
+    fun execute(beginTransaction: BeginTransaction<E>)
+
+    fun execute(commitTransaction: CommitTransaction<E>)
+
+    fun execute(rollbackTransaction: RollbackTransaction<E>)
 }
 
 abstract class DefaultConnection<E : Engine<E>> {
