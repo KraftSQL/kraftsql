@@ -24,6 +24,7 @@ import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.expressions.SumAsBigDecimal
 import java.math.BigDecimal
+import java.sql.SQLDataException
 import java.sql.SQLSyntaxErrorException
 import kotlin.reflect.KClass
 import kotlin.reflect.full.allSuperclasses
@@ -97,7 +98,12 @@ open class SimulatorConnection<E : Engine<E>>(
                 else -> throw NotImplementedError("Inserting ${values::class.qualifiedName} is not implemented.")
             }
         }
-        table.second.addAll(rows)
+        rows.forEach { row ->
+            if (row.values.keys != table.first.columns.map { column -> column.name }.toSet()) {
+                throw IllegalArgumentException("$row to insert doesn't match table schema of '${table.first.qualifiedName}'.")
+            }
+            table.second.add(row)
+        }
         return rows.count()
     }
 
