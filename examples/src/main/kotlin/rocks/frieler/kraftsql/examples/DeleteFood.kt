@@ -1,13 +1,12 @@
 package rocks.frieler.kraftsql.examples
 
-import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.examples.data.Category
 import rocks.frieler.kraftsql.examples.data.Product
 import rocks.frieler.kraftsql.examples.data.products
 import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.h2.ddl.create
 import rocks.frieler.kraftsql.h2.ddl.drop
-import rocks.frieler.kraftsql.h2.dml.execute
+import rocks.frieler.kraftsql.h2.dml.delete
 import rocks.frieler.kraftsql.h2.dml.insertInto
 import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.dsl.Select
@@ -33,5 +32,4 @@ fun main() {
 }
 
 fun deleteFood(productTable: Table<Product>) =
-    Delete(productTable, productTable[Product::category][Category::name] `=` Constant("Food"))
-        .execute()
+    productTable.delete(productTable[Product::category][Category::name] `=` Constant("Food"))
