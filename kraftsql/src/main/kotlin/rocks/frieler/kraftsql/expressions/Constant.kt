@@ -10,6 +10,7 @@ open class Constant<E : Engine<E>, T : Any>(
     override fun sql(): String {
         return when (value) {
             null -> "NULL"
+            is Boolean -> if (value) "TRUE" else "FALSE"
             is Number -> value.toString()
             is Instant -> "TIMESTAMP '$value'"
             is LocalDate -> "DATE '$value'"

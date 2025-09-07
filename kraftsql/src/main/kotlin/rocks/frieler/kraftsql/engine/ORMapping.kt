@@ -43,8 +43,9 @@ interface ORMapping<E : Engine<E>, R : Any> {
                 value as Expression<E, T>
             }
             value == null -> Constant(null)
-            value is String -> Constant(value)
+            value is Boolean -> Constant(value)
             value is Number -> Constant(value)
+            value is String -> Constant(value)
             value is Instant -> Constant(value)
             value is LocalDate -> Constant(value)
             value is kotlin.Array<*> -> {

@@ -25,6 +25,10 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
         while (queryResult.next()) {
             result.add(
                 when {
+                    type == Boolean::class -> {
+                        @Suppress("UNCHECKED_CAST")
+                        queryResult.getBoolean(columnOffset + 1) as T
+                    }
                     type == Integer::class -> {
                         @Suppress("UNCHECKED_CAST")
                         queryResult.getInt(columnOffset + 1) as T
@@ -74,6 +78,7 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                 .map { queryResult.metaData.getColumnLabel(it) to getKTypeFor(types.parseType(queryResult.metaData.getColumnTypeName(it))) }
                                 .associate { (name, valueColumnType) -> name to
                                     when {
+                                        valueColumnType == typeOf<Boolean>() -> queryResult.getBoolean(name)
                                         valueColumnType == typeOf<Int>() -> queryResult.getInt(name)
                                         valueColumnType == typeOf<Long>() -> queryResult.getLong(name)
                                         valueColumnType == typeOf<String>() -> queryResult.getString(name)
@@ -96,6 +101,12 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                         val constructor = type.ensuredPrimaryConstructor()
                         constructor.callBy(constructor.parameters.associateWith { param ->
                             when {
+                                param.type == typeOf<Boolean>() -> {
+                                    if (resultSchema.any { it.name == param.name })
+                                        queryResult.getBoolean(param.name)
+                                    else
+                                        queryResult.getBoolean(columnOffset + param.index + 1)
+                                }
                                 param.type == typeOf<Integer>() -> {
                                     if (resultSchema.any { it.name == param.name })
                                         queryResult.getInt(param.name)
