@@ -4,8 +4,8 @@ dokka = "2.0.0"
 maven-publish-plugin = "0.34.0"
 h2 = "2.3.232"
 junit = "5.13.3"
-kotest = "5.9.1"
 junit-platform = "1.13.3"
+kotest = "5.9.1"
 
 [libraries]
 maven-publish-plugin = { group = "com.vanniktech.maven.publish", name = "com.vanniktech.maven.publish.gradle.plugin", version.ref = "maven-publish-plugin" }
