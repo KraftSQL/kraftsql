@@ -2,7 +2,6 @@ package rocks.frieler.kraftsql.examples
 
 import org.junit.jupiter.api.Test
 import rocks.frieler.kraftsql.dml.Delete
-import rocks.frieler.kraftsql.dsl.`as`
 import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.h2.ddl.create
 import rocks.frieler.kraftsql.h2.dml.execute
@@ -37,12 +36,9 @@ class TransactionsTest {
             println(e.message)
 
         } finally {
-            Select<DataRow> {
-                from(table)
-                columns(table.get<Int>("number") `as` "number")
-            }.execute().also { result ->
-                result shouldContainExactlyOne { it["number"] == 1 }
-                result shouldContainExactlyOne { it["number"] == 2 }
+            Select<DataRow> { from(table) }.execute().also { rows ->
+                rows shouldContainExactlyOne { it["number"] == 1 }
+                rows shouldContainExactlyOne { it["number"] == 2 }
             }
         }
     }

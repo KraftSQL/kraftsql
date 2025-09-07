@@ -71,8 +71,11 @@ open class SimulatorConnection<E : Engine<E>>(
                 DataRow(projections.mapValues { (_, expression) -> expression.invoke(rowGroup) })
             }
         } else {
-            val projections = (select.columns ?: throw NotImplementedError("Simulation of 'SELECT *' is not implemented."))
-                .associate { (it.alias ?: it.value.defaultColumnName()) to simulateExpression(it.value) }
+            val projections = (
+                    select.columns
+                    ?: (select.source.data as? Table)?.columns?.map { Projection(select.source[it.name]) }
+                    ?: throw NotImplementedError("Simulation of 'SELECT *' is not implemented.")
+                ).associate { (it.alias ?: it.value.defaultColumnName()) to simulateExpression(it.value) }
             rows = rows.map { row ->
                 DataRow(projections.mapValues { (_, expression) -> expression.invoke(row) })
             }
