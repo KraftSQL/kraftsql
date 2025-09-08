@@ -12,11 +12,7 @@ import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.typeOf
 
 open class SimulatorORMapping<E : Engine<E>> : ORMapping<E, List<DataRow>> {
-    override fun getTypeFor(type: KType): Type<E> {
-        throw NotImplementedError("Simulated Engines don't use a SQL Type system.")
-    }
-
-    override fun getKTypeFor(sqlType: Type<E>): KType {
+    override fun getTypeFor(type: KType): Type<E, *> {
         throw NotImplementedError("Simulated Engines don't use a SQL Type system.")
     }
 
