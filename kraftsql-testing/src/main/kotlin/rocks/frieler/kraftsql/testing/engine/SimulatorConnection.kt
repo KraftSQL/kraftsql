@@ -24,13 +24,18 @@ import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.expressions.Array
+import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.expressions.SumAsBigDecimal
 import java.math.BigDecimal
 import java.sql.SQLSyntaxErrorException
+import java.time.LocalDate
 import kotlin.reflect.KClass
+import kotlin.reflect.cast
 import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.jvm.jvmErasure
+import kotlin.reflect.typeOf
 
 open class SimulatorConnection<E : Engine<E>>(
     private val orm: SimulatorORMapping<E> = SimulatorORMapping()
@@ -195,6 +200,20 @@ open class SimulatorConnection<E : Engine<E>>(
             is Column<E, T> -> { row ->
                 @Suppress("UNCHECKED_CAST")
                 row[expression.qualifiedName] as T
+            }
+            is Cast<E, T> -> { row ->
+                val targetType = expression.type.naturalKType()
+                val value = simulateExpression(expression.expression).invoke(row)
+                @Suppress("UNCHECKED_CAST")
+                when (targetType) {
+                    typeOf<Boolean>() -> value?.toString()?.toBooleanStrictOrNull()
+                    typeOf<Int>() -> value?.toString()?.toInt()
+                    typeOf<Long>() -> value?.toString()?.toLong()
+                    typeOf<String>() -> value?.toString()
+                    typeOf<LocalDate>() -> value?.toString()?.let { LocalDate.parse(it) }
+                    // TODO: add support for other types as needed
+                    else -> targetType.jvmErasure.cast(value)
+                } as T
             }
             is Equals<E> -> { row : DataRow ->
                 @Suppress("UNCHECKED_CAST") // because T must be Boolean in case of Equals

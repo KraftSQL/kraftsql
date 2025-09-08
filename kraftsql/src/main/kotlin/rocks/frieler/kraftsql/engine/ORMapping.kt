@@ -14,9 +14,7 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
 interface ORMapping<E : Engine<E>, R : Any> {
-    fun getTypeFor(type: KType): Type<E>
-
-    fun getKTypeFor(sqlType: Type<E>): KType
+    fun getTypeFor(type: KType): Type<E, *>
 
     fun getSchemaFor(type: KClass<*>): List<Column<E>> {
         check(type.isData) { "Automatic schema generation for non-data class ${type.qualifiedName} is not supported." }

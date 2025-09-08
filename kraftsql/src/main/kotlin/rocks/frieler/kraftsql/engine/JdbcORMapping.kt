@@ -63,7 +63,7 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                     }
                     type.starProjectedType == typeOf<Array<*>>() -> {
                         val jdbcArray = queryResult.getArray(columnOffset + 1)
-                        val elementType = getKTypeFor(types.parseType(jdbcArray.baseTypeName)).arguments.single().type!!
+                        val elementType = types.parseType(jdbcArray.baseTypeName).naturalKType().arguments.single().type!!
                         val elements = deserializeQueryResultInternal(jdbcArray.resultSet, elementType.jvmErasure, 1)
                         val array = java.lang.reflect.Array.newInstance(elementType.jvmErasure.java, elements.size)
                         @Suppress("UNCHECKED_CAST")
@@ -75,7 +75,7 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                         @Suppress("UNCHECKED_CAST")
                         DataRow(
                             (columnOffset + 1..queryResult.metaData.columnCount)
-                                .map { queryResult.metaData.getColumnLabel(it) to getKTypeFor(types.parseType(queryResult.metaData.getColumnTypeName(it))) }
+                                .map { queryResult.metaData.getColumnLabel(it) to types.parseType(queryResult.metaData.getColumnTypeName(it)).naturalKType() }
                                 .associate { (name, valueColumnType) -> name to
                                     when {
                                         valueColumnType == typeOf<Boolean>() -> queryResult.getBoolean(name)
