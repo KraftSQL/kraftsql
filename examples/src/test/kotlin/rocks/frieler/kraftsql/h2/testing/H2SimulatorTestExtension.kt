@@ -8,20 +8,20 @@ import rocks.frieler.kraftsql.testing.SimulatorTestExtension
 import rocks.frieler.kraftsql.testing.engine.SimulatorConnection
 
 class H2SimulatorTestExtension(
-    connection : SimulatorConnection<H2Engine> = SimulatorConnection(),
+    connectionProvider : () -> SimulatorConnection<H2Engine> = { SimulatorConnection() },
     defaultConnectionToConfigure: DefaultConnection<H2Engine>? = H2InMemoryConnection.Default,
-) : SimulatorTestExtension<H2Engine>(connection, defaultConnectionToConfigure) {
+) : SimulatorTestExtension<H2Engine>(connectionProvider, defaultConnectionToConfigure) {
 
     class Builder(
-        connection : SimulatorConnection<H2Engine> = SimulatorConnection(),
-    ) : SimulatorTestExtension.Builder<H2Engine>(connection) {
+        connectionProvider : () -> SimulatorConnection<H2Engine> = { SimulatorConnection() },
+    ) : SimulatorTestExtension.Builder<H2Engine>(connectionProvider) {
 
         init {
             defaultConnectionToConfigure(H2InMemoryConnection.Default)
         }
 
         override fun build(): H2SimulatorTestExtension {
-            return H2SimulatorTestExtension(this@Builder.connection, defaultConnectionToConfigure)
+            return H2SimulatorTestExtension(this@Builder.connectionProvider, defaultConnectionToConfigure)
         }
     }
 }

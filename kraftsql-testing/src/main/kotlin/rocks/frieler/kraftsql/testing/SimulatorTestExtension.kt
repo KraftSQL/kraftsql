@@ -9,7 +9,7 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.testing.engine.SimulatorConnection
 
 open class SimulatorTestExtension<E : Engine<E>>(
-    open val connection: SimulatorConnection<E>,
+    open val connectionProvider: () -> SimulatorConnection<E>,
     private val defaultConnectionToConfigure: DefaultConnection<E>? = null
 ) : TestInstancePreConstructCallback, TestInstancePreDestroyCallback {
 
@@ -17,7 +17,7 @@ open class SimulatorTestExtension<E : Engine<E>>(
         testInstanceFactoryContext: TestInstanceFactoryContext,
         extensionContext: ExtensionContext,
     ) {
-        defaultConnectionToConfigure?.set(connection)
+        defaultConnectionToConfigure?.set(connectionProvider.invoke())
     }
 
     override fun preDestroyTestInstance(extensionContext: ExtensionContext) {
@@ -25,7 +25,7 @@ open class SimulatorTestExtension<E : Engine<E>>(
     }
 
     open class Builder<E : Engine<E>>(
-        protected open val connection: SimulatorConnection<E>,
+        protected open val connectionProvider: () -> SimulatorConnection<E>,
     ) {
         protected var defaultConnectionToConfigure: DefaultConnection<E>? = null
 
@@ -35,6 +35,6 @@ open class SimulatorTestExtension<E : Engine<E>>(
         }
 
         open fun build() : SimulatorTestExtension<E> =
-            SimulatorTestExtension(connection, defaultConnectionToConfigure)
+            SimulatorTestExtension(connectionProvider, defaultConnectionToConfigure)
     }
 }
