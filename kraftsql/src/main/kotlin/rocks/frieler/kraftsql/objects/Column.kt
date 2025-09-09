@@ -8,6 +8,6 @@ class Column<E : Engine<E>>(
     val type: Type<E, *>,
 ) {
     fun sql() : String {
-        return "\"$name\" ${type.sql()}"
+        return "$name ${type.sql()}"
     }
 }
