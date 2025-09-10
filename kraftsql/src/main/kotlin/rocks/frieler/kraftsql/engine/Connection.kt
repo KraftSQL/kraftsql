@@ -28,14 +28,14 @@ interface Connection<E: Engine<E>> {
     fun execute(rollbackTransaction: RollbackTransaction<E>)
 }
 
-abstract class DefaultConnection<E : Engine<E>> {
-    private var instance : Connection<E>? = null
+abstract class DefaultConnection<E : Engine<E>, C : Connection<E>> {
+    private var instance : C? = null
 
-    fun get(): Connection<E> = (instance ?: instantiate()).also { instance = it }
+    fun get(): C = (instance ?: instantiate()).also { instance = it }
 
-    protected abstract fun instantiate(): Connection<E>
+    protected abstract fun instantiate(): C
 
-    fun set(instance: Connection<E>) {
+    fun set(instance: C) {
         this.instance = instance
     }
 
