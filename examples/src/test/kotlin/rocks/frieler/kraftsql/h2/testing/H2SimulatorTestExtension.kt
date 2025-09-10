@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.h2.testing
 
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.ExtensionContext
 import rocks.frieler.kraftsql.engine.Connection
 import rocks.frieler.kraftsql.engine.DefaultConnection
 import rocks.frieler.kraftsql.h2.engine.H2Engine
@@ -9,7 +10,7 @@ import rocks.frieler.kraftsql.testing.engine.GenericSimulatorConnection
 import rocks.frieler.kraftsql.testing.engine.SimulatorConnection
 
 class H2SimulatorTestExtension(
-    connectionProvider : () -> SimulatorConnection<H2Engine> = { GenericSimulatorConnection() },
+    connectionProvider : (ExtensionContext) -> SimulatorConnection<H2Engine> = { GenericSimulatorConnection() },
     defaultConnectionToConfigure: DefaultConnection<H2Engine, Connection<H2Engine>>? = H2Engine.DefaultConnection,
 ) : SimulatorTestExtension<H2Engine, Connection<H2Engine>, SimulatorConnection<H2Engine>>(connectionProvider, defaultConnectionToConfigure) {
 
@@ -22,7 +23,7 @@ class H2SimulatorTestExtension(
         }
 
         override fun build(): H2SimulatorTestExtension {
-            return H2SimulatorTestExtension(this@Builder.connectionProvider, defaultConnectionToConfigure)
+            return H2SimulatorTestExtension({ this@Builder.connectionProvider.invoke() }, defaultConnectionToConfigure)
         }
     }
 }

@@ -10,17 +10,19 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.testing.engine.SimulatorConnection
 
 open class SimulatorTestExtension<E : Engine<E>, C : Connection<E>, S : SimulatorConnection<E>>(
-    open val connectionProvider: () -> S,
+    open val connectionProvider: (ExtensionContext) -> S,
     private val defaultConnectionToConfigure: DefaultConnection<E, C>? = null
 ) : TestInstancePreConstructCallback, TestInstancePreDestroyCallback {
+
 
     override fun preConstructTestInstance(
         testInstanceFactoryContext: TestInstanceFactoryContext,
         extensionContext: ExtensionContext,
     ) {
+        val simulatorConnection = connectionProvider.invoke(extensionContext)
         @Suppress("UNCHECKED_CAST")
         // we cannot express that S must also implement C, so we have to let it fail at runtime :-(
-        defaultConnectionToConfigure?.set(connectionProvider.invoke() as C)
+        defaultConnectionToConfigure?.set(simulatorConnection as C)
     }
 
     override fun preDestroyTestInstance(extensionContext: ExtensionContext) {
@@ -38,6 +40,6 @@ open class SimulatorTestExtension<E : Engine<E>, C : Connection<E>, S : Simulato
         }
 
         open fun build() : SimulatorTestExtension<E, C, S> =
-            SimulatorTestExtension(connectionProvider, defaultConnectionToConfigure)
+            SimulatorTestExtension({ connectionProvider.invoke() }, defaultConnectionToConfigure)
     }
 }
