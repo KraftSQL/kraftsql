@@ -37,10 +37,31 @@ import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.typeOf
 
 open class GenericSimulatorConnection<E : Engine<E>>(
-    private val orm: SimulatorORMapping<E> = SimulatorORMapping()
+    private val orm: SimulatorORMapping<E> = SimulatorORMapping(),
+    protected val rootState: EngineState<E> = EngineState(),
 ) : SimulatorConnection<E> {
-    private val tables: MutableMap<String, Pair<Table<E, *>, MutableList<DataRow>>> = mutableMapOf()
-    private val transactionsOverlayData = mutableListOf<MutableMap<String, Pair<Table<E, *>, MutableList<DataRow>>>>()
+    protected var topState:  EngineState<E> = rootState
+
+    protected open class TransactionStateOverlay<E : Engine<E>>(
+        val parent: EngineState<E>,
+    ) : EngineState<E>() {
+        override fun containsTable(name: String): Boolean {
+            return super.containsTable(name) || parent.containsTable(name)
+        }
+
+        override fun findTable(name: String): Pair<Table<E, *>, MutableList<DataRow>>? {
+            return super.findTable(name) ?: parent.findTable(name)
+        }
+
+        fun ensureTableCopy(name: String) {
+            tables.computeIfAbsent(name) { getTable(name).run { first to second.toMutableList() } }
+        }
+
+        fun commitIntoParent(): EngineState<E> {
+            tables.values.forEach { (table, data) -> parent.writeTable(table, data) }
+            return parent
+        }
+    }
 
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> {
         var rows = fetchData(select.source)
@@ -90,20 +111,22 @@ open class GenericSimulatorConnection<E : Engine<E>>(
 
     override fun execute(createTable: CreateTable<E>) {
         commitAllOpenTransactions()
-        check(createTable.table.qualifiedName !in tables) { "Table '${createTable.table.qualifiedName}' already exists." }
-        tables[createTable.table.qualifiedName] = createTable.table to mutableListOf()
+        check(!rootState.containsTable(createTable.table.qualifiedName)) { "Table '${createTable.table.qualifiedName}' already exists." }
+        rootState.addTable(createTable.table)
     }
 
     override fun execute(dropTable: DropTable<E>) {
         commitAllOpenTransactions()
         if (!dropTable.ifExists) {
-            check(dropTable.table.qualifiedName in tables) { "Table '${dropTable.table.qualifiedName}' does not exist." }
+            check(rootState.containsTable(dropTable.table.qualifiedName)) { "Table '${dropTable.table.qualifiedName}' does not exist." }
         }
-        tables.remove(dropTable.table.qualifiedName)
+        rootState.removeTable(dropTable.table)
     }
 
     override fun execute(insertInto: InsertInto<E, *>): Int {
-        val table = ensureTableCopyInTransactionIfOpen(insertInto.table.qualifiedName)
+        val table = topState
+            .also { (it as? TransactionStateOverlay<E>)?.ensureTableCopy(insertInto.table.qualifiedName) }
+            .getTable(insertInto.table.qualifiedName)
         val rows = insertInto.values.let { values ->
             when (values) {
                 is ConstantData -> values.items.map { item -> simulateExpression(orm.serialize(item)).invoke(DataRow(emptyMap())) as DataRow }
@@ -120,7 +143,9 @@ open class GenericSimulatorConnection<E : Engine<E>>(
     }
 
     override fun execute(delete: Delete<E>): Int {
-        val table = ensureTableCopyInTransactionIfOpen(delete.table.qualifiedName)
+        val table = topState
+            .also { (it as? TransactionStateOverlay<E>)?.ensureTableCopy(delete.table.qualifiedName) }
+            .getTable(delete.table.qualifiedName)
         val tableSizeBefore = table.second.size
         val condition = delete.condition?.let { simulateExpression(it) }
         if (condition == null) {
@@ -132,42 +157,36 @@ open class GenericSimulatorConnection<E : Engine<E>>(
     }
 
     override fun execute(beginTransaction: BeginTransaction<E>) {
-        transactionsOverlayData.add(mutableMapOf())
+        topState = TransactionStateOverlay(topState)
     }
 
-    private fun ensureTableCopyInTransactionIfOpen(qualifiedName: String) =
-        if (transactionsOverlayData.isNotEmpty()) {
-            transactionsOverlayData.last().computeIfAbsent(qualifiedName) { findTable(qualifiedName).run { first to second.toMutableList() } }
-        } else {
-            findTable(qualifiedName)
-        }
-
     override fun execute(commitTransaction: CommitTransaction<E>) {
-        val dataToCommit = transactionsOverlayData.removeLast()
-        val stateToCommitInto = if (transactionsOverlayData.isNotEmpty()) transactionsOverlayData.last() else tables
-        dataToCommit.forEach { (qualifiedName, data) ->
-            stateToCommitInto[qualifiedName] = data.first to data.second
+        topState = topState.let {
+            if (it is TransactionStateOverlay<E>) {
+                it.commitIntoParent()
+            } else {
+                throw IllegalStateException("No open transaction to commit.")
+            }
         }
     }
 
     private fun commitAllOpenTransactions() {
-        while (transactionsOverlayData.isNotEmpty()) execute(CommitTransaction())
+        while (topState is TransactionStateOverlay<E>) execute(CommitTransaction())
     }
 
     override fun execute(rollbackTransaction: RollbackTransaction<E>) {
-        transactionsOverlayData.removeLast()
-    }
-
-    private fun findTable(name: String): Pair<Table<E, *>, MutableList<DataRow>> {
-        for (state in transactionsOverlayData.reversed()) {
-            state[name]?.let { return it }
+        topState = topState.let {
+            if (it is TransactionStateOverlay<E>) {
+                it.parent
+            } else {
+                throw IllegalStateException("No open transaction to roll back.")
+            }
         }
-        return tables[name] ?: throw IllegalStateException("Table '$name' does not exist.")
     }
 
     protected open fun fetchData(source: QuerySource<E, *>) : List<DataRow> {
         var rows = source.data.let { data -> when (data) {
-            is Table<E, *> -> findTable(data.qualifiedName).second
+            is Table<E, *> -> topState.getTable(data.qualifiedName).second
             is Select<E, *> -> {
                 @Suppress("UNCHECKED_CAST")
                 execute(data as Select<E, DataRow>, DataRow::class)
