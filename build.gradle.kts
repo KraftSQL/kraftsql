@@ -1,6 +1,6 @@
 allprojects {
     group = "rocks.frieler.kraftsql"
-    version = "0.0.5-SNAPSHOT"
+    version = "0.0.5"
 
     repositories {
         mavenCentral()
