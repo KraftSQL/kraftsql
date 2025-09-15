@@ -7,6 +7,7 @@ import rocks.frieler.kraftsql.h2.dml.execute
 import rocks.frieler.kraftsql.h2.dml.insertInto
 import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.dsl.Select
+import rocks.frieler.kraftsql.h2.dsl.transaction
 import rocks.frieler.kraftsql.h2.engine.Types.INTEGER
 import rocks.frieler.kraftsql.h2.expressions.Constant
 import rocks.frieler.kraftsql.h2.objects.Table
@@ -20,7 +21,7 @@ fun main() {
         DataRow(mapOf("number" to 2)).insertInto(table)
 
         try {
-            rocks.frieler.kraftsql.h2.dsl.inTransaction {
+            transaction {
                 Delete(table, table.get<Int>("number") `=` Constant(1)).execute()
                 DataRow(mapOf("number" to 3, "foo" to "bar")).insertInto(table)
             }

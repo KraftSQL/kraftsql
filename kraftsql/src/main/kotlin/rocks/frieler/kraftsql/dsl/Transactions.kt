@@ -7,7 +7,7 @@ import rocks.frieler.kraftsql.dml.execute
 import rocks.frieler.kraftsql.engine.Connection
 import rocks.frieler.kraftsql.engine.Engine
 
-fun <E : Engine<E>> inTransaction(connection: Connection<E>, content: () -> Unit) {
+fun <E : Engine<E>> transaction(connection: Connection<E>, content: () -> Unit) {
     BeginTransaction<E>().execute(connection)
     try {
         content.invoke()

@@ -9,6 +9,7 @@ import rocks.frieler.kraftsql.dql.Join
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
+import kotlin.reflect.KProperty
 
 fun <E : Engine<E>, T : Any> Select(configurator: @SqlDsl SelectBuilder<E, T>.() -> Unit) : Select<E, T> {
     return SelectBuilder<E, T>().apply { configurator() }.build()
@@ -28,7 +29,15 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
             .also { this.source = it }
     }
 
-    fun from(source: Data<E, *>) = from(QuerySource(source))
+    fun <S: Any> from(source: Data<E, S>) = from(QuerySource(source))
+
+    fun column(column: Projection<E, *>) {
+        columns.add(column)
+    }
+
+    fun column(column: Expression<E, *>) {
+        column(Projection(column))
+    }
 
     fun columns(vararg columns: Projection<E, *>) {
         this.columns.addAll(columns)
@@ -62,4 +71,9 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
 
 infix fun <E : Engine<E>, T : Any> Data<E, T>.`as`(alias: String) = QuerySource(this, alias)
 
-infix fun <E : Engine<E>, T> Expression<E, T>.`as`(alias: String) = Projection(this, alias)
+infix fun <E : Engine<E>, T : Any> Expression<E, T>.`as`(alias: String) = Projection(this, alias)
+
+infix fun <E: Engine<E>, T : Any> Expression<E, T>.`as`(field: KProperty<T>) = Projection(this, field.name)
+
+@JvmName("asNullable")
+infix fun <E: Engine<E>, T : Any> Expression<E, T>.`as`(field: KProperty<T?>) = Projection(this, field.name)
