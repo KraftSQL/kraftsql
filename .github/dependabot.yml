@@ -9,6 +9,9 @@ updates:
         patterns:
           - org.junit.jupiter:*
           - org.junit.platform:*
+      kotest:
+        patterns:
+          - io.kotest:kotest-*
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
