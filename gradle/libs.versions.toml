@@ -4,7 +4,7 @@ dokka = "2.0.0"
 maven-publish-plugin = "0.34.0"
 h2 = "2.3.232"
 junit = "5.13.3"
-junit-platform = "1.13.3"
+junit-platform = "1.13.4"
 kotest = "5.9.1"
 
 [libraries]
