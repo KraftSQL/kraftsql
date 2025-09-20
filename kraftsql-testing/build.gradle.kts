@@ -9,8 +9,7 @@ plugins {
 
 dependencies {
     implementation(libs.junit5.api)
-    implementation(libs.kotest.assertions.api)
-    implementation(libs.kotest.assertions.shared)
+    implementation(libs.kotest.assertions.core)
     implementation(project(":kraftsql"))
 }
 

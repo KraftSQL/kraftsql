@@ -1,5 +1,7 @@
 package rocks.frieler.kraftsql.examples
 
+import io.kotest.inspectors.forNone
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import rocks.frieler.kraftsql.h2.dsl.Select
@@ -10,8 +12,6 @@ import rocks.frieler.kraftsql.h2.ddl.create
 import rocks.frieler.kraftsql.h2.dml.insertInto
 import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
-import rocks.frieler.kraftsql.testing.matchers.collections.shouldContainExactlyOne
-import rocks.frieler.kraftsql.testing.matchers.collections.shouldContainNone
 
 @WithH2Simulator
 class DeleteFoodTest {
@@ -25,8 +25,8 @@ class DeleteFoodTest {
 
         deletedProductCount shouldBe 1
         Select<Product> { from(products) }.execute().also { remainingProducts ->
-            remainingProducts shouldContainNone  { it.category.name == "Food" }
-            remainingProducts shouldContainExactlyOne { it == pants }
+            remainingProducts.forNone { it.category.name shouldBe "Food" }
+            remainingProducts shouldContain pants
         }
     }
 }

@@ -8,7 +8,7 @@ import rocks.frieler.kraftsql.examples.data.Purchase
 import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
 import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.objects.ConstantData
-import rocks.frieler.kraftsql.testing.matchers.collections.shouldContainExactlyOne
+import rocks.frieler.kraftsql.testing.kotest.inspectors.filterForOne
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -32,10 +32,10 @@ class TotalPurchaseValuePerCustomerTest {
         val customerPurchaseValues = aggregatePurchaseValuePerCustomer(customers, purchases)
             .execute()
 
-        (customerPurchaseValues shouldContainExactlyOne { it.customerId == customer1.id }).also {
+        (customerPurchaseValues.filterForOne { it.customerId shouldBe customer1.id }).also {
             it.totalAmount shouldBe BigDecimal("3.00")
         }
-        (customerPurchaseValues shouldContainExactlyOne { it.customerId == customer2.id }).also {
+        (customerPurchaseValues.filterForOne { it.customerId shouldBe customer2.id }).also {
             it.totalAmount shouldBe BigDecimal("30.00")
         }
     }

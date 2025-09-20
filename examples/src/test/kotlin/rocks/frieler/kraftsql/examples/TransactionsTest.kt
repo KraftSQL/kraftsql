@@ -1,5 +1,7 @@
 package rocks.frieler.kraftsql.examples
 
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldHaveSingleElement
 import org.junit.jupiter.api.Test
 import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.expressions.`=`
@@ -15,7 +17,6 @@ import rocks.frieler.kraftsql.h2.objects.Table
 import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
 import rocks.frieler.kraftsql.objects.Column
 import rocks.frieler.kraftsql.objects.DataRow
-import rocks.frieler.kraftsql.testing.matchers.collections.shouldContainExactlyOne
 
 @WithH2Simulator
 class TransactionsTest {
@@ -27,19 +28,16 @@ class TransactionsTest {
         DataRow(mapOf("number" to 1)).insertInto(table)
         DataRow(mapOf("number" to 2)).insertInto(table)
 
-        try {
+        shouldThrow<IllegalArgumentException> {
             transaction {
                 Delete(table, table.get<Int>("number") `=` Constant(1)).execute()
                 DataRow(mapOf("number" to 3, "foo" to "bar")).insertInto(table)
             }
-        } catch (e: Exception) {
-            println(e.message)
+        }
 
-        } finally {
-            Select<DataRow> { from(table) }.execute().also { rows ->
-                rows shouldContainExactlyOne { it["number"] == 1 }
-                rows shouldContainExactlyOne { it["number"] == 2 }
-            }
+        Select<DataRow> { from(table) }.execute().also { rows ->
+            rows shouldHaveSingleElement  { it["number"] == 1 }
+            rows shouldHaveSingleElement { it["number"] == 2 }
         }
     }
 }

@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.examples
 
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import rocks.frieler.kraftsql.examples.data.Category
@@ -11,7 +12,7 @@ import rocks.frieler.kraftsql.examples.data.Purchase
 import rocks.frieler.kraftsql.h2.objects.ConstantData
 import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
-import rocks.frieler.kraftsql.testing.matchers.collections.shouldContainExactlyOne
+import rocks.frieler.kraftsql.testing.kotest.inspectors.filterForOne
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -40,8 +41,8 @@ class SoldFoodPerCountryTest {
             ),
         ).execute()
 
-        val soldFood = soldFoodPerCountry shouldContainExactlyOne { it[Customer::country.name] == germanCustomer.country.code }
-        soldFood["_totalAmount"] shouldBe 3L
+        val soldFoodInGermany = soldFoodPerCountry.filterForOne { it[Customer::country.name] shouldBe germanCustomer.country.code }
+        soldFoodInGermany["_totalAmount"] shouldBe 3L
     }
 
     @Test
@@ -57,8 +58,8 @@ class SoldFoodPerCountryTest {
             ),
         ).execute()
 
-        val soldFood = soldFoodPerCountry shouldContainExactlyOne { it[Customer::country.name] == germanCustomer.country.code }
-        soldFood["_totalAmount"] shouldBe 1L
+        val soldFoodInGermany = soldFoodPerCountry.filterForOne { it[Customer::country.name] shouldBe germanCustomer.country.code }
+        soldFoodInGermany["_totalAmount"] shouldBe 1L
     }
 
     @Test
@@ -75,8 +76,7 @@ class SoldFoodPerCountryTest {
             ),
         ).execute()
 
-        soldFoodPerCountry shouldContainExactlyOne { it[Customer::country.name] == germanCustomer.country.code }
-        soldFoodPerCountry shouldContainExactlyOne { it[Customer::country.name] == austrianCustomer.country.code }
+        soldFoodPerCountry.map { it[Customer::country.name] } shouldContainExactlyInAnyOrder listOf(germanCustomer.country.code, austrianCustomer.country.code)
     }
 
     @Test
@@ -94,8 +94,8 @@ class SoldFoodPerCountryTest {
             ),
         ).execute()
 
-        val soldFood = soldFoodPerCountry shouldContainExactlyOne { it[Customer::country.name] == germanCustomer.country.code }
-        soldFood["_totalAmount"] shouldBe 1L
+        val soldFoodInGermany = soldFoodPerCountry.filterForOne { it[Customer::country.name] shouldBe germanCustomer.country.code }
+        soldFoodInGermany["_totalAmount"] shouldBe 1L
     }
 
     @Test
@@ -113,7 +113,7 @@ class SoldFoodPerCountryTest {
             ),
         ).execute()
 
-        val soldFood = soldFoodPerCountry shouldContainExactlyOne { it[Customer::country.name] == germanCustomer.country.code }
+        val soldFood = soldFoodPerCountry.filterForOne { it[Customer::country.name] shouldBe germanCustomer.country.code }
         soldFood["_totalAmount"] shouldBe 1L
     }
 }
