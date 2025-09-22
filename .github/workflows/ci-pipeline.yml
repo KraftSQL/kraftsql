@@ -15,9 +15,14 @@ jobs:
           java-version: '21'
       - name: Build and check
         uses: christopherfrieler/gradle-wrapper-action@v0.6.0
+        env:
+          GITHUB_REPO_DEFAULT_BRANCH_NAME: ${{ github.event.repository.default_branch }}
+          GITHUB_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           arguments: |
-            check assemble generatePomFileForMavenPublication kotlinSourcesJar dokkaJavadocJar
+            check sonar
+            assemble generatePomFileForMavenPublication kotlinSourcesJar dokkaJavadocJar
             versionFile
           artifacts: |
             core-build kraftsql/build/publications/maven/pom-default.xml kraftsql/build/libs/kraftsql-*.jar
