@@ -9,6 +9,8 @@ jobs:
       version: ${{ steps.provide_version.outputs.version }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # for sonar
       - uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
