@@ -49,6 +49,11 @@ sonar {
 project(":examples") {
     sonar.isSkipProject = true
 }
+tasks.sonar {
+    for (subproject in subprojects.filterNot { it.sonar.isSkipProject }) {
+        subproject.tasks.findByName("jacocoTestReport")?.also { dependsOn(it) }
+    }
+}
 
 tasks.register<Exec>("fetchDefaultBranch") {
     group = "other"
