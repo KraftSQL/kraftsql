@@ -26,11 +26,11 @@ java {
 
 tasks.test {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
 }
 tasks.jacocoTestReport {
     reports {
         xml.required = true
         html.required = false
     }
-    dependsOn(tasks.test)
 }
