@@ -33,5 +33,4 @@ tasks.jacocoTestReport {
         html.required = false
     }
     dependsOn(tasks.test)
-    rootProject.tasks.findByName("sonar")?.dependsOn(this)
 }
