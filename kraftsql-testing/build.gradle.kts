@@ -3,6 +3,7 @@ project.description = "KrafSQL Core Testing Support"
 plugins {
     id(libs.plugins.kotlin.jvm.get().pluginId)
     `java-library`
+    jacoco
     alias(libs.plugins.dokka.javadoc)
     id("kraftsql-publishing")
 }
@@ -27,4 +28,12 @@ java {
 
 tasks.test {
     useJUnitPlatform()
+}
+tasks.jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = false
+    }
+    dependsOn(tasks.test)
+    rootProject.tasks.findByName("sonar")?.dependsOn(this)
 }
