@@ -51,7 +51,7 @@ project(":examples") {
 }
 tasks.sonar {
     for (subproject in subprojects.filterNot { it.sonar.isSkipProject }) {
-        subproject.tasks.findByName("jacocoTestReport")?.also { dependsOn(it) }
+        subproject.tasks.findByName("test")?.also { dependsOn(it) }
     }
 }
 
