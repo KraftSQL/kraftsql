@@ -3,8 +3,8 @@ project.description = "KrafSQL Core Library"
 plugins {
     id(libs.plugins.kotlin.jvm.get().pluginId)
     `java-library`
-    jacoco
     alias(libs.plugins.dokka.javadoc)
+    alias(libs.plugins.kover)
     id("kraftsql-publishing")
 }
 
@@ -26,11 +26,4 @@ java {
 
 tasks.test {
     useJUnitPlatform()
-    finalizedBy(tasks.jacocoTestReport)
-}
-tasks.jacocoTestReport {
-    reports {
-        xml.required = true
-        html.required = false
-    }
 }

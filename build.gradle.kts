@@ -32,6 +32,7 @@ sonar {
         property("sonar.projectKey", "kraftsql_kraftsql-core")
         property("sonar.projectName", "KraftSQL Core")
         property("sonar.gradle.scanAll", "True")
+        property("sonar.coverage.jacoco.xmlReportPaths", "**/build/reports/kover/report.xml")
         if (System.getenv("GITHUB_ACTIONS") == "true") {
             when (val githubEvent = System.getenv("GITHUB_EVENT_NAME")) {
                 "push" -> {
@@ -51,7 +52,7 @@ project(":examples") {
 }
 tasks.sonar {
     for (subproject in subprojects.filterNot { it.sonar.isSkipProject }) {
-        subproject.tasks.findByName("test")?.also { dependsOn(it) }
+        subproject.tasks.findByName("koverXmlReport")?.also { dependsOn(it) }
     }
 }
 
