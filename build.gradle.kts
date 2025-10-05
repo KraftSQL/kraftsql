@@ -51,11 +51,8 @@ project(":examples") {
     sonar.isSkipProject = true
 }
 tasks.sonar {
-    for (subproject in subprojects
-        .filterNot { it.sonar.isSkipProject }
-        .filter { it.plugins.hasPlugin(libs.plugins.kover.get().pluginId) }
-    ) {
-        subproject.tasks.findByName("koverXmlReport")!!.also { dependsOn(it) }
+    for (subproject in subprojects.filterNot { it.sonar.isSkipProject }) {
+        dependsOn("${subproject.name}:koverXmlReport")
     }
 }
 
