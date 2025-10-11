@@ -9,7 +9,6 @@ import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dml.RollbackTransaction
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Count
-import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.SumAsDouble
 import rocks.frieler.kraftsql.expressions.SumAsLong
@@ -227,6 +226,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         registerExpressionSimulator(ConstantSimulator())
         registerExpressionSimulator(ColumnSimulator())
         registerExpressionSimulator(CastSimulator())
+        registerExpressionSimulator(EqualsSimulator())
     }
 
     protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? {
@@ -252,10 +252,6 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         }
 
         return when (expression) {
-            is Equals<E> -> { row : DataRow ->
-                @Suppress("UNCHECKED_CAST") // because T must be Boolean in case of Equals
-                (simulateExpression(expression.left).invoke(row) == simulateExpression(expression.right).invoke(row)) as T
-            }
             is Array<E, *> -> { row ->
                 @Suppress("UNCHECKED_CAST")
                 if (expression.elements == null) {
@@ -313,13 +309,6 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         }
 
         return when (expression) {
-            is Equals<E> -> { rows ->
-                @Suppress("UNCHECKED_CAST")
-                (
-                    simulateAggregation(expression.left, groupExpressions).invoke(rows)
-                        == simulateAggregation(expression.right, groupExpressions).invoke(rows)
-                ) as T
-            }
             is Count<E> -> { rows ->
                 @Suppress("UNCHECKED_CAST")
                 rows.count().toLong() as T

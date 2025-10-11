@@ -3,6 +3,13 @@ package rocks.frieler.kraftsql.expressions
 import rocks.frieler.kraftsql.engine.Engine
 import java.util.Objects
 
+/**
+ * The SQL '=' operator.
+ *
+ * @param <E> the [Engine] that implements this [Equals] and for which the SQL code is rendered
+ * @param left the left-hand side of the '='-expression
+ * @param right the right-hand side of the '='-expression
+ */
 class Equals<E : Engine<E>>(
     val left: Expression<E, *>,
     val right: Expression<E, *>,

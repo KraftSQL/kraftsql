@@ -11,6 +11,7 @@ import rocks.frieler.kraftsql.engine.Type
 import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Constant
+import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
 import kotlin.reflect.typeOf
@@ -54,5 +55,17 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["number"] shouldBe 123
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate the equals-operator`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(emptyMap()))),
+                columns = listOf(Projection(Equals(Constant(1), Constant(1)), "equals")),
+            ), DataRow::class
+        )
+
+        result.single()["equals"] shouldBe true
     }
 }
