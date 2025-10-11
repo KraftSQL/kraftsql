@@ -8,7 +8,6 @@ import rocks.frieler.kraftsql.examples.data.products
 import rocks.frieler.kraftsql.examples.data.purchases
 import rocks.frieler.kraftsql.examples.data.customers
 import rocks.frieler.kraftsql.expressions.`=`
-import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.h2.dsl.Select
 import rocks.frieler.kraftsql.h2.engine.H2Engine
@@ -22,6 +21,7 @@ import rocks.frieler.kraftsql.examples.data.Purchase
 import rocks.frieler.kraftsql.examples.data.purchaseItems
 import rocks.frieler.kraftsql.examples.data.withSampleData
 import rocks.frieler.kraftsql.h2.dsl.`as`
+import rocks.frieler.kraftsql.h2.expressions.Constant
 
 fun main() {
     withSampleData {
