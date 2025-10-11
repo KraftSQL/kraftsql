@@ -9,7 +9,6 @@ import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dml.RollbackTransaction
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Column
-import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
@@ -232,7 +231,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         expressionSimulators[expression::class] as ExpressionSimulator<E, T, X>?
 
     init {
-        // TODO: register ExpressionSimulators
+        registerExpressionSimulator(ConstantSimulator())
     }
 
     protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? {
@@ -258,9 +257,6 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         }
 
         return when (expression) {
-            is Constant<E, T> -> { _ ->
-                expression.value
-            }
             is Column<E, T> -> { row ->
                 @Suppress("UNCHECKED_CAST")
                 row[expression.qualifiedName] as T
@@ -340,9 +336,6 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         }
 
         return when (expression) {
-            is Constant<E, T> -> { _ ->
-                expression.value
-            }
             is Column<E, T> -> throw SQLSyntaxErrorException("'${expression.sql()}' is neither in the GROUP BY list nor wrapped in an aggregation.")
             is Equals<E> -> { rows ->
                 @Suppress("UNCHECKED_CAST")
