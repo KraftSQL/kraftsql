@@ -25,6 +25,11 @@ java {
         languageVersion = JavaLanguageVersion.of(21)
     }
 }
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-parameters")
+    }
+}
 
 tasks.test {
     useJUnitPlatform()

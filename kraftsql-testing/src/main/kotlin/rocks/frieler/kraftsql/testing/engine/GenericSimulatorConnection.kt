@@ -36,6 +36,13 @@ import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.typeOf
 
+/**
+ * Generic [SimulatorConnection], that implements common behavior of SQL engines and dialects for testing.
+ *
+ * The [GenericSimulatorConnection] is configurable and extendable to simulate specific SQL engines and dialects.
+ *
+ * @param <E> the [Engine] to simulate
+ */
 open class GenericSimulatorConnection<E : Engine<E>>(
     private val orm: SimulatorORMapping<E> = SimulatorORMapping(),
     protected val rootState: EngineState<E> = EngineState(),
@@ -210,7 +217,46 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         return rows
     }
 
+    private val expressionSimulators: MutableMap<KClass<*>, ExpressionSimulator<E, *, *>> = mutableMapOf()
+
+    fun <T, X: Expression<E, T>> registerExpressionSimulator(expressionSimulator: ExpressionSimulator<E, T, X>) {
+        expressionSimulators[expressionSimulator.expression] = expressionSimulator
+    }
+
+    fun unregisterExpressionSimulator(expression: KClass<out Expression<*, *>>) {
+        expressionSimulators.remove(expression)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T, X: Expression<E, T>> getExpressionSimulator(expression: X) =
+        expressionSimulators[expression::class] as ExpressionSimulator<E, T, X>?
+
+    init {
+        // TODO: register ExpressionSimulators
+    }
+
     protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? {
+        context(
+            object : ExpressionSimulator.SubexpressionCallbacks<E> {
+                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? = { row ->
+                    context(this) { simulateExpressionInStatementContext(expression)(row) }
+                }
+
+                context(groupExpressions: List<Expression<E, *>>)
+                override fun <T> simulateAggregation(expression: Expression<E, T>) =
+                    throw IllegalStateException("sub-expression cannot be an aggregation")
+            }
+        ) {
+            return simulateExpressionInStatementContext(expression)
+        }
+    }
+
+    context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    private fun <T> simulateExpressionInStatementContext(expression: Expression<E, T>): (DataRow) -> T? {
+        getExpressionSimulator(expression)?.let {
+            return it.simulateExpression(expression)
+        }
+
         return when (expression) {
             is Constant<E, T> -> { _ ->
                 expression.value
@@ -266,9 +312,34 @@ open class GenericSimulatorConnection<E : Engine<E>>(
     }
 
     protected open fun <T> simulateAggregation(expression: Expression<E, T>, groupExpressions: List<Expression<E, *>>): (List<DataRow>) -> T? {
-        return if (groupExpressions.contains(expression)) {
-            { rows -> simulateExpression(expression).invoke(rows.first()) }
-        } else when (expression) {
+        context(
+            groupExpressions,
+            object : ExpressionSimulator.SubexpressionCallbacks<E> {
+                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? = { row ->
+                    context(this) { simulateExpressionInStatementContext(expression)(row) }
+                }
+
+                context(groupExpressions: List<Expression<E, *>>)
+                override fun <T> simulateAggregation(expression: Expression<E, T>): (List<DataRow>) -> T? = { rows ->
+                    context(groupExpressions, this) { simulateAggregationInStatementContext(expression)(rows)}
+                }
+            }
+        ) {
+            return simulateAggregationInStatementContext(expression)
+        }
+    }
+
+    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    private fun <T> simulateAggregationInStatementContext(expression: Expression<E, T>): (List<DataRow>) -> T? {
+        if (expression in groupExpressions) {
+            return { rows -> simulateExpressionInStatementContext(expression)(rows.first()) }
+        }
+
+        getExpressionSimulator(expression)?.let {
+            return it.simulateAggregation(expression)
+        }
+
+        return when (expression) {
             is Constant<E, T> -> { _ ->
                 expression.value
             }
