@@ -10,8 +10,6 @@ import rocks.frieler.kraftsql.dml.RollbackTransaction
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Expression
-import rocks.frieler.kraftsql.expressions.SumAsDouble
-import rocks.frieler.kraftsql.expressions.SumAsLong
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.objects.Table
@@ -19,8 +17,6 @@ import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
-import rocks.frieler.kraftsql.expressions.SumAsBigDecimal
-import java.math.BigDecimal
 import kotlin.reflect.KClass
 
 /**
@@ -227,6 +223,9 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         registerExpressionSimulator(EqualsSimulator())
         registerExpressionSimulator(ArraySimulator<E, Any>())
         registerExpressionSimulator(RowSimulator())
+        registerExpressionSimulator(SumAsLongSimulator())
+        registerExpressionSimulator(SumAsDoubleSimulator())
+        registerExpressionSimulator(SumAsBigDecimalSimulator())
     }
 
     protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? {
@@ -277,18 +276,6 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             is Count<E> -> { rows ->
                 @Suppress("UNCHECKED_CAST")
                 rows.count().toLong() as T
-            }
-            is SumAsLong<E> -> { rows : List<DataRow> ->
-                @Suppress("UNCHECKED_CAST")
-                rows.map { row -> simulateExpression(expression.expression).invoke(row) as Number }.reduceOrNull { a, b -> a.toLong() + b.toLong() } as T
-            }
-            is SumAsDouble<E> -> { rows : List<DataRow> ->
-                @Suppress("UNCHECKED_CAST")
-                rows.map { row -> simulateExpression(expression.expression).invoke(row) as Number }.reduceOrNull { a, b -> a.toDouble() + b.toDouble() } as T
-            }
-            is SumAsBigDecimal<E> -> { rows: List<DataRow> ->
-                @Suppress("UNCHECKED_CAST")
-                rows.map { row -> simulateExpression(expression.expression).invoke(row) as BigDecimal }.reduceOrNull(BigDecimal::plus) as T
             }
             else -> throw NotImplementedError("Simulation of a ${expression::class.qualifiedName} is not implemented.")
         }
