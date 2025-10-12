@@ -23,13 +23,13 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
     private lateinit var filter: Expression<E, Boolean>
     private val grouping: MutableList<Expression<E, *>> = mutableListOf()
 
-    fun <S: Any> from(source: QuerySource<E, S>) : HasColumns<E, S> {
+    open fun <S: Any> from(source: QuerySource<E, S>) : HasColumns<E, S> {
         check(!this::source.isInitialized) { "SELECT already has a source to select from." }
         return source
             .also { this.source = it }
     }
 
-    fun <S: Any> from(source: Data<E, S>) = from(QuerySource(source))
+    open fun <S: Any> from(source: Data<E, S>) = from(QuerySource(source))
 
     fun column(column: Projection<E, *>) {
         columns.add(column)
@@ -43,12 +43,12 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
         this.columns.addAll(columns)
     }
 
-    fun <J : Any> innerJoin(data: QuerySource<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) : HasColumns<E, J> {
+    open fun <J : Any> innerJoin(data: QuerySource<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) : HasColumns<E, J> {
         return data
             .also { joins.add(InnerJoin(it, condition(data))) }
     }
 
-    fun <J : Any> innerJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) =
+    open fun <J : Any> innerJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) =
         innerJoin(QuerySource(data), condition)
 
     fun where(filter: Expression<E, Boolean>) {
@@ -60,7 +60,7 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
         grouping.addAll(columns)
     }
 
-    fun build(): Select<E, T> = Select(
+    open fun build(): Select<E, T> = Select(
         source,
         joins,
         columns.takeIf { it.isNotEmpty() },
