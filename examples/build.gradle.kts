@@ -10,8 +10,8 @@ dependencies {
     testImplementation(project(":kraftsql-testing"))
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.kotest.assertions.core)
-    testImplementation(libs.junit5.api)
-    testRuntimeOnly(libs.junit5.engine)
+    testImplementation(libs.junit.api)
+    testRuntimeOnly(libs.junit.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
