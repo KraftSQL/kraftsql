@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
+import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
@@ -22,5 +23,17 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single().values.values.single() shouldBe 42L
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate a Column expression`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(mapOf("foo" to "bar")))),
+                columns = listOf(Projection(Column("foo"))),
+            ), DataRow::class
+        )
+
+        result.single()["foo"] shouldBe "bar"
     }
 }

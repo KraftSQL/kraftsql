@@ -8,7 +8,6 @@ import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dml.RollbackTransaction
 import rocks.frieler.kraftsql.engine.Engine
-import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
@@ -26,7 +25,6 @@ import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.expressions.SumAsBigDecimal
 import java.math.BigDecimal
-import java.sql.SQLSyntaxErrorException
 import java.time.LocalDate
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
@@ -232,6 +230,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
 
     init {
         registerExpressionSimulator(ConstantSimulator())
+        registerExpressionSimulator(ColumnSimulator())
     }
 
     protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? {
@@ -257,10 +256,6 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         }
 
         return when (expression) {
-            is Column<E, T> -> { row ->
-                @Suppress("UNCHECKED_CAST")
-                row[expression.qualifiedName] as T
-            }
             is Cast<E, T> -> { row ->
                 val targetType = expression.type.naturalKType()
                 val value = simulateExpression(expression.expression).invoke(row)
@@ -336,7 +331,6 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         }
 
         return when (expression) {
-            is Column<E, T> -> throw SQLSyntaxErrorException("'${expression.sql()}' is neither in the GROUP BY list nor wrapped in an aggregation.")
             is Equals<E> -> { rows ->
                 @Suppress("UNCHECKED_CAST")
                 (

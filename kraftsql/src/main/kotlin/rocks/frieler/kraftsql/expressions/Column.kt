@@ -3,6 +3,14 @@ package rocks.frieler.kraftsql.expressions
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.objects.HasColumns
 
+/**
+ * An [Expression] that references a column in the data.
+ *
+ * @param <E> the [Engine] targeted
+ * @param <T> the Kotlin type of the [Column]
+ * @param qualifiers optional qualifiers for the [Column], e.g., the table name or alias
+ * @param name the bare name of the [Column]
+ */
 open class Column<E: Engine<E>, T : Any>(
     val qualifiers: List<String>,
     val name: String,
