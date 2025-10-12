@@ -2,13 +2,18 @@ package rocks.frieler.kraftsql.testing.engine
 
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
+import rocks.frieler.kraftsql.engine.Type
+import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
+import kotlin.reflect.typeOf
 
 class GenericSimulatorConnectionTest {
     private val connection = GenericSimulatorConnection<DummyEngine>()
@@ -35,5 +40,19 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["foo"] shouldBe "bar"
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate a Cast`() {
+        val intType = mock<Type<DummyEngine, Int>> { whenever(it.naturalKType()).thenReturn(typeOf<Int>()) }
+
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(emptyMap()))),
+                columns = listOf(Projection(Cast(Constant("123"), intType), "number")),
+            ), DataRow::class
+        )
+
+        result.single()["number"] shouldBe 123
     }
 }
