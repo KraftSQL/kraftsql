@@ -227,6 +227,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         registerExpressionSimulator(ColumnSimulator())
         registerExpressionSimulator(CastSimulator())
         registerExpressionSimulator(EqualsSimulator())
+        registerExpressionSimulator(ArraySimulator<E, Any>())
     }
 
     protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? {
@@ -252,22 +253,6 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         }
 
         return when (expression) {
-            is Array<E, *> -> { row ->
-                @Suppress("UNCHECKED_CAST")
-                if (expression.elements == null) {
-                    null
-                } else {
-                    val elements = expression.elements!!.map { simulateExpression(it).invoke(row) }
-                    val commonSuperType = elements.filterNotNull()
-                        .map { setOf(it::class) + it::class.allSuperclasses }
-                        .run { reduceOrNull { classes1, classes2 -> classes1.intersect(classes2) } ?: emptySet() }
-                        .let { candidates -> candidates.filter { candidate -> !candidates.all { other -> other != candidate && other.isSubclassOf(candidate) } } }
-                        .firstOrNull() ?: Any::class
-                    java.lang.reflect.Array.newInstance(commonSuperType.java, elements.size).also { array ->
-                        elements.forEachIndexed { index, element -> (array as kotlin.Array<Any?>)[index] = element }
-                    }
-                } as T
-            }
             is Row<E, *> -> { row ->
                 @Suppress("UNCHECKED_CAST")
                 if (expression.values == null) {

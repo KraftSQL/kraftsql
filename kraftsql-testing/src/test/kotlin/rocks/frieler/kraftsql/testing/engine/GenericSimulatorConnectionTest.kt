@@ -8,6 +8,7 @@ import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.engine.Type
+import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Constant
@@ -67,5 +68,17 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["equals"] shouldBe true
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate an Array expression`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(emptyMap()))),
+                columns = listOf(Projection(Array(Constant(1), Constant(2)), "array")),
+            ), DataRow::class
+        )
+
+        result.single()["array"] shouldBe arrayOf(1, 2)
     }
 }
