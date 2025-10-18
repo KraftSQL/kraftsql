@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.testing.engine
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
@@ -13,6 +14,8 @@ import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Equals
+import rocks.frieler.kraftsql.expressions.Expression
+import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
 import kotlin.reflect.typeOf
@@ -80,5 +83,29 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["array"] shouldBe arrayOf(1, 2)
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate a Row expression`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(emptyMap()))),
+                columns = listOf(Projection(Row(mapOf("key" to Constant(1), "value" to Constant("foo"))), "row")),
+            ), DataRow::class
+        )
+
+        result.single()["row"] shouldBe DataRow(mapOf("key" to 1, "value" to "foo"))
+    }
+
+    @Test
+    fun `GenericSimulatorConnection rejects to simulate an unknown Expression`() {
+        shouldThrow<NotImplementedError> {
+            connection.execute(
+                Select(
+                    source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(emptyMap()))),
+                    columns = listOf(Projection(mock<Expression<DummyEngine, Nothing>>(), "_")),
+                ), DataRow::class
+            )
+        }
     }
 }

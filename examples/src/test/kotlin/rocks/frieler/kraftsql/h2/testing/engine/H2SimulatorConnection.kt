@@ -8,6 +8,8 @@ class H2SimulatorConnection : GenericSimulatorConnection<H2Engine>(orm = H2Simul
         unregisterExpressionSimulator(rocks.frieler.kraftsql.expressions.Constant::class)
         registerExpressionSimulator(ConstantSimulator())
         unregisterExpressionSimulator(rocks.frieler.kraftsql.expressions.Column::class)
-        registerExpressionSimulator(ColumnSimulator<Any>())
+        registerExpressionSimulator(ColumnSimulator())
+        unregisterExpressionSimulator(rocks.frieler.kraftsql.expressions.Row::class)
+        registerExpressionSimulator(RowSimulator())
     }
 }

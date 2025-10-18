@@ -19,13 +19,9 @@ import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
-import rocks.frieler.kraftsql.expressions.Array
-import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.expressions.SumAsBigDecimal
 import java.math.BigDecimal
 import kotlin.reflect.KClass
-import kotlin.reflect.full.allSuperclasses
-import kotlin.reflect.full.isSubclassOf
 
 /**
  * Generic [SimulatorConnection], that implements common behavior of SQL engines and dialects for testing.
@@ -220,7 +216,9 @@ open class GenericSimulatorConnection<E : Engine<E>>(
 
     @Suppress("UNCHECKED_CAST")
     private fun <T, X: Expression<E, T>> getExpressionSimulator(expression: X) =
-        expressionSimulators[expression::class] as ExpressionSimulator<E, T, X>?
+        expressionSimulators.getOrElse(expression::class) {
+            throw NotImplementedError("Simulation of a ${expression::class.qualifiedName} is not implemented.")
+        } as ExpressionSimulator<E, T, X>
 
     init {
         registerExpressionSimulator(ConstantSimulator())
@@ -228,13 +226,14 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         registerExpressionSimulator(CastSimulator())
         registerExpressionSimulator(EqualsSimulator())
         registerExpressionSimulator(ArraySimulator<E, Any>())
+        registerExpressionSimulator(RowSimulator())
     }
 
     protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? {
         context(
             object : ExpressionSimulator.SubexpressionCallbacks<E> {
                 override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? = { row ->
-                    context(this) { simulateExpressionInStatementContext(expression)(row) }
+                    context(this) { getExpressionSimulator(expression).simulateExpression(expression)(row) }
                 }
 
                 context(groupExpressions: List<Expression<E, *>>)
@@ -242,26 +241,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                     throw IllegalStateException("sub-expression cannot be an aggregation")
             }
         ) {
-            return simulateExpressionInStatementContext(expression)
-        }
-    }
-
-    context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    private fun <T> simulateExpressionInStatementContext(expression: Expression<E, T>): (DataRow) -> T? {
-        getExpressionSimulator(expression)?.let {
-            return it.simulateExpression(expression)
-        }
-
-        return when (expression) {
-            is Row<E, *> -> { row ->
-                @Suppress("UNCHECKED_CAST")
-                if (expression.values == null) {
-                    null
-                } else {
-                    DataRow(expression.values!!.mapValues { (_, value) -> simulateExpression(value).invoke(row) })
-                } as T
-            }
-            else -> throw NotImplementedError("Simulation of a ${expression::class.qualifiedName} is not implemented.")
+            return getExpressionSimulator(expression).simulateExpression(expression)
         }
     }
 
@@ -270,7 +250,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             groupExpressions,
             object : ExpressionSimulator.SubexpressionCallbacks<E> {
                 override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? = { row ->
-                    context(this) { simulateExpressionInStatementContext(expression)(row) }
+                    context(this) { getExpressionSimulator(expression).simulateExpression(expression)(row) }
                 }
 
                 context(groupExpressions: List<Expression<E, *>>)
@@ -286,7 +266,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     private fun <T> simulateAggregationInStatementContext(expression: Expression<E, T>): (List<DataRow>) -> T? {
         if (expression in groupExpressions) {
-            return { rows -> simulateExpressionInStatementContext(expression)(rows.first()) }
+            return { rows -> getExpressionSimulator(expression).simulateExpression(expression)(rows.first()) }
         }
 
         getExpressionSimulator(expression)?.let {
