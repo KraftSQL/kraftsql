@@ -7,7 +7,6 @@ import rocks.frieler.kraftsql.expressions.Sum.Companion.SumAsDouble
 import rocks.frieler.kraftsql.expressions.Sum.Companion.SumAsLong
 import rocks.frieler.kraftsql.objects.DataRow
 import java.math.BigDecimal
-import java.sql.SQLException
 import kotlin.reflect.KClass
 
 /**
@@ -16,14 +15,9 @@ import kotlin.reflect.KClass
  *
  * @param <E> the [Engine] to simulate
  */
-class SumAsLongSimulator<E : Engine<E>> : ExpressionSimulator<E, Long, SumAsLong<E>> {
+class SumAsLongSimulator<E : Engine<E>> : AggregationSimulator<E, Long, SumAsLong<E>>("SUM") {
     @Suppress("UNCHECKED_CAST")
     override val expression = SumAsLong::class as KClass<out SumAsLong<E>>
-
-    context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateExpression(expression: SumAsLong<E>): (DataRow) -> Long? {
-        throw SQLException("SUM must be used as an aggregating expression.")
-    }
 
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: SumAsLong<E>): (List<DataRow>) -> Long? = { rows ->
@@ -38,14 +32,9 @@ class SumAsLongSimulator<E : Engine<E>> : ExpressionSimulator<E, Long, SumAsLong
  *
  * @param <E> the [Engine] to simulate
  */
-class SumAsDoubleSimulator<E : Engine<E>> : ExpressionSimulator<E, Double, SumAsDouble<E>> {
+class SumAsDoubleSimulator<E : Engine<E>> : AggregationSimulator<E, Double, SumAsDouble<E>>("SUM") {
     @Suppress("UNCHECKED_CAST")
     override val expression = SumAsDouble::class as KClass<out SumAsDouble<E>>
-
-    context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateExpression(expression: SumAsDouble<E>): (DataRow) -> Double? {
-        throw SQLException("SUM must be used as an aggregating expression.")
-    }
 
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: SumAsDouble<E>): (List<DataRow>) -> Double? = { rows ->
@@ -60,14 +49,9 @@ class SumAsDoubleSimulator<E : Engine<E>> : ExpressionSimulator<E, Double, SumAs
  *
  * @param <E> the [Engine] to simulate
  */
-class SumAsBigDecimalSimulator<E : Engine<E>> : ExpressionSimulator<E, BigDecimal, SumAsBigDecimal<E>> {
+class SumAsBigDecimalSimulator<E : Engine<E>> : AggregationSimulator<E, BigDecimal, SumAsBigDecimal<E>>("SUM") {
     @Suppress("UNCHECKED_CAST")
     override val expression = SumAsBigDecimal::class as KClass<out SumAsBigDecimal<E>>
-
-    context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateExpression(expression: SumAsBigDecimal<E>): (DataRow) -> BigDecimal? {
-        throw SQLException("SUM must be used as an aggregating expression.")
-    }
 
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: SumAsBigDecimal<E>): (List<DataRow>) -> BigDecimal? = { rows ->
