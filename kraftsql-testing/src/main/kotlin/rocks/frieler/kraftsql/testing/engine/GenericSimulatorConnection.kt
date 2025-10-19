@@ -8,7 +8,6 @@ import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dml.RollbackTransaction
 import rocks.frieler.kraftsql.engine.Engine
-import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
@@ -223,6 +222,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         registerExpressionSimulator(EqualsSimulator())
         registerExpressionSimulator(ArraySimulator<E, Any>())
         registerExpressionSimulator(RowSimulator())
+        registerExpressionSimulator(CountSimulator())
         registerExpressionSimulator(SumAsLongSimulator())
         registerExpressionSimulator(SumAsDoubleSimulator())
         registerExpressionSimulator(SumAsBigDecimalSimulator())
@@ -254,30 +254,21 @@ open class GenericSimulatorConnection<E : Engine<E>>(
 
                 context(groupExpressions: List<Expression<E, *>>)
                 override fun <T> simulateAggregation(expression: Expression<E, T>): (List<DataRow>) -> T? = { rows ->
-                    context(groupExpressions, this) { simulateAggregationInStatementContext(expression)(rows)}
+                    context(groupExpressions, this) {
+                        if (expression in groupExpressions) {
+                            getExpressionSimulator(expression).simulateExpression(expression)(rows.first())
+                        } else {
+                            getExpressionSimulator(expression).simulateAggregation(expression)(rows)
+                        }
+                    }
                 }
             }
         ) {
-            return simulateAggregationInStatementContext(expression)
-        }
-    }
-
-    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    private fun <T> simulateAggregationInStatementContext(expression: Expression<E, T>): (List<DataRow>) -> T? {
-        if (expression in groupExpressions) {
-            return { rows -> getExpressionSimulator(expression).simulateExpression(expression)(rows.first()) }
-        }
-
-        getExpressionSimulator(expression)?.let {
-            return it.simulateAggregation(expression)
-        }
-
-        return when (expression) {
-            is Count<E> -> { rows ->
-                @Suppress("UNCHECKED_CAST")
-                rows.count().toLong() as T
+            return if (expression in groupExpressions) {
+                { rows -> getExpressionSimulator(expression).simulateExpression(expression)(rows.first()) }
+            } else {
+                getExpressionSimulator(expression).simulateAggregation(expression)
             }
-            else -> throw NotImplementedError("Simulation of a ${expression::class.qualifiedName} is not implemented.")
         }
     }
 }

@@ -13,6 +13,7 @@ import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Constant
+import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Row
@@ -107,5 +108,18 @@ class GenericSimulatorConnectionTest {
                 ), DataRow::class
             )
         }
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate a Count aggregation`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(emptyMap()))),
+                grouping = listOf(Constant(1)),
+                columns = listOf(Projection(Count(), "count")),
+            ), DataRow::class
+        )
+
+        result.single()["count"] shouldBe 1
     }
 }
