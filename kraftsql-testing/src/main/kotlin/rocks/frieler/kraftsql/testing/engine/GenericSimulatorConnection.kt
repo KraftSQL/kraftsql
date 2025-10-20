@@ -8,13 +8,7 @@ import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dml.RollbackTransaction
 import rocks.frieler.kraftsql.engine.Engine
-import rocks.frieler.kraftsql.expressions.Column
-import rocks.frieler.kraftsql.expressions.Constant
-import rocks.frieler.kraftsql.expressions.Count
-import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
-import rocks.frieler.kraftsql.expressions.SumAsDouble
-import rocks.frieler.kraftsql.expressions.SumAsLong
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.objects.Table
@@ -22,20 +16,15 @@ import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
-import rocks.frieler.kraftsql.expressions.Array
-import rocks.frieler.kraftsql.expressions.Cast
-import rocks.frieler.kraftsql.expressions.Row
-import rocks.frieler.kraftsql.expressions.SumAsBigDecimal
-import java.math.BigDecimal
-import java.sql.SQLSyntaxErrorException
-import java.time.LocalDate
 import kotlin.reflect.KClass
-import kotlin.reflect.cast
-import kotlin.reflect.full.allSuperclasses
-import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.jvm.jvmErasure
-import kotlin.reflect.typeOf
 
+/**
+ * Generic [SimulatorConnection], that implements common behavior of SQL engines and dialects for testing.
+ *
+ * The [GenericSimulatorConnection] is configurable and extendable to simulate specific SQL engines and dialects.
+ *
+ * @param <E> the [Engine] to simulate
+ */
 open class GenericSimulatorConnection<E : Engine<E>>(
     private val orm: SimulatorORMapping<E> = SimulatorORMapping(),
     protected val rootState: EngineState<E> = EngineState(),
@@ -210,93 +199,76 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         return rows
     }
 
+    private val expressionSimulators: MutableMap<KClass<*>, ExpressionSimulator<E, *, *>> = mutableMapOf()
+
+    fun <T, X: Expression<E, T>> registerExpressionSimulator(expressionSimulator: ExpressionSimulator<E, T, X>) {
+        expressionSimulators[expressionSimulator.expression] = expressionSimulator
+    }
+
+    fun unregisterExpressionSimulator(expression: KClass<out Expression<*, *>>) {
+        expressionSimulators.remove(expression)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T, X: Expression<E, T>> getExpressionSimulator(expression: X) =
+        expressionSimulators.getOrElse(expression::class) {
+            throw NotImplementedError("Simulation of a ${expression::class.qualifiedName} is not implemented.")
+        } as ExpressionSimulator<E, T, X>
+
+    init {
+        registerExpressionSimulator(ConstantSimulator())
+        registerExpressionSimulator(ColumnSimulator())
+        registerExpressionSimulator(CastSimulator())
+        registerExpressionSimulator(EqualsSimulator())
+        registerExpressionSimulator(ArraySimulator<E, Any>())
+        registerExpressionSimulator(RowSimulator())
+        registerExpressionSimulator(CountSimulator())
+        registerExpressionSimulator(SumAsLongSimulator())
+        registerExpressionSimulator(SumAsDoubleSimulator())
+        registerExpressionSimulator(SumAsBigDecimalSimulator())
+    }
+
     protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? {
-        return when (expression) {
-            is Constant<E, T> -> { _ ->
-                expression.value
+        context(
+            object : ExpressionSimulator.SubexpressionCallbacks<E> {
+                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? = { row ->
+                    context(this) { getExpressionSimulator(expression).simulateExpression(expression)(row) }
+                }
+
+                context(groupExpressions: List<Expression<E, *>>)
+                override fun <T> simulateAggregation(expression: Expression<E, T>) =
+                    throw IllegalStateException("sub-expression cannot be an aggregation")
             }
-            is Column<E, T> -> { row ->
-                @Suppress("UNCHECKED_CAST")
-                row[expression.qualifiedName] as T
-            }
-            is Cast<E, T> -> { row ->
-                val targetType = expression.type.naturalKType()
-                val value = simulateExpression(expression.expression).invoke(row)
-                @Suppress("UNCHECKED_CAST")
-                when (targetType) {
-                    typeOf<Boolean>() -> value?.toString()?.toBooleanStrictOrNull()
-                    typeOf<Int>() -> value?.toString()?.toInt()
-                    typeOf<Long>() -> value?.toString()?.toLong()
-                    typeOf<String>() -> value?.toString()
-                    typeOf<LocalDate>() -> value?.toString()?.let { LocalDate.parse(it) }
-                    // TODO: add support for other types as needed
-                    else -> targetType.jvmErasure.cast(value)
-                } as T
-            }
-            is Equals<E> -> { row : DataRow ->
-                @Suppress("UNCHECKED_CAST") // because T must be Boolean in case of Equals
-                (simulateExpression(expression.left).invoke(row) == simulateExpression(expression.right).invoke(row)) as T
-            }
-            is Array<E, *> -> { row ->
-                @Suppress("UNCHECKED_CAST")
-                if (expression.elements == null) {
-                    null
-                } else {
-                    val elements = expression.elements!!.map { simulateExpression(it).invoke(row) }
-                    val commonSuperType = elements.filterNotNull()
-                        .map { setOf(it::class) + it::class.allSuperclasses }
-                        .run { reduceOrNull { classes1, classes2 -> classes1.intersect(classes2) } ?: emptySet() }
-                        .let { candidates -> candidates.filter { candidate -> !candidates.all { other -> other != candidate && other.isSubclassOf(candidate) } } }
-                        .firstOrNull() ?: Any::class
-                    java.lang.reflect.Array.newInstance(commonSuperType.java, elements.size).also { array ->
-                        elements.forEachIndexed { index, element -> (array as kotlin.Array<Any?>)[index] = element }
-                    }
-                } as T
-            }
-            is Row<E, *> -> { row ->
-                @Suppress("UNCHECKED_CAST")
-                if (expression.values == null) {
-                    null
-                } else {
-                    DataRow(expression.values!!.mapValues { (_, value) -> simulateExpression(value).invoke(row) })
-                } as T
-            }
-            else -> throw NotImplementedError("Simulation of a ${expression::class.qualifiedName} is not implemented.")
+        ) {
+            return getExpressionSimulator(expression).simulateExpression(expression)
         }
     }
 
     protected open fun <T> simulateAggregation(expression: Expression<E, T>, groupExpressions: List<Expression<E, *>>): (List<DataRow>) -> T? {
-        return if (groupExpressions.contains(expression)) {
-            { rows -> simulateExpression(expression).invoke(rows.first()) }
-        } else when (expression) {
-            is Constant<E, T> -> { _ ->
-                expression.value
+        context(
+            groupExpressions,
+            object : ExpressionSimulator.SubexpressionCallbacks<E> {
+                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? = { row ->
+                    context(this) { getExpressionSimulator(expression).simulateExpression(expression)(row) }
+                }
+
+                context(groupExpressions: List<Expression<E, *>>)
+                override fun <T> simulateAggregation(expression: Expression<E, T>): (List<DataRow>) -> T? = { rows ->
+                    context(groupExpressions, this) {
+                        if (expression in groupExpressions) {
+                            getExpressionSimulator(expression).simulateExpression(expression)(rows.first())
+                        } else {
+                            getExpressionSimulator(expression).simulateAggregation(expression)(rows)
+                        }
+                    }
+                }
             }
-            is Column<E, T> -> throw SQLSyntaxErrorException("'${expression.sql()}' is neither in the GROUP BY list nor wrapped in an aggregation.")
-            is Equals<E> -> { rows ->
-                @Suppress("UNCHECKED_CAST")
-                (
-                    simulateAggregation(expression.left, groupExpressions).invoke(rows)
-                        == simulateAggregation(expression.right, groupExpressions).invoke(rows)
-                ) as T
+        ) {
+            return if (expression in groupExpressions) {
+                { rows -> getExpressionSimulator(expression).simulateExpression(expression)(rows.first()) }
+            } else {
+                getExpressionSimulator(expression).simulateAggregation(expression)
             }
-            is Count<E> -> { rows ->
-                @Suppress("UNCHECKED_CAST")
-                rows.count().toLong() as T
-            }
-            is SumAsLong<E> -> { rows : List<DataRow> ->
-                @Suppress("UNCHECKED_CAST")
-                rows.map { row -> simulateExpression(expression.expression).invoke(row) as Number }.reduceOrNull { a, b -> a.toLong() + b.toLong() } as T
-            }
-            is SumAsDouble<E> -> { rows : List<DataRow> ->
-                @Suppress("UNCHECKED_CAST")
-                rows.map { row -> simulateExpression(expression.expression).invoke(row) as Number }.reduceOrNull { a, b -> a.toDouble() + b.toDouble() } as T
-            }
-            is SumAsBigDecimal<E> -> { rows: List<DataRow> ->
-                @Suppress("UNCHECKED_CAST")
-                rows.map { row -> simulateExpression(expression.expression).invoke(row) as BigDecimal }.reduceOrNull(BigDecimal::plus) as T
-            }
-            else -> throw NotImplementedError("Simulation of a ${expression::class.qualifiedName} is not implemented.")
         }
     }
 }

@@ -18,6 +18,7 @@ h2-database = { group = "com.h2database", name = "h2", version.ref = "h2" }
 junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
 junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit-platform" }
+junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
 kotest-assertions-core = { group = "io.kotest", name = "kotest-assertions-core-jvm", version.ref = "kotest" }
 mockito = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockito" }
 

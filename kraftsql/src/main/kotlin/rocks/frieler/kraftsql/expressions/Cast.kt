@@ -3,6 +3,14 @@ package rocks.frieler.kraftsql.expressions
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.engine.Type
 
+/**
+ * SQL CAST() function that casts a value to a certain type.
+ *
+ * @param <E> the [Engine] targeted
+ * @param <T> the Kotlin type of the [Cast]'s target type
+ * @param expression the [Expression] to cast
+ * @param type the target type to cast to
+ */
 class Cast<E : Engine<E>, T : Any>(
     val expression: Expression<E, *>,
     val type: Type<E, T>,
