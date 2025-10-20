@@ -2,7 +2,7 @@
 kotlin = "2.2.20"
 dokka = "2.1.0"
 maven-publish-plugin = "0.34.0"
-sonarqube = "6.3.1.5724"
+sonarqube = "7.0.0.6105"
 h2 = "2.4.240"
 junit = "6.0.0"
 junit-platform = "6.0.0"
