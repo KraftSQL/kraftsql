@@ -30,5 +30,5 @@ class EqualsSimulator<E : Engine<E>> : ExpressionSimulator<E, Boolean, Equals<E>
             subexpressionCallbacks.simulateAggregation(expression.right)(rows))
     }
 
-    private fun simulate(left: Any?, right: Any?) = left == right
+    private fun simulate(left: Any?, right: Any?) = left != null && right != null && left == right
 }

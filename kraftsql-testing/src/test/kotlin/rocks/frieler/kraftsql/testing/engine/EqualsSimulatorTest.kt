@@ -32,6 +32,20 @@ class EqualsSimulatorTest {
     }
 
     @Test
+    fun `EqualsSimulator returns false when comparing to NULL`() {
+        val row = mock<DataRow>()
+        val leftHandSide = mock<Expression<DummyEngine, *>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> null} }
+        val rightHandSide = mock<Expression<DummyEngine, *>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> null} }
+
+        val simulation = context(subexpressionCallbacks) {
+            EqualsSimulator<DummyEngine>().simulateExpression(Equals(leftHandSide, rightHandSide))
+        }
+        val result = simulation(row)
+
+        result shouldBe false
+    }
+
+    @Test
     fun `EqualsSimulator can simulate Equals wrapping two aggregations`() {
         val groupExpressions = emptyList<Expression<DummyEngine, *>>()
         val row = mock<DataRow>()
