@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
  *
  * @param <E> the [Engine] to simulate
  */
-class SumAsLongSimulator<E : Engine<E>> : AggregationSimulator<E, Long, SumAsLong<E>>("SUM") {
+class SumAsLongSimulator<E : Engine<E>> : AggregationSimulator<E, Long?, SumAsLong<E>>("SUM") {
     @Suppress("UNCHECKED_CAST")
     override val expression = SumAsLong::class as KClass<out SumAsLong<E>>
 
@@ -32,7 +32,7 @@ class SumAsLongSimulator<E : Engine<E>> : AggregationSimulator<E, Long, SumAsLon
  *
  * @param <E> the [Engine] to simulate
  */
-class SumAsDoubleSimulator<E : Engine<E>> : AggregationSimulator<E, Double, SumAsDouble<E>>("SUM") {
+class SumAsDoubleSimulator<E : Engine<E>> : AggregationSimulator<E, Double?, SumAsDouble<E>>("SUM") {
     @Suppress("UNCHECKED_CAST")
     override val expression = SumAsDouble::class as KClass<out SumAsDouble<E>>
 
@@ -49,7 +49,7 @@ class SumAsDoubleSimulator<E : Engine<E>> : AggregationSimulator<E, Double, SumA
  *
  * @param <E> the [Engine] to simulate
  */
-class SumAsBigDecimalSimulator<E : Engine<E>> : AggregationSimulator<E, BigDecimal, SumAsBigDecimal<E>>("SUM") {
+class SumAsBigDecimalSimulator<E : Engine<E>> : AggregationSimulator<E, BigDecimal?, SumAsBigDecimal<E>>("SUM") {
     @Suppress("UNCHECKED_CAST")
     override val expression = SumAsBigDecimal::class as KClass<out SumAsBigDecimal<E>>
 

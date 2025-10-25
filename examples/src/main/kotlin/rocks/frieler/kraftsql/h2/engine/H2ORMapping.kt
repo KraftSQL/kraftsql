@@ -33,18 +33,18 @@ object H2ORMapping : JdbcORMapping<H2Engine>(Types) {
             else -> throw NotImplementedError("Unsupported Kotlin type $type.")
         }
 
-    override fun <T : Any> serialize(value: T?): Expression<H2Engine, T> {
-        fun <T : Any> replaceWithH2Expressions(expression: Expression<H2Engine, T>) : Expression<H2Engine, T> =
+    override fun <T : Any> serialize(value: T?): Expression<H2Engine, out T?> {
+        fun <T : Any> replaceWithH2Expressions(expression: Expression<H2Engine, out T?>) : Expression<H2Engine, out T?> =
             when (expression) {
                 is rocks.frieler.kraftsql.expressions.Constant -> Constant(expression.value)
                 is rocks.frieler.kraftsql.expressions.Row -> Row(
                     expression.values?.mapValues { (_, value) ->
                         @Suppress("UNCHECKED_CAST")
-                        replaceWithH2Expressions(value as Expression<H2Engine, Any>)
+                        replaceWithH2Expressions(value as Expression<H2Engine, Any?>)
                     })
                 else -> expression
             }
 
-        return replaceWithH2Expressions(super.serialize(value))
+        return replaceWithH2Expressions<T>(super.serialize(value))
     }
 }

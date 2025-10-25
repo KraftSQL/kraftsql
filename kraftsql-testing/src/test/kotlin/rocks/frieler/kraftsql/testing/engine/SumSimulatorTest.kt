@@ -44,7 +44,7 @@ class SumSimulatorTest {
 
     @Test
     fun `SumAsLongSimulator ignores NULL values`() {
-        val expressionToSum = mock<Expression<DummyEngine, Long>>().also {
+        val expressionToSum = mock<Expression<DummyEngine, Long?>>().also {
             whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn(mock())
         }
         val row = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum)(it)).thenReturn(1L) }
@@ -89,7 +89,7 @@ class SumSimulatorTest {
 
     @Test
     fun `SumAsDoubleSimulator ignores NULL values`() {
-        val expressionToSum = mock<Expression<DummyEngine, Double>>().also {
+        val expressionToSum = mock<Expression<DummyEngine, Double?>>().also {
             whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn(mock())
         }
         val row = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum)(it)).thenReturn(1.0) }
@@ -130,7 +130,7 @@ class SumSimulatorTest {
 
     @Test
     fun `SumAsBigDecimalSimulator ignores NULL values`() {
-        val expressionToSum = mock<Expression<DummyEngine, BigDecimal>>().also {
+        val expressionToSum = mock<Expression<DummyEngine, BigDecimal?>>().also {
             whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn(mock())
         }
         val row = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum)(it)).thenReturn(BigDecimal.ONE) }

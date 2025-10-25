@@ -231,7 +231,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
     protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? {
         context(
             object : ExpressionSimulator.SubexpressionCallbacks<E> {
-                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? = { row ->
+                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T = { row ->
                     context(this) { getExpressionSimulator(expression).simulateExpression(expression)(row) }
                 }
 
@@ -248,12 +248,12 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         context(
             groupExpressions,
             object : ExpressionSimulator.SubexpressionCallbacks<E> {
-                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? = { row ->
+                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T = { row ->
                     context(this) { getExpressionSimulator(expression).simulateExpression(expression)(row) }
                 }
 
                 context(groupExpressions: List<Expression<E, *>>)
-                override fun <T> simulateAggregation(expression: Expression<E, T>): (List<DataRow>) -> T? = { rows ->
+                override fun <T> simulateAggregation(expression: Expression<E, T>): (List<DataRow>) -> T = { rows ->
                     context(groupExpressions, this) {
                         if (expression in groupExpressions) {
                             getExpressionSimulator(expression).simulateExpression(expression)(rows.first())

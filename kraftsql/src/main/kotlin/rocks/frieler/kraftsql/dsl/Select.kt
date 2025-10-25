@@ -71,9 +71,6 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
 
 infix fun <E : Engine<E>, T : Any> Data<E, T>.`as`(alias: String) = QuerySource(this, alias)
 
-infix fun <E : Engine<E>, T : Any> Expression<E, T>.`as`(alias: String) = Projection(this, alias)
+infix fun <E : Engine<E>, T> Expression<E, T>.`as`(alias: String) = Projection(this, alias)
 
-infix fun <E: Engine<E>, T : Any> Expression<E, T>.`as`(field: KProperty<T>) = Projection(this, field.name)
-
-@JvmName("asNullable")
-infix fun <E: Engine<E>, T : Any> Expression<E, T>.`as`(field: KProperty<T?>) = Projection(this, field.name)
+infix fun <E: Engine<E>, T> Expression<E, T>.`as`(field: KProperty<T>) = Projection(this, field.name)

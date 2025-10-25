@@ -9,7 +9,7 @@ import rocks.frieler.kraftsql.engine.Engine
  * @param <T> the Kotlin type of the row's value
  * @param values the named sub-[Expression]s to create the row from
  */
-open class Row<E : Engine<E>, T : Any>(
+open class Row<E : Engine<E>, T>(
     val values: Map<String, Expression<E, *>>?
 ) : Expression<E, T> {
     override fun sql(): String {

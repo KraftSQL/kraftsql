@@ -34,7 +34,7 @@ interface ORMapping<E : Engine<E>, R : Any> {
      * @param value the value to serialize
      * @return an [Expression] that constantly evaluates to the SQL equivalent of the value
      */
-    fun <T : Any> serialize(value: T?): Expression<E, T> =
+    fun <T : Any> serialize(value: T?): Expression<E, out T?> =
         when {
             value is Expression<*, *> -> {
                 @Suppress("UNCHECKED_CAST")

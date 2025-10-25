@@ -2,7 +2,7 @@ package rocks.frieler.kraftsql.h2.expressions
 
 import rocks.frieler.kraftsql.h2.engine.H2Engine
 
-class Column<T : Any>(val parent: Column<*>?, qualifiers: List<String>, name: String) : rocks.frieler.kraftsql.expressions.Column<H2Engine, T>(qualifiers, name) {
+class Column<T>(val parent: Column<*>?, qualifiers: List<String>, name: String) : rocks.frieler.kraftsql.expressions.Column<H2Engine, T>(qualifiers, name) {
 
     constructor(qualifiers: List<String>, name: String) : this(null, qualifiers, name)
 
@@ -20,5 +20,5 @@ class Column<T : Any>(val parent: Column<*>?, qualifiers: List<String>, name: St
         return sql
     }
 
-    override fun <V : Any> get(field: String) = Column<V>(this, field)
+    override fun get(field: String) = Column<Any?>(this, field)
 }

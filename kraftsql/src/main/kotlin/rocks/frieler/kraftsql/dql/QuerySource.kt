@@ -12,6 +12,6 @@ open class QuerySource<E: Engine<E>, T : Any>(
         .let { sql -> if (sql.contains(" ")) "($sql)" else sql }
         .let { sql -> if (alias != null) "$sql AS `$alias`" else sql }
 
-    override operator fun <V : Any> get(field: String) = super.get<V>(field)
+    override operator fun get(field: String) = super.get(field)
         .let { if (alias != null) it.withQualifier(alias) else it }
 }

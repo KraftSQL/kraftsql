@@ -10,5 +10,5 @@ class ConstantData<T : Any> : ConstantData<H2Engine, T> {
 
     constructor(vararg items: T) : super(H2ORMapping, *items)
 
-    override fun <V : Any> get(field: String) = Column<V>(field)
+    override fun get(field: String) = Column<Any?>(field)
 }

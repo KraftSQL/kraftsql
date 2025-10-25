@@ -17,10 +17,10 @@ open class ConstantSimulator<E : Engine<E>, T : Any> : ExpressionSimulator<E, T,
     override val expression = Constant::class as KClass<out Constant<E, T>>
 
     context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateExpression(expression: Constant<E, T>): (DataRow) -> T? = { _ -> simulate(expression) }
+    override fun simulateExpression(expression: Constant<E, T>): (DataRow) -> T = { _ -> simulate(expression) }
 
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateAggregation(expression: Constant<E, T>): (List<DataRow>) -> T? = { _ -> simulate(expression) }
+    override fun simulateAggregation(expression: Constant<E, T>): (List<DataRow>) -> T = { _ -> simulate(expression) }
 
-    private fun simulate(expression: Constant<E, T>): T? = expression.value
+    private fun simulate(expression: Constant<E, T>): T = expression.value
 }

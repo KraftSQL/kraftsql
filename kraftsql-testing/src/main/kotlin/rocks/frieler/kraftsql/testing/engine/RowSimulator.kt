@@ -14,17 +14,17 @@ import kotlin.reflect.KClass
  *
  * @param <E> the [Engine] to simulate
  */
-open class RowSimulator<E : Engine<E>> : ExpressionSimulator<E, DataRow, Row<E, DataRow>> {
+open class RowSimulator<E : Engine<E>> : ExpressionSimulator<E, DataRow?, Row<E, DataRow?>> {
     @Suppress("UNCHECKED_CAST")
-    override val expression = Row::class as KClass<out Row<E, DataRow>>
+    override val expression = Row::class as KClass<out Row<E, DataRow?>>
 
     context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateExpression(expression: Row<E, DataRow>): (DataRow) -> DataRow? = { row ->
+    override fun simulateExpression(expression: Row<E, DataRow?>): (DataRow) -> DataRow? = { row ->
         simulate(expression.values?.mapValues { (_, value) -> subexpressionCallbacks.simulateExpression(value)(row) })
     }
 
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateAggregation(expression: Row<E, DataRow>): (List<DataRow>) -> DataRow? = { rows ->
+    override fun simulateAggregation(expression: Row<E, DataRow?>): (List<DataRow>) -> DataRow? = { rows ->
         simulate(expression.values?.mapValues { (_, value) -> subexpressionCallbacks.simulateAggregation(value)(rows) })
     }
 

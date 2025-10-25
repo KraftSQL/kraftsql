@@ -41,7 +41,7 @@ class GenericSimulatorConnectionTest {
         val result = connection.execute(
             Select(
                 source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(mapOf("foo" to "bar")))),
-                columns = listOf(Projection(Column("foo"))),
+                columns = listOf(Projection(Column<DummyEngine, String>("foo"))),
             ), DataRow::class
         )
 
@@ -91,7 +91,7 @@ class GenericSimulatorConnectionTest {
         val result = connection.execute(
             Select(
                 source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(emptyMap()))),
-                columns = listOf(Projection(Row(mapOf("key" to Constant(1), "value" to Constant("foo"))), "row")),
+                columns = listOf(Projection(Row<DummyEngine, DataRow>(mapOf("key" to Constant(1), "value" to Constant("foo"))), "row")),
             ), DataRow::class
         )
 

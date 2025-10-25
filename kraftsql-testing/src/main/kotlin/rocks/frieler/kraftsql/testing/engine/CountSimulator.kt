@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
  *
  * @param <E> the [Engine] to simulate
  */
-class CountSimulator<E : Engine<E>> : AggregationSimulator<E, Long, Count<E>>("COUNT") {
+class CountSimulator<E : Engine<E>> : AggregationSimulator<E, Long?, Count<E>>("COUNT") {
     @Suppress("UNCHECKED_CAST")
     override val expression = Count::class as KClass<out Count<E>>
 
