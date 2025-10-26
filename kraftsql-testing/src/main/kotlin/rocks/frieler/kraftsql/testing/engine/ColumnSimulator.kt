@@ -18,13 +18,13 @@ open class ColumnSimulator<E : Engine<E>, T : Any> : ExpressionSimulator<E, T, C
     override val expression = Column::class as KClass<out Column<E, T>>
 
     context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateExpression(expression: Column<E, T>): (DataRow) -> T? = { row ->
+    override fun simulateExpression(expression: Column<E, T>): (DataRow) -> T = { row ->
         @Suppress("UNCHECKED_CAST")
         row[expression.qualifiedName] as T
     }
 
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateAggregation(expression: Column<E, T>): (List<DataRow>) -> T? {
+    override fun simulateAggregation(expression: Column<E, T>): (List<DataRow>) -> T {
         if (expression in groupExpressions) {
             return { rows -> simulateExpression(expression)(rows.first()) }
         }

@@ -9,9 +9,9 @@ import rocks.frieler.kraftsql.engine.Engine
  * @param <T> the Kotlin type of the array's elements
  * @param elements the sub-[Expression]s to create the array from
  */
-class Array<E : Engine<E>, T : Any>(
+class Array<E : Engine<E>, T>(
     val elements: kotlin.Array<Expression<E, out T>>?,
-) : Expression<E, kotlin.Array<T?>> {
+) : Expression<E, kotlin.Array<T>?> {
     override fun sql(): String {
         if (elements == null) {
             return "NULL"

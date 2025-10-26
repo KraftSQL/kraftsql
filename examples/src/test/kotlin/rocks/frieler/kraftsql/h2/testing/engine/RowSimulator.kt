@@ -8,5 +8,5 @@ import kotlin.reflect.KClass
 
 class RowSimulator : RowSimulator<H2Engine>() {
     @Suppress("UNCHECKED_CAST")
-    override val expression = Row::class as KClass<out Row<DataRow>>
+    override val expression = Row::class as KClass<out Row<DataRow?>>
 }

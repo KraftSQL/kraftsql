@@ -13,6 +13,12 @@ import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
+/**
+ * Base interface for mapping between Kotlin and SQL type-system.
+ *
+ * @param <E> the SQL [Engine] to map to and from
+ * @param <R> the result-type of a query from a connection to that [Engine]
+ */
 interface ORMapping<E : Engine<E>, R : Any> {
     fun getTypeFor(type: KType): Type<E, *>
 
@@ -20,8 +26,7 @@ interface ORMapping<E : Engine<E>, R : Any> {
         check(type.isData) { "Automatic schema generation for non-data class ${type.qualifiedName} is not supported." }
 
         return type.ensuredPrimaryConstructor().parameters
-            .map { parameter -> Column(parameter.name!!, getTypeFor(parameter.type))
-        }
+            .map { parameter -> Column(parameter.name!!, getTypeFor(parameter.type), parameter.type.isMarkedNullable) }
     }
 
     /**
@@ -34,7 +39,7 @@ interface ORMapping<E : Engine<E>, R : Any> {
      * @param value the value to serialize
      * @return an [Expression] that constantly evaluates to the SQL equivalent of the value
      */
-    fun <T : Any> serialize(value: T?): Expression<E, T> =
+    fun <T : Any> serialize(value: T?): Expression<E, out T?> =
         when {
             value is Expression<*, *> -> {
                 @Suppress("UNCHECKED_CAST")

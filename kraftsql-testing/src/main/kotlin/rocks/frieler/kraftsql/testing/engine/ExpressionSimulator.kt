@@ -24,10 +24,10 @@ interface ExpressionSimulator<E : Engine<E>, T, X : Expression<E, T>> {
      * @param <E> the [Engine] to simulate
      */
     interface SubexpressionCallbacks<E : Engine<E>> {
-        fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T?
+        fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T
 
         context(groupExpressions: List<Expression<E, *>>)
-        fun <T> simulateAggregation(expression: Expression<E, T>): (List<DataRow>) -> T?
+        fun <T> simulateAggregation(expression: Expression<E, T>): (List<DataRow>) -> T
     }
 
     /**
@@ -38,7 +38,7 @@ interface ExpressionSimulator<E : Engine<E>, T, X : Expression<E, T>> {
      * @return a function that simulates the [Expression]
      */
     context(subexpressionCallbacks: SubexpressionCallbacks<E>)
-    fun simulateExpression(expression: X): (DataRow) -> T?
+    fun simulateExpression(expression: X): (DataRow) -> T
 
 
     /**
@@ -54,5 +54,5 @@ interface ExpressionSimulator<E : Engine<E>, T, X : Expression<E, T>> {
      * @return a function that simulates the [Expression]
      */
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: SubexpressionCallbacks<E>)
-    fun simulateAggregation(expression: X): (List<DataRow>) -> T?
+    fun simulateAggregation(expression: X): (List<DataRow>) -> T
 }

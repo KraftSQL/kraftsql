@@ -11,7 +11,7 @@ import rocks.frieler.kraftsql.objects.HasColumns
  * @param qualifiers optional qualifiers for the [Column], e.g., the table name or alias
  * @param name the bare name of the [Column]
  */
-open class Column<E: Engine<E>, T : Any>(
+open class Column<E: Engine<E>, T>(
     val qualifiers: List<String>,
     val name: String,
 ) : Expression<E, T>, HasColumns<E, T> {
@@ -25,7 +25,7 @@ open class Column<E: Engine<E>, T : Any>(
 
     override fun defaultColumnName() = qualifiedName
 
-    override fun <V : Any> get(field: String) = Column<E, V>(qualifiers + name, field)
+    override fun get(field: String) = Column<E, Any?>(qualifiers + name, field)
 
     open fun withQualifier(qualifier: String) = Column<E, T>(listOf(qualifier) + qualifiers, name)
 

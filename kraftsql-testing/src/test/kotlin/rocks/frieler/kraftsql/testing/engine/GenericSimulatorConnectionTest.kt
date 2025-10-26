@@ -5,6 +5,8 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import rocks.frieler.kraftsql.ddl.CreateTable
+import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
@@ -16,9 +18,11 @@ import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
+import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.objects.Table
 import kotlin.reflect.typeOf
 
 class GenericSimulatorConnectionTest {
@@ -37,11 +41,35 @@ class GenericSimulatorConnectionTest {
     }
 
     @Test
+    fun `GenericSimulatorConnection can simulate InsertInto`() {
+        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
+            rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT),
+        )).also { connection.execute(CreateTable(it)) }
+        val testData = ConstantData<DummyEngine, DataRow>(SimulatorORMapping(), DataRow(mapOf("c" to "foo")))
+
+        val rows = connection.execute(InsertInto(table, testData))
+
+        rows shouldBe 1
+    }
+
+    @Test
+    fun `GenericSimulatorConnection rejects inserting NULL into non-nullable column`() {
+        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
+            rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT, nullable = false),
+        )).also { connection.execute(CreateTable(it)) }
+        val testData = ConstantData<DummyEngine, DataRow>(SimulatorORMapping(), DataRow(mapOf("c" to null)))
+
+        shouldThrow<IllegalArgumentException> {
+            connection.execute(InsertInto(table, testData))
+        }
+    }
+
+    @Test
     fun `GenericSimulatorConnection can simulate a Column expression`() {
         val result = connection.execute(
             Select(
                 source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(mapOf("foo" to "bar")))),
-                columns = listOf(Projection(Column("foo"))),
+                columns = listOf(Projection(Column<DummyEngine, String>("foo"))),
             ), DataRow::class
         )
 
@@ -60,6 +88,18 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["number"] shouldBe 123
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate the IS NOT NULL operator`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(emptyMap()))),
+                columns = listOf(Projection(IsNotNull(Constant(1)), "not_null")),
+            ), DataRow::class
+        )
+
+        result.single()["not_null"] shouldBe true
     }
 
     @Test
@@ -91,7 +131,7 @@ class GenericSimulatorConnectionTest {
         val result = connection.execute(
             Select(
                 source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(emptyMap()))),
-                columns = listOf(Projection(Row(mapOf("key" to Constant(1), "value" to Constant("foo"))), "row")),
+                columns = listOf(Projection(Row<DummyEngine, DataRow>(mapOf("key" to Constant(1), "value" to Constant("foo"))), "row")),
             ), DataRow::class
         )
 

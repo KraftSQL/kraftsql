@@ -16,7 +16,7 @@ import java.math.BigDecimal
  */
 abstract class Sum<E : Engine<E>, T : Number> protected constructor(
     val expression: Expression<E, *>,
-) : Aggregation<E, T> {
+) : Aggregation<E, T?> {
 
     override fun sql() = "SUM(${expression.sql()})"
 
@@ -35,7 +35,7 @@ abstract class Sum<E : Engine<E>, T : Number> protected constructor(
          * @param expression the [Expression] to sum the values of
          */
         @JvmName("SumOfBytes")
-        operator fun <E : Engine<E>> invoke(expression: Expression<E, Byte>) = SumAsLong(expression)
+        operator fun <E : Engine<E>> invoke(expression: Expression<E, out Byte?>) = SumAsLong(expression)
 
         /**
          * Sums the values of a short-valued [Expression] as a [Long].
@@ -43,7 +43,7 @@ abstract class Sum<E : Engine<E>, T : Number> protected constructor(
          * @param expression the [Expression] to sum the values of
          */
         @JvmName("SumOfShorts")
-        operator fun <E : Engine<E>> invoke(expression: Expression<E, Short>) = SumAsLong(expression)
+        operator fun <E : Engine<E>> invoke(expression: Expression<E, out Short?>) = SumAsLong(expression)
 
         /**
          * Sums the values of an int-valued [Expression] as a [Long].
@@ -51,7 +51,7 @@ abstract class Sum<E : Engine<E>, T : Number> protected constructor(
          * @param expression the [Expression] to sum the values of
          */
         @JvmName("SumOfInts")
-        operator fun <E : Engine<E>> invoke(expression: Expression<E, Int>) = SumAsLong(expression)
+        operator fun <E : Engine<E>> invoke(expression: Expression<E, out Int?>) = SumAsLong(expression)
 
         /**
          * Sums the values of a long-valued [Expression] as a [Long].
@@ -59,7 +59,8 @@ abstract class Sum<E : Engine<E>, T : Number> protected constructor(
          * @param expression the [Expression] to sum the values of
          */
         @JvmName("SumOfLongs")
-        operator fun <E : Engine<E>> invoke(expression: Expression<E, Long>) = SumAsLong(expression)
+        operator fun <E : Engine<E>> invoke(expression: Expression<E, out Long?>) = SumAsLong(expression)
+
         open class SumAsDouble<E : Engine<E>>(expression: Expression<E, *>) : Sum<E, Double>(expression)
 
         /**
@@ -68,7 +69,7 @@ abstract class Sum<E : Engine<E>, T : Number> protected constructor(
          * @param expression the [Expression] to sum the values of
          */
         @JvmName("SumOfFloats")
-        operator fun <E : Engine<E>> invoke(expression: Expression<E, Float>) = SumAsDouble(expression)
+        operator fun <E : Engine<E>> invoke(expression: Expression<E, out Float?>) = SumAsDouble(expression)
 
         /**
          * Sums the values of a double-valued [Expression] as a [Double].
@@ -76,7 +77,7 @@ abstract class Sum<E : Engine<E>, T : Number> protected constructor(
          * @param expression the [Expression] to sum the values of
          */
         @JvmName("SumOfDoubles")
-        operator fun <E : Engine<E>> invoke(expression: Expression<E, Double>) = SumAsDouble(expression)
+        operator fun <E : Engine<E>> invoke(expression: Expression<E, out Double?>) = SumAsDouble(expression)
 
         open class SumAsBigDecimal<E : Engine<E>>(expression: Expression<E, *>) : Sum<E, BigDecimal>(expression)
 
@@ -86,6 +87,6 @@ abstract class Sum<E : Engine<E>, T : Number> protected constructor(
          * @param expression the [Expression] to sum the values of
          */
         @JvmName("SumOfBigDecimals")
-        operator fun <E : Engine<E>> invoke(expression: Expression<E, BigDecimal>) = SumAsBigDecimal(expression)
+        operator fun <E : Engine<E>> invoke(expression: Expression<E, out BigDecimal?>) = SumAsBigDecimal(expression)
     }
 }

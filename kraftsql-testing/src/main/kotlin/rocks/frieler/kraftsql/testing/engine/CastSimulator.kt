@@ -17,7 +17,7 @@ import kotlin.reflect.typeOf
  * @param <E> the [Engine] to simulate
  * @param <T> the Kotlin type of the [Cast]s target type and thereby the return type of its simulation
  */
-class CastSimulator<E : Engine<E>, T : Any> : ExpressionSimulator<E, T, Cast<E, T>> {
+class CastSimulator<E : Engine<E>, T : Any> : ExpressionSimulator<E, T?, Cast<E, T>> {
     @Suppress("UNCHECKED_CAST")
     override val expression = Cast::class as KClass<out Cast<E, T>>
 

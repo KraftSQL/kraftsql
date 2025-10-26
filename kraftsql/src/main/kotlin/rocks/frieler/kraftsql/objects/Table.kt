@@ -17,7 +17,7 @@ open class Table<E: Engine<E>, T : Any>(
     val qualifiedName: String
         get() = listOfNotNull(database, schema, name).joinToString(".")
 
-    override fun <V : Any> get(field: String): rocks.frieler.kraftsql.expressions.Column<E, V> {
+    override fun get(field: String): rocks.frieler.kraftsql.expressions.Column<E, Any?> {
         check(columns.any { it.name == field }) { "no column '${field}' in table '$name'" }
         return super.get(field)
     }

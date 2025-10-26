@@ -4,9 +4,12 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Column
 import kotlin.reflect.KProperty1
 
-interface HasColumns<E : Engine<E>, T : Any> {
+interface HasColumns<E : Engine<E>, T> {
 
-    operator fun <V : Any> get(field: String) = Column<E, V>(field)
+    operator fun get(field: String) = Column<E, Any?>(field)
 
-    operator fun <V : Any> get(property: KProperty1<T, V?>) : Column<E, V> = this[property.name]
+    operator fun <V> get(property: KProperty1<T, V>) : Column<E, V> {
+        @Suppress("UNCHECKED_CAST")
+        return this[property.name] as Column<E, V>
+    }
 }

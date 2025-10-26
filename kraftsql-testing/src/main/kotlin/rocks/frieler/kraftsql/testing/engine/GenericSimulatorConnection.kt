@@ -123,8 +123,11 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             }
         }
         rows.forEach { row ->
-            if (row.values.keys != table.first.columns.map { column -> column.name }.toSet()) {
-                throw IllegalArgumentException("$row to insert doesn't match table schema of '${table.first.qualifiedName}'.")
+            require(row.values.keys == table.first.columns.map { column -> column.name }.toSet()) {
+                "$row to insert doesn't match table schema of '${table.first.qualifiedName}'."
+            }
+            require(table.first.columns.all { column -> column.nullable || row.values[column.name] != null }) {
+                "$row to insert violates NOT NULL constraint of a column in '${table.first.qualifiedName}'."
             }
             table.second.add(row)
         }
@@ -219,6 +222,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         registerExpressionSimulator(ConstantSimulator())
         registerExpressionSimulator(ColumnSimulator())
         registerExpressionSimulator(CastSimulator())
+        registerExpressionSimulator(IsNotNullSimulator())
         registerExpressionSimulator(EqualsSimulator())
         registerExpressionSimulator(ArraySimulator<E, Any>())
         registerExpressionSimulator(RowSimulator())
@@ -231,7 +235,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
     protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? {
         context(
             object : ExpressionSimulator.SubexpressionCallbacks<E> {
-                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? = { row ->
+                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T = { row ->
                     context(this) { getExpressionSimulator(expression).simulateExpression(expression)(row) }
                 }
 
@@ -248,12 +252,12 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         context(
             groupExpressions,
             object : ExpressionSimulator.SubexpressionCallbacks<E> {
-                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? = { row ->
+                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T = { row ->
                     context(this) { getExpressionSimulator(expression).simulateExpression(expression)(row) }
                 }
 
                 context(groupExpressions: List<Expression<E, *>>)
-                override fun <T> simulateAggregation(expression: Expression<E, T>): (List<DataRow>) -> T? = { rows ->
+                override fun <T> simulateAggregation(expression: Expression<E, T>): (List<DataRow>) -> T = { rows ->
                     context(groupExpressions, this) {
                         if (expression in groupExpressions) {
                             getExpressionSimulator(expression).simulateExpression(expression)(rows.first())

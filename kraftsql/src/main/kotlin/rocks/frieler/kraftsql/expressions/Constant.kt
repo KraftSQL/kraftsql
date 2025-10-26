@@ -11,8 +11,8 @@ import java.time.LocalDate
  * @param <T> the Kotlin type of the [Constant] value
  * @param value the constant value
  */
-open class Constant<E : Engine<E>, T : Any>(
-    val value: T?,
+open class Constant<E : Engine<E>, T>(
+    val value: T,
 ) : Expression<E, T> {
     override fun sql(): String {
         return when (value) {
