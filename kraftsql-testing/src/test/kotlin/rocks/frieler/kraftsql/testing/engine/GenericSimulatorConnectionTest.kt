@@ -18,6 +18,7 @@ import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
+import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
@@ -87,6 +88,18 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["number"] shouldBe 123
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate the IS NOT NULL operator`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(SimulatorORMapping(), DataRow(emptyMap()))),
+                columns = listOf(Projection(IsNotNull(Constant(1)), "not_null")),
+            ), DataRow::class
+        )
+
+        result.single()["not_null"] shouldBe true
     }
 
     @Test

@@ -222,6 +222,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         registerExpressionSimulator(ConstantSimulator())
         registerExpressionSimulator(ColumnSimulator())
         registerExpressionSimulator(CastSimulator())
+        registerExpressionSimulator(IsNotNullSimulator())
         registerExpressionSimulator(EqualsSimulator())
         registerExpressionSimulator(ArraySimulator<E, Any>())
         registerExpressionSimulator(RowSimulator())
