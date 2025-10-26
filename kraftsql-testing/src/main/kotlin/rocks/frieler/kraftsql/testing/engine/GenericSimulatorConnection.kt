@@ -123,8 +123,11 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             }
         }
         rows.forEach { row ->
-            if (row.values.keys != table.first.columns.map { column -> column.name }.toSet()) {
-                throw IllegalArgumentException("$row to insert doesn't match table schema of '${table.first.qualifiedName}'.")
+            require(row.values.keys == table.first.columns.map { column -> column.name }.toSet()) {
+                "$row to insert doesn't match table schema of '${table.first.qualifiedName}'."
+            }
+            require(table.first.columns.all { column -> column.nullable || row.values[column.name] != null }) {
+                "$row to insert violates NOT NULL constraint of a column in '${table.first.qualifiedName}'."
             }
             table.second.add(row)
         }

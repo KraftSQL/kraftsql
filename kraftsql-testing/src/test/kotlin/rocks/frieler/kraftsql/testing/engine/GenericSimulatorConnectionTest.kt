@@ -5,6 +5,8 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import rocks.frieler.kraftsql.ddl.CreateTable
+import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
@@ -19,6 +21,7 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.objects.Table
 import kotlin.reflect.typeOf
 
 class GenericSimulatorConnectionTest {
@@ -34,6 +37,30 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single().values.values.single() shouldBe 42L
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate InsertInto`() {
+        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
+            rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT),
+        )).also { connection.execute(CreateTable(it)) }
+        val testData = ConstantData<DummyEngine, DataRow>(SimulatorORMapping(), DataRow(mapOf("c" to "foo")))
+
+        val rows = connection.execute(InsertInto(table, testData))
+
+        rows shouldBe 1
+    }
+
+    @Test
+    fun `GenericSimulatorConnection rejects inserting NULL into non-nullable column`() {
+        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
+            rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT, nullable = false),
+        )).also { connection.execute(CreateTable(it)) }
+        val testData = ConstantData<DummyEngine, DataRow>(SimulatorORMapping(), DataRow(mapOf("c" to null)))
+
+        shouldThrow<IllegalArgumentException> {
+            connection.execute(InsertInto(table, testData))
+        }
     }
 
     @Test
