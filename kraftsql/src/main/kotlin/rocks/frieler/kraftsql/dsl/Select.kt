@@ -9,7 +9,9 @@ import rocks.frieler.kraftsql.dql.Join
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
+import rocks.frieler.kraftsql.expressions.knownNotNull
 import kotlin.reflect.KProperty
+import kotlin.reflect.typeOf
 
 fun <E : Engine<E>, T : Any> Select(configurator: @SqlDsl SelectBuilder<E, T>.() -> Unit) : Select<E, T> {
     return SelectBuilder<E, T>().apply { configurator() }.build()
@@ -73,4 +75,22 @@ infix fun <E : Engine<E>, T : Any> Data<E, T>.`as`(alias: String) = QuerySource(
 
 infix fun <E : Engine<E>, T> Expression<E, T>.`as`(alias: String) = Projection(this, alias)
 
-infix fun <E: Engine<E>, T> Expression<E, T>.`as`(field: KProperty<T>) = Projection(this, field.name)
+/**
+ * Creates a [Projection] from an [Expression] using a [KProperty] of a data-class describing the result schema.
+ *
+ * Using a [KProperty] does not only use its name but also checks the type, including nullability. Be aware that `T` is
+ * often automatically inferred to be nullable by Kotlin as a lor of [Expression]s are nullable. You can use
+ * [knownNotNull] on the [Expression] to prevent this.
+ *
+ * @param E the [Engine] where the [Expression] and [Projection] happen
+ * @param T the Kotlin type of the result column
+ * @param field the [KProperty] describing the result column
+ * @return a [Projection] for the given [Expression] named after and checked against the [KProperty]
+ * @throws IllegalArgumentException if the [KProperty] is not nullable, but the [Expression] is
+ */
+inline infix fun <E: Engine<E>, reified T> Expression<E, T>.`as`(field: KProperty<T>): Projection<E, T> {
+    require(!typeOf<T>().isMarkedNullable || field.returnType.isMarkedNullable) {
+        "field '$field' is declared as non-nullable, but the expression '${sql()}' is nullable."
+    }
+    return Projection(this, field.name)
+}

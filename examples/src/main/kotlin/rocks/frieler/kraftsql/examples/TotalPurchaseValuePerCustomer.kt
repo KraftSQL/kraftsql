@@ -8,6 +8,7 @@ import rocks.frieler.kraftsql.examples.data.purchases
 import rocks.frieler.kraftsql.examples.data.withSampleData
 import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.expressions.Sum
+import rocks.frieler.kraftsql.expressions.knownNotNull
 import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.dsl.Select
 import rocks.frieler.kraftsql.h2.dsl.`as`
@@ -30,8 +31,8 @@ fun aggregatePurchaseValuePerCustomer(customers: Data<H2Engine, Customer>, purch
         from(purchases)
         val customers = innerJoin(customers `as` "customers") { this[Customer::id] `=` purchases[Purchase::customerId] }
         columns(
-            customers[Customer::id] `as` CustomerPurchaseValue::customerId.name,
-            Sum.Companion(purchases[Purchase::totalPrice]) `as` CustomerPurchaseValue::totalAmount.name,
+            customers[Customer::id] `as` CustomerPurchaseValue::customerId,
+            Sum(purchases[Purchase::totalPrice]).knownNotNull() `as` CustomerPurchaseValue::totalAmount,
         )
         groupBy(customers[Customer::id])
     }
