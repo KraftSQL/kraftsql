@@ -219,9 +219,9 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         } as ExpressionSimulator<E, T, X>
 
     init {
-        registerExpressionSimulator(ConstantSimulator())
-        registerExpressionSimulator(ColumnSimulator())
-        registerExpressionSimulator(CastSimulator())
+        registerExpressionSimulator(ConstantSimulator<E, Any?>())
+        registerExpressionSimulator(ColumnSimulator<E, Any?>())
+        registerExpressionSimulator(CastSimulator<E, Any?>())
         registerExpressionSimulator(IsNotNullSimulator())
         registerExpressionSimulator(EqualsSimulator())
         registerExpressionSimulator(ArraySimulator<E, Any>())

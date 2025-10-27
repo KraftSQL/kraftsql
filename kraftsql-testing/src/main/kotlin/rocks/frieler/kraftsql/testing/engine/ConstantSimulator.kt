@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
  * @param <E> the [Engine] to simulate
  * @param <T> the Kotlin type of the [Constant]
  */
-open class ConstantSimulator<E : Engine<E>, T : Any> : ExpressionSimulator<E, T, Constant<E, T>> {
+open class ConstantSimulator<E : Engine<E>, T> : ExpressionSimulator<E, T, Constant<E, T>> {
     @Suppress("UNCHECKED_CAST")
     override val expression = Constant::class as KClass<out Constant<E, T>>
 

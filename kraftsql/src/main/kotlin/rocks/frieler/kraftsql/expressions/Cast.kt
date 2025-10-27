@@ -11,10 +11,10 @@ import rocks.frieler.kraftsql.engine.Type
  * @param expression the [Expression] to cast
  * @param type the target type to cast to
  */
-class Cast<E : Engine<E>, T : Any>(
+class Cast<E : Engine<E>, T>(
     val expression: Expression<E, *>,
-    val type: Type<E, T>,
-) : Expression<E, T?> {
+    val type: Type<E, T & Any>,
+) : Expression<E, T> {
     override fun sql() = "CAST(${expression.sql()} AS ${type.sql()})"
 
     override fun defaultColumnName() = "CAST(${expression.defaultColumnName()} AS ${type.sql()})"
