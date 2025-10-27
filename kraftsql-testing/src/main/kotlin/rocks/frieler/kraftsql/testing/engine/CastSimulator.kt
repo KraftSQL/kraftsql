@@ -17,26 +17,26 @@ import kotlin.reflect.typeOf
  * @param <E> the [Engine] to simulate
  * @param <T> the Kotlin type of the [Cast]s target type and thereby the return type of its simulation
  */
-class CastSimulator<E : Engine<E>, T : Any> : ExpressionSimulator<E, T?, Cast<E, T>> {
+class CastSimulator<E : Engine<E>, T> : ExpressionSimulator<E, T, Cast<E, T>> {
     @Suppress("UNCHECKED_CAST")
     override val expression = Cast::class as KClass<out Cast<E, T>>
 
     context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateExpression(expression: Cast<E, T>): (DataRow) -> T? = { row ->
+    override fun simulateExpression(expression: Cast<E, T>): (DataRow) -> T = { row ->
         val value = subexpressionCallbacks.simulateExpression(expression.expression)(row)
         val targetType = expression.type.naturalKType()
         simulate(value, targetType)
     }
 
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateAggregation(expression: Cast<E, T>): (List<DataRow>) -> T? = { rows ->
+    override fun simulateAggregation(expression: Cast<E, T>): (List<DataRow>) -> T = { rows ->
         val value = subexpressionCallbacks.simulateAggregation(expression.expression)(rows)
         val targetType = expression.type.naturalKType()
         simulate(value, targetType)
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun simulate(value: Any?, targetType: KType): T? =
+    private fun simulate(value: Any?, targetType: KType): T =
         when (targetType) {
             typeOf<Boolean>() -> value?.toString()?.toBooleanStrictOrNull()
             typeOf<Int>() -> value?.toString()?.toInt()
@@ -45,5 +45,5 @@ class CastSimulator<E : Engine<E>, T : Any> : ExpressionSimulator<E, T?, Cast<E,
             typeOf<LocalDate>() -> value?.toString()?.let { LocalDate.parse(it) }
             // TODO: add support for other types as needed
             else -> targetType.jvmErasure.cast(value)
-        } as T?
+        } as T
 }

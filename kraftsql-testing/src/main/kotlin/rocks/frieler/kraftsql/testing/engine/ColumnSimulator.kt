@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
  * @param <E> the [Engine] to simulate
  * @param <T> the Kotlin type of the [Column] and thereby the return type of its simulation
  */
-open class ColumnSimulator<E : Engine<E>, T : Any> : ExpressionSimulator<E, T, Column<E, T>> {
+open class ColumnSimulator<E : Engine<E>, T> : ExpressionSimulator<E, T, Column<E, T>> {
     @Suppress("UNCHECKED_CAST")
     override val expression = Column::class as KClass<out Column<E, T>>
 

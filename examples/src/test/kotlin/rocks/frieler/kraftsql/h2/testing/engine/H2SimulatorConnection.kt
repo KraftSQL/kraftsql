@@ -6,9 +6,9 @@ import rocks.frieler.kraftsql.testing.engine.GenericSimulatorConnection
 class H2SimulatorConnection : GenericSimulatorConnection<H2Engine>(orm = H2SimulatorORMapping) {
     init {
         unregisterExpressionSimulator(rocks.frieler.kraftsql.expressions.Constant::class)
-        registerExpressionSimulator(ConstantSimulator())
+        registerExpressionSimulator(ConstantSimulator<Any?>())
         unregisterExpressionSimulator(rocks.frieler.kraftsql.expressions.Column::class)
-        registerExpressionSimulator(ColumnSimulator())
+        registerExpressionSimulator(ColumnSimulator<Any?>())
         unregisterExpressionSimulator(rocks.frieler.kraftsql.expressions.Row::class)
         registerExpressionSimulator(RowSimulator())
     }

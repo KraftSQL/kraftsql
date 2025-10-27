@@ -25,6 +25,19 @@ class ConstantSimulatorTest {
     }
 
     @Test
+    fun `simulateExpression() returns function that returns the value of NULL Constant`() {
+        val row = mock<DataRow>()
+
+        val simulation = context(subexpressionCallbacks) {
+            ConstantSimulator<DummyEngine, Long?>().simulateExpression(Constant(null))
+        }
+        val value = simulation(row)
+
+        value shouldBe null
+        verifyNoInteractions(subexpressionCallbacks, row)
+    }
+
+    @Test
     fun `simulateAggregation() returns function that returns the Constant's value`() {
         val rows = listOf(mock<DataRow>())
 

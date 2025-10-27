@@ -30,6 +30,21 @@ class ColumnSimulatorTest {
     }
 
     @Test
+    fun `ColumnSimulator returns function that returns a nullable Column's value from a DataRow`() {
+        val row = mock<DataRow> {
+            whenever(it["foo"]).thenReturn(null)
+        }
+
+        val simulation = context(subexpressionCallbacks) {
+            ColumnSimulator<DummyEngine, String?>().simulateExpression(Column("foo"))
+        }
+        val value = simulation(row)
+
+        value shouldBe null
+        verifyNoInteractions(subexpressionCallbacks)
+    }
+
+    @Test
     fun `simulateAggregation() returns function that returns the Column's value from any DataRow if it is a GROUP BY expression`() {
         val rows = listOf(
             mock<DataRow> { whenever(it["group"]).thenReturn("foo") },
