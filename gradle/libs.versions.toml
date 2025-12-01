@@ -5,7 +5,7 @@ maven-publish-plugin = "0.35.0"
 sonarqube = "7.0.1.6134"
 h2 = "2.4.240"
 junit = "6.0.1"
-kotest = "6.0.4"
+kotest = "6.0.7"
 mockito = "6.1.0"
 kover = "0.9.3"
 
