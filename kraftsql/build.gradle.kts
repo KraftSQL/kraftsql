@@ -20,7 +20,12 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(24)
+    }
+}
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xreturn-value-checker=disable")
     }
 }
 
