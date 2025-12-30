@@ -66,7 +66,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                             .filter { row -> joinCondition.invoke(row) ?: false }
                     }
                 }
-                else -> NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")
+                else -> throw NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")
             }
         }
 
