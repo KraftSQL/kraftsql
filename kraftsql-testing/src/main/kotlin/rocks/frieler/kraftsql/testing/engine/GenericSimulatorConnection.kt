@@ -79,6 +79,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             val groupingExtractors = select.grouping.map { expression -> simulateExpression(expression) }
             val rowGroups = rows.groupBy { row -> groupingExtractors.map { it.invoke(row) } }.values
 
+            // TODO: test SELECT * FROM ... GROUP BY ...
             val projections = (select.columns ?: select.grouping.map { Projection<E, _>(it) })
                 .associate { (it.alias ?: it.value.defaultColumnName()) to simulateAggregation(it.value, select.grouping) }
             rows = rowGroups.map { rowGroup ->
@@ -87,8 +88,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         } else {
             val projections = (
                     select.columns
-                    ?: (select.source.data as? Table)?.columns?.map { Projection(select.source[it.name]) }
-                    ?: throw NotImplementedError("Simulation of 'SELECT *' is not implemented.")
+                    ?: select.inferSchema().map { Projection(select.source[it.name]) }
                 ).associate { (it.alias ?: it.value.defaultColumnName()) to simulateExpression(it.value) }
             rows = rows.map { row ->
                 DataRow(projections.mapValues { (_, expression) -> expression.invoke(row) })

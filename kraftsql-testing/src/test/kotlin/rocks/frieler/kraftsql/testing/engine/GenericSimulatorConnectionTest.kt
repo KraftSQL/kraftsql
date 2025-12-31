@@ -41,6 +41,18 @@ class GenericSimulatorConnectionTest {
     }
 
     @Test
+    fun `GenericSimulatorConnection can simulate SELECT of all columns`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow(mapOf("integer" to 42, "string" to "foo")))),
+            ), DataRow::class
+        )
+
+        result.single().values["integer"] shouldBe 42
+        result.single().values["string"] shouldBe "foo"
+    }
+
+    @Test
     fun `GenericSimulatorConnection can simulate InsertInto`() {
         val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
             rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT),

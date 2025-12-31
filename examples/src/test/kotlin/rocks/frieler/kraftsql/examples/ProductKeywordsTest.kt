@@ -41,7 +41,7 @@ class ProductKeywordsTest {
 
         val keywords = Select<DataRow> {
             val source = from(QuerySource(collectProductKeywords(products)))
-            column(Projection(source["keywords"]))
+            //column(Projection(source["keywords"]))
         }.execute()
 
         keywords.shouldContainAll(

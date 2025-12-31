@@ -10,8 +10,12 @@ import java.time.Instant
 import java.time.LocalDate
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.KTypeProjection
+import kotlin.reflect.KVariance
+import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.full.starProjectedType
 
 /**
  * Base interface for mapping between Kotlin and SQL type-system.
@@ -27,6 +31,17 @@ interface ORMapping<E : Engine<E>, R : Any> {
 
         return type.ensuredPrimaryConstructor().parameters
             .map { parameter -> Column(parameter.name!!, getTypeFor(parameter.type), parameter.type.isMarkedNullable) }
+    }
+
+    fun inferKType(expression: Expression<E, *>, surroundingSchema: List<Column<E>>) : KType {
+        // TODO: infer nullability
+        return when (expression) {
+            is Constant<E, *> -> expression.value!!::class.starProjectedType // TODO: handle null
+            is rocks.frieler.kraftsql.expressions.Column<E, *> -> surroundingSchema.single { it.name == expression.qualifiedName }.type.naturalKType()
+            is Array<E, *> -> kotlin.Array::class.createType(listOf(KTypeProjection(KVariance.INVARIANT, inferKType(expression.elements!!.first(), surroundingSchema)))) // TODO: handle null
+            // TODO: handle all expressions
+            else -> throw IllegalStateException("Cannot infer type for ${expression::class.qualifiedName}.")
+        }
     }
 
     /**
