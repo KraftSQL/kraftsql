@@ -41,10 +41,6 @@ interface ORMapping<E : Engine<E>, R : Any> {
      */
     fun <T : Any> serialize(value: T?): Expression<E, out T?> =
         when {
-            value is Expression<*, *> -> {
-                @Suppress("UNCHECKED_CAST")
-                value as Expression<E, T>
-            }
             value == null -> Constant(null)
             value is Boolean -> Constant(value)
             value is Number -> Constant(value)
