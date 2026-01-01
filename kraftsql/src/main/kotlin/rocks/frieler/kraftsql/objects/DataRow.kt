@@ -1,6 +1,5 @@
 package rocks.frieler.kraftsql.objects
 
-import java.util.Arrays
 import java.util.Objects
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
