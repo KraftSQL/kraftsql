@@ -10,5 +10,12 @@ class ConstantData<T : Any> : ConstantData<H2Engine, T> {
 
     constructor(vararg items: T) : super(H2ORMapping, *items)
 
+    private constructor(columnNames: List<String>) : super(H2ORMapping, emptyList(), columnNames)
+
+    companion object {
+        fun <T : Any> empty(columnNames: List<String>) = ConstantData<T>(columnNames)
+        inline fun <reified T : Any> empty() = empty<T>(H2ORMapping.getSchemaFor(T::class).map { it.name })
+    }
+
     override fun get(field: String) = Column<Any?>(field)
 }

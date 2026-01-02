@@ -54,7 +54,7 @@ fun collectProductKeywords(products: Data<H2Engine, Product>) =
             @Suppress("UNCHECKED_CAST")
             DataRow("keywords" to (it["part1"] as Array<String> + it["part2"] as Array<String>))
         }
-        .let { ConstantData(it) }
+        .let { result -> if (result.isNotEmpty()) ConstantData(result) else ConstantData.empty(listOf("keywords")) }
 
 fun countKeywords(words: Data<H2Engine, DataRow>): Map<String, Long> {
     val wordCounts = Select<DataRow> {

@@ -22,7 +22,7 @@ class ProductKeywordsTest {
 
     @Test
     fun `collectProductKeywords() can handle empty data`() {
-        val products = ConstantData<Product>()
+        val products = ConstantData.empty<Product>()
 
         val keywords = Select<DataRow> {
             val source = from(QuerySource(collectProductKeywords(products)))
@@ -52,7 +52,7 @@ class ProductKeywordsTest {
 
     @Test
     fun `countKeywords() can handle empty data`() {
-        val words = ConstantData(emptyList<DataRow>())
+        val words = ConstantData.empty<DataRow>(listOf("keywords"))
 
         val wordCounts = countKeywords(words)
 
