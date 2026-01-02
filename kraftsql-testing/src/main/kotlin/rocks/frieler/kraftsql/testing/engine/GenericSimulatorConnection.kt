@@ -87,8 +87,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         } else {
             val projections = (
                     select.columns
-                    ?: (select.source.data as? Table)?.columns?.map { Projection(select.source[it.name]) }
-                    ?: throw NotImplementedError("Simulation of 'SELECT *' is not implemented.")
+                    ?: select.columnNames.map { Projection(select.source[it]) }
                 ).associate { (it.alias ?: it.value.defaultColumnName()) to simulateExpression(it.value) }
             rows = rows.map { row ->
                 DataRow(projections.map { (name, expression) -> name to expression.invoke(row) })

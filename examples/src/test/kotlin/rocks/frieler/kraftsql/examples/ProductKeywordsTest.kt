@@ -6,7 +6,6 @@ import io.kotest.matchers.maps.shouldBeEmpty
 import io.kotest.matchers.maps.shouldContain
 import io.kotest.matchers.maps.shouldContainKeys
 import org.junit.jupiter.api.Test
-import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.examples.data.Category
 import rocks.frieler.kraftsql.examples.data.Product
 import rocks.frieler.kraftsql.h2.dql.QuerySource
@@ -25,8 +24,7 @@ class ProductKeywordsTest {
         val products = ConstantData.empty<Product>()
 
         val keywords = Select<DataRow> {
-            val source = from(QuerySource(collectProductKeywords(products)))
-            column(Projection(source["keywords"]))
+            from(QuerySource(collectProductKeywords(products)))
         }.execute()
 
         keywords.shouldBeEmpty()
@@ -40,8 +38,7 @@ class ProductKeywordsTest {
         )
 
         val keywords = Select<DataRow> {
-            val source = from(QuerySource(collectProductKeywords(products)))
-            column(Projection(source["keywords"]))
+            from(QuerySource(collectProductKeywords(products)))
         }.execute()
 
         keywords.shouldContainAll(

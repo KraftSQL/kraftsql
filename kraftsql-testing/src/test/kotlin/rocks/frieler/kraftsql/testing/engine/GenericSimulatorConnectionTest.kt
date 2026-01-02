@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.testing.engine
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
@@ -50,6 +51,39 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["data.answer"] shouldBe 42L
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate SELECT of all columns`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow("integer" to 42, "string" to "foo"))),
+            ), DataRow::class
+        )
+
+        result.single()["integer"] shouldBe 42
+        result.single()["string"] shouldBe "foo"
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate SELECT of all columns when grouping`() {
+        val dummyData = ConstantData(DummyEngine.orm,
+            DataRow("integer" to 42, "string" to "foo"),
+            DataRow("integer" to 43, "string" to "bar"),
+            DataRow("integer" to 43, "string" to "baz"),
+        )
+
+        val result = connection.execute(
+            Select(
+                source = QuerySource(dummyData),
+                grouping = listOf(dummyData["integer"]),
+            ), DataRow::class
+        )
+
+        result shouldHaveSize 2
+        result.forEach { row ->
+            row.columnNames shouldBe listOf("integer")
+        }
     }
 
     @Test
