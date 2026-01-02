@@ -51,7 +51,7 @@ interface ORMapping<E : Engine<E>, R : Any> {
                 @Suppress("UNCHECKED_CAST")
                 Array(value.map { serialize(it) }.toTypedArray()) as Expression<E, T>
             }
-            value is DataRow -> Row(value.values.mapValues { serialize(it.value) })
+            value is DataRow -> Row(value.entries.associate { (key, value) -> key to serialize(value) })
             value::class.isData -> {
                 val fields = value::class.ensuredPrimaryConstructor().parameters
                     .map { param ->

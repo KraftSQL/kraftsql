@@ -32,12 +32,24 @@ class GenericSimulatorConnectionTest {
     fun `GenericSimulatorConnection can simulate a Constant expression`() {
         val result = connection.execute(
             Select(
-                source = QuerySource(ConstantData(DummyEngine.orm, DataRow(emptyMap()))),
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
                 columns = listOf(Projection(Constant(42L))),
             ), DataRow::class
         )
 
-        result.single().values.values.single() shouldBe 42L
+        result.single().entries.single().second shouldBe 42L
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate SELECT from source with alias`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow("answer" to 42L)), "data"),
+                columns = listOf(Projection(Column<DummyEngine, Long>("data.answer"))),
+            ), DataRow::class
+        )
+
+        result.single()["data.answer"] shouldBe 42L
     }
 
     @Test
@@ -45,7 +57,7 @@ class GenericSimulatorConnectionTest {
         val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
             rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT),
         )).also { connection.execute(CreateTable(it)) }
-        val testData = ConstantData(DummyEngine.orm, DataRow(mapOf("c" to "foo")))
+        val testData = ConstantData(DummyEngine.orm, DataRow("c" to "foo"))
 
         val rows = connection.execute(InsertInto(table, testData))
 
@@ -53,11 +65,24 @@ class GenericSimulatorConnectionTest {
     }
 
     @Test
+    fun `GenericSimulatorConnection rejects inserting data that does not match the Table's schema`() {
+        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
+            rocks.frieler.kraftsql.objects.Column("c1", DummyEngine.Types.TEXT),
+            rocks.frieler.kraftsql.objects.Column("c2", DummyEngine.Types.TEXT),
+        )).also { connection.execute(CreateTable(it)) }
+        val testData = ConstantData(DummyEngine.orm, DataRow("c1" to null, "col" to null))
+
+        shouldThrow<IllegalArgumentException> {
+            connection.execute(InsertInto(table, testData))
+        }
+    }
+
+    @Test
     fun `GenericSimulatorConnection rejects inserting NULL into non-nullable column`() {
         val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
             rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT, nullable = false),
         )).also { connection.execute(CreateTable(it)) }
-        val testData = ConstantData(DummyEngine.orm, DataRow(mapOf("c" to null)))
+        val testData = ConstantData(DummyEngine.orm, DataRow("c" to null))
 
         shouldThrow<IllegalArgumentException> {
             connection.execute(InsertInto(table, testData))
@@ -68,7 +93,7 @@ class GenericSimulatorConnectionTest {
     fun `GenericSimulatorConnection can simulate a Column expression`() {
         val result = connection.execute(
             Select(
-                source = QuerySource(ConstantData(DummyEngine.orm, DataRow(mapOf("foo" to "bar")))),
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow("foo" to "bar"))),
                 columns = listOf(Projection(Column<DummyEngine, String>("foo"))),
             ), DataRow::class
         )
@@ -82,7 +107,7 @@ class GenericSimulatorConnectionTest {
 
         val result = connection.execute(
             Select(
-                source = QuerySource(ConstantData(DummyEngine.orm, DataRow(emptyMap()))),
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
                 columns = listOf(Projection(Cast(Constant("123"), intType), "number")),
             ), DataRow::class
         )
@@ -94,7 +119,7 @@ class GenericSimulatorConnectionTest {
     fun `GenericSimulatorConnection can simulate the IS NOT NULL operator`() {
         val result = connection.execute(
             Select(
-                source = QuerySource(ConstantData(DummyEngine.orm, DataRow(emptyMap()))),
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
                 columns = listOf(Projection(IsNotNull(Constant(1)), "not_null")),
             ), DataRow::class
         )
@@ -106,7 +131,7 @@ class GenericSimulatorConnectionTest {
     fun `GenericSimulatorConnection can simulate the equals-operator`() {
         val result = connection.execute(
             Select(
-                source = QuerySource(ConstantData(DummyEngine.orm, DataRow(emptyMap()))),
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
                 columns = listOf(Projection(Equals(Constant(1), Constant(1)), "equals")),
             ), DataRow::class
         )
@@ -118,7 +143,7 @@ class GenericSimulatorConnectionTest {
     fun `GenericSimulatorConnection can simulate an Array expression`() {
         val result = connection.execute(
             Select(
-                source = QuerySource(ConstantData(DummyEngine.orm, DataRow(emptyMap()))),
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
                 columns = listOf(Projection(Array(Constant(1), Constant(2)), "array")),
             ), DataRow::class
         )
@@ -130,12 +155,12 @@ class GenericSimulatorConnectionTest {
     fun `GenericSimulatorConnection can simulate a Row expression`() {
         val result = connection.execute(
             Select(
-                source = QuerySource(ConstantData(DummyEngine.orm, DataRow(emptyMap()))),
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
                 columns = listOf(Projection(Row<DummyEngine, DataRow>(mapOf("key" to Constant(1), "value" to Constant("foo"))), "row")),
             ), DataRow::class
         )
 
-        result.single()["row"] shouldBe DataRow(mapOf("key" to 1, "value" to "foo"))
+        result.single()["row"] shouldBe DataRow("key" to 1, "value" to "foo")
     }
 
     @Test
@@ -143,7 +168,7 @@ class GenericSimulatorConnectionTest {
         shouldThrow<NotImplementedError> {
             connection.execute(
                 Select(
-                    source = QuerySource(ConstantData(DummyEngine.orm, DataRow(emptyMap()))),
+                    source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
                     columns = listOf(Projection(mock<Expression<DummyEngine, Nothing>>(), "_")),
                 ), DataRow::class
             )
@@ -154,7 +179,7 @@ class GenericSimulatorConnectionTest {
     fun `GenericSimulatorConnection can simulate a Count aggregation`() {
         val result = connection.execute(
             Select(
-                source = QuerySource(ConstantData(DummyEngine.orm, DataRow(emptyMap()))),
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
                 grouping = listOf(Constant(1)),
                 columns = listOf(Projection(Count(), "count")),
             ), DataRow::class

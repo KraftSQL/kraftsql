@@ -82,7 +82,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             val projections = (select.columns ?: select.grouping.map { Projection<E, _>(it) })
                 .associate { (it.alias ?: it.value.defaultColumnName()) to simulateAggregation(it.value, select.grouping) }
             rows = rowGroups.map { rowGroup ->
-                DataRow(projections.mapValues { (_, expression) -> expression.invoke(rowGroup) })
+                DataRow(projections.map { (name, expression) -> name to expression.invoke(rowGroup) })
             }
         } else {
             val projections = (
@@ -91,7 +91,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                     ?: throw NotImplementedError("Simulation of 'SELECT *' is not implemented.")
                 ).associate { (it.alias ?: it.value.defaultColumnName()) to simulateExpression(it.value) }
             rows = rows.map { row ->
-                DataRow(projections.mapValues { (_, expression) -> expression.invoke(row) })
+                DataRow(projections.map { (name, expression) -> name to expression.invoke(row) })
             }
         }
 
@@ -118,15 +118,15 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             .getTable(insertInto.table.qualifiedName)
         val rows = insertInto.values.let { values ->
             when (values) {
-                is ConstantData -> values.items.map { item -> simulateExpression(orm.serialize(item)).invoke(DataRow(emptyMap())) as DataRow }
+                is ConstantData -> values.items.map { item -> simulateExpression(orm.serialize(item)).invoke(DataRow()) as DataRow }
                 else -> throw NotImplementedError("Inserting ${values::class.qualifiedName} is not implemented.")
             }
         }
         rows.forEach { row ->
-            require(row.values.keys == table.first.columns.map { column -> column.name }.toSet()) {
+            require(row.columnNames == table.first.columns.map { column -> column.name }) {
                 "$row to insert doesn't match table schema of '${table.first.qualifiedName}'."
             }
-            require(table.first.columns.all { column -> column.nullable || row.values[column.name] != null }) {
+            require(table.first.columns.all { column -> column.nullable || row[column.name] != null }) {
                 "$row to insert violates NOT NULL constraint of a column in '${table.first.qualifiedName}'."
             }
             table.second.add(row)
@@ -186,8 +186,8 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             is ConstantData<E, *> -> {
                 data.items.map { item ->
                     val expression = orm.serialize(item)
-                    val value = simulateExpression(expression).invoke(DataRow(emptyMap()))
-                    value as? DataRow ?: DataRow(mapOf(expression.defaultColumnName() to value))
+                    val value = simulateExpression(expression).invoke(DataRow())
+                    value as? DataRow ?: DataRow(expression.defaultColumnName() to value)
                 }
             }
             else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
@@ -195,7 +195,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
 
         if (source.alias != null) {
             rows = rows.map { row ->
-                DataRow(row.values.mapKeys { (field, _) -> "${source.alias}.$field" })
+                DataRow(row.entries.map { (field, value) -> "${source.alias}.$field" to value })
             }
         }
 

@@ -45,8 +45,8 @@ class ProductKeywordsTest {
         }.execute()
 
         keywords.shouldContainAll(
-            DataRow(mapOf("keywords" to arrayOf("Chocolate", "Food", "sweets"))),
-            DataRow(mapOf("keywords" to arrayOf("Lemon", "Food", "sour"))),
+            DataRow("keywords" to arrayOf("Chocolate", "Food", "sweets")),
+            DataRow("keywords" to arrayOf("Lemon", "Food", "sour")),
         )
     }
 
@@ -62,8 +62,8 @@ class ProductKeywordsTest {
     @Test
     fun `countKeywords() collects all words`() {
         val words = ConstantData(
-            DataRow(mapOf("keywords" to arrayOf("sweets"))),
-            DataRow(mapOf("keywords" to arrayOf("sour"))),
+            DataRow("keywords" to arrayOf("sweets")),
+            DataRow("keywords" to arrayOf("sour")),
         )
 
         val wordCounts = countKeywords(words)
@@ -74,8 +74,8 @@ class ProductKeywordsTest {
     @Test
     fun `countKeywords() counts occurrences per word`() {
         val words = ConstantData(
-            DataRow(mapOf("keywords" to arrayOf("fruit", "sweet"))),
-            DataRow(mapOf("keywords" to arrayOf("fruit", "sour"))),
+            DataRow("keywords" to arrayOf("fruit", "sweet")),
+            DataRow("keywords" to arrayOf("fruit", "sour")),
         )
 
         val wordCounts = countKeywords(words)
