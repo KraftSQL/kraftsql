@@ -8,20 +8,36 @@ import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.engine.ORMapping
 import rocks.frieler.kraftsql.engine.TestableDummyEngine
 import rocks.frieler.kraftsql.expressions.Constant
-import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Row
 
 class ConstantDataTest {
     private val orm = mock<ORMapping<TestableDummyEngine, *>>()
 
     @Test
-    fun `ConstantData can hold items`() {
+    fun `ConstantData can hold DataRows as items`() {
         val item1 = mock<DataRow> { whenever(it.columnNames).thenReturn(listOf("c1", "c2")) }
         val item2 = mock<DataRow> { whenever(it.columnNames).thenReturn(listOf("c1", "c2")) }
 
         val data = ConstantData(orm, listOf(item1, item2))
 
         data.items shouldBe listOf(item1, item2)
+        data.columnNames shouldBe listOf("c1", "c2")
+    }
+
+    @Test
+    fun `ConstantData can hold data-class instances as items`() {
+        data class Item(val id: Int, val value: String)
+        whenever(orm.getSchemaFor(Item::class)).thenReturn(listOf(
+            Column("id", TestableDummyEngine.Types.INTEGER),
+            Column("value", TestableDummyEngine.Types.TEXT),
+        ))
+        val item1 = mock<Item>()
+        val item2 = mock<Item>()
+
+        val data = ConstantData(orm, listOf(item1, item2))
+
+        data.items shouldBe listOf(item1, item2)
+        data.columnNames shouldBe listOf("id", "value")
     }
 
     @Test
@@ -63,6 +79,7 @@ class ConstantDataTest {
         val emptyData = ConstantData.empty<TestableDummyEngine, DataRow>(orm, listOf("c1", "c2"))
 
         emptyData.items shouldBe emptyList()
+        emptyData.columnNames shouldBe listOf("c1", "c2")
     }
 
     @Test
@@ -76,6 +93,7 @@ class ConstantDataTest {
         val emptyData = ConstantData.empty<TestableDummyEngine, Item>(orm)
 
         emptyData.items shouldBe emptyList()
+        emptyData.columnNames shouldBe listOf("id", "value")
     }
 
     @Test

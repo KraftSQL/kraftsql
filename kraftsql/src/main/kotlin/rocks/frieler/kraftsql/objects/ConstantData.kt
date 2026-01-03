@@ -16,7 +16,7 @@ open class ConstantData<E : Engine<E>, T : Any> protected constructor(
      * The items - or rows - in this data.
      */
     val items: Iterable<T>,
-    private val columnNames: List<String>,
+    override val columnNames: List<String>,
 ) : Data<E, T> {
 
     /**

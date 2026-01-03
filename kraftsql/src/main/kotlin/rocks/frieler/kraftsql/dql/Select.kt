@@ -6,6 +6,12 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.Data
 
+/**
+ * A SQL `SELECT` statement.
+ *
+ * @param E the [Engine] where this [Select] can be executed
+ * @param T the Kotlin type of the rows this [Select] returns
+ */
 open class Select<E : Engine<E>, T : Any>(
     val source: QuerySource<E, *>,
     val joins: List<Join<E>> = emptyList(),
@@ -13,6 +19,20 @@ open class Select<E : Engine<E>, T : Any>(
     val filter: Expression<E, Boolean>? = null,
     val grouping: List<Expression<E, *>> = emptyList(),
 ) : Command<E, List<T>>, Data<E, T> {
+
+    /**
+     * The names of the columns this [Select] returns.
+     */
+    @Suppress("IfThenToElvis")
+    override val columnNames: List<String>
+        get() =
+            if (columns != null) {
+                columns.map { it.alias ?: it.value.defaultColumnName() }
+            } else if (grouping.isNotEmpty()) {
+                grouping.map { it.defaultColumnName() }
+            } else {
+                source.columnNames + joins.flatMap { it.data.columnNames }
+            }
 
     override fun sql() = """
         SELECT ${columns?.joinToString(", ") { it.sql() } ?: "*"}

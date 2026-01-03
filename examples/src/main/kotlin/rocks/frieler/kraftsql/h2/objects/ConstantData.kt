@@ -17,5 +17,5 @@ class ConstantData<T : Any> : ConstantData<H2Engine, T> {
         inline fun <reified T : Any> empty() = empty<T>(H2ORMapping.getSchemaFor(T::class).map { it.name })
     }
 
-    override fun get(field: String) = Column<Any?>(field)
+    override fun get(column: String) = Column<Any?>(column)
 }
