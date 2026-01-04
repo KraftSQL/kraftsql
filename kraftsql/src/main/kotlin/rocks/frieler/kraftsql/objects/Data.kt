@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.objects
 
+import rocks.frieler.kraftsql.engine.Connection
 import rocks.frieler.kraftsql.engine.Engine
 
 /**
@@ -19,3 +20,14 @@ interface Data<E : Engine<E>, T : Any> : HasColumns<E, T> {
      */
     fun sql(): String
 }
+
+/**
+ * Collects this [Data]'s rows as Kotlin objects using the given [Connection].
+ *
+ * @param T the Kotlin type of the rows
+ * @param connection the [Connection] to collect the data
+ * @return the [Data]'s rows as Kotlin objects
+ * @see Connection.collect
+ */
+inline fun <E : Engine<E>, reified T : Any> Data<E, T>.collect(connection: Connection<E>) =
+    connection.collect(this, T::class)

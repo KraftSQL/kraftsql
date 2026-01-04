@@ -8,10 +8,8 @@ import io.kotest.matchers.maps.shouldContainKeys
 import org.junit.jupiter.api.Test
 import rocks.frieler.kraftsql.examples.data.Category
 import rocks.frieler.kraftsql.examples.data.Product
-import rocks.frieler.kraftsql.h2.dql.QuerySource
-import rocks.frieler.kraftsql.h2.dql.execute
-import rocks.frieler.kraftsql.h2.dsl.Select
 import rocks.frieler.kraftsql.h2.objects.ConstantData
+import rocks.frieler.kraftsql.h2.objects.collect
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
 
@@ -23,9 +21,7 @@ class ProductKeywordsTest {
     fun `collectProductKeywords() can handle empty data`() {
         val products = ConstantData.empty<Product>()
 
-        val keywords = Select<DataRow> {
-            from(QuerySource(collectProductKeywords(products)))
-        }.execute()
+        val keywords = collectProductKeywords(products).collect()
 
         keywords.shouldBeEmpty()
     }
@@ -37,9 +33,7 @@ class ProductKeywordsTest {
             Product(2, "Lemon", food, tags = arrayOf("sour")),
         )
 
-        val keywords = Select<DataRow> {
-            from(QuerySource(collectProductKeywords(products)))
-        }.execute()
+        val keywords = collectProductKeywords(products).collect()
 
         keywords.shouldContainAll(
             DataRow("keywords" to arrayOf("Chocolate", "Food", "sweets")),
