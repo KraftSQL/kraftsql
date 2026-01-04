@@ -1,0 +1,50 @@
+package rocks.frieler.kraftsql.dql
+
+import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Test
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
+import rocks.frieler.kraftsql.engine.TestableDummyEngine
+import rocks.frieler.kraftsql.expressions.Column
+import rocks.frieler.kraftsql.objects.Data
+import rocks.frieler.kraftsql.objects.DataRow
+
+class QuerySourceTest {
+    private val data = mock<Data<TestableDummyEngine, DataRow>>()
+
+    @Test
+    fun `column names are forwarded from underlying data`() {
+        whenever(data.columnNames).thenReturn(listOf("c1", "c2"))
+
+        QuerySource(data).columnNames shouldBe data.columnNames
+    }
+
+    @Test
+    fun `column names are prefixed with the alias`() {
+        whenever(data.columnNames).thenReturn(listOf("c1"))
+
+        QuerySource(data, "a").columnNames shouldBe listOf("a.c1")
+    }
+
+    @Test
+    fun `get operator provides column expression by name from underlying data`() {
+        val column = mock<Column<TestableDummyEngine, Any?>> { whenever(it.name).thenReturn("c1") }
+        whenever(data["c1"]).thenReturn(column)
+
+        QuerySource(data)["c1"] shouldBe column
+    }
+
+    @Test
+    fun `get operator provides column expression by name prefixed with the alias`() {
+        val column = mock<Column<TestableDummyEngine, Any?>> {
+            whenever(it.name).thenReturn("c1")
+        }
+        whenever(data["c1"]).thenReturn(column)
+        whenever(column.withQualifier("a")).thenReturn(Column(listOf("a"), "c1"))
+
+        val prefixedColumn = QuerySource(data, "a")["c1"]
+
+        prefixedColumn.qualifiers shouldBe listOf("a")
+        prefixedColumn.name shouldBe column.name
+    }
+}

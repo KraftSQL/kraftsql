@@ -20,14 +20,14 @@ open class RowSimulator<E : Engine<E>> : ExpressionSimulator<E, DataRow?, Row<E,
 
     context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateExpression(expression: Row<E, DataRow?>): (DataRow) -> DataRow? = { row ->
-        simulate(expression.values?.mapValues { (_, value) -> subexpressionCallbacks.simulateExpression(value)(row) })
+        simulate(expression.values?.map { (name, value) -> name to subexpressionCallbacks.simulateExpression(value)(row) })
     }
 
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: Row<E, DataRow?>): (List<DataRow>) -> DataRow? = { rows ->
-        simulate(expression.values?.mapValues { (_, value) -> subexpressionCallbacks.simulateAggregation(value)(rows) })
+        simulate(expression.values?.map { (name, value) -> name to subexpressionCallbacks.simulateAggregation(value)(rows) })
     }
 
-    private fun simulate(values: Map<String, *>?): DataRow? =
+    private fun simulate(values: Iterable<Pair<String, *>>?): DataRow? =
         if (values == null) null else DataRow(values)
 }

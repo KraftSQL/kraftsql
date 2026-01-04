@@ -4,7 +4,6 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.DataRow
@@ -32,7 +31,7 @@ class RowSimulatorTest {
         }
         val result = simulation(mock<DataRow>())
 
-        result shouldBe DataRow(mapOf("key" to 1, "value" to "foo"))
+        result shouldBe DataRow("key" to 1, "value" to "foo")
     }
 
     @Test
@@ -45,6 +44,6 @@ class RowSimulatorTest {
         }
         val result = simulation(listOf(mock<DataRow>()))
 
-        result shouldBe DataRow(mapOf("key" to 1, "value" to "foo"))
+        result shouldBe DataRow("key" to 1, "value" to "foo")
     }
 }

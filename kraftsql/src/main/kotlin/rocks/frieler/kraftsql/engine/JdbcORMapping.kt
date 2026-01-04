@@ -76,7 +76,7 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                         DataRow(
                             (columnOffset + 1..queryResult.metaData.columnCount)
                                 .map { queryResult.metaData.getColumnLabel(it) to types.parseType(queryResult.metaData.getColumnTypeName(it)).naturalKType() }
-                                .associate { (name, valueColumnType) -> name to
+                                .map { (name, valueColumnType) -> name to
                                     when {
                                         valueColumnType == typeOf<Boolean>() -> queryResult.getBoolean(name)
                                         valueColumnType == typeOf<Int>() -> queryResult.getInt(name)

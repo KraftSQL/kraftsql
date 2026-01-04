@@ -1,49 +1,48 @@
 package rocks.frieler.kraftsql.objects
 
 import java.util.Objects
-import kotlin.reflect.KClass
-import kotlin.reflect.full.memberProperties
 
+/**
+ * A row of data, i.e. a sequence of values associated with the column names of a schema.
+ */
 class DataRow(
-    val values: Map<String, Any?>
+    val entries: Iterable<Pair<String, Any?>>
 ) {
+    constructor(vararg entries: Pair<String, Any?>) : this(entries.toList())
+
+    val columnNames : List<String> = entries.map { it.first }.apply {
+        require(toSet().size == size) { "Column names must be unique." }
+    }
+
+    private val values = entries.associateBy({ it.first }, { it.second })
+
     operator fun get(field: String): Any? {
         var fieldName = field
-        while (fieldName !in values && fieldName.isNotEmpty()) {
+        while (fieldName !in columnNames && fieldName.isNotEmpty()) {
             fieldName = fieldName.substringBeforeLast(".", missingDelimiterValue = "")
         }
         if (fieldName == field) {
             return values[fieldName]
         } else if (fieldName.isEmpty()) {
-            throw IllegalStateException("No field '$field' in DataRow; did you mean one of ${values.keys}?")
+            throw IllegalStateException("No field '$field' in DataRow; did you mean one of $columnNames?")
         }
 
         val subfieldName = field.removePrefix("${fieldName}.")
-        if (values[fieldName] is DataRow) {
-            return (values[fieldName] as DataRow)[subfieldName]
-        }
-
-        throw IllegalStateException("Field '$field' is not a DataRow with subfield '$subfieldName'.")
+        val rowField = values[fieldName] as? DataRow
+            ?: throw IllegalStateException("Field '$field' is not a DataRow with subfield '$subfieldName'.")
+        return (rowField)[subfieldName]
     }
 
-    operator fun plus(other: DataRow) = DataRow(this.values + other.values)
+    operator fun plus(other: DataRow) = DataRow(this.entries + other.entries)
 
     override fun toString(): String {
-        return "DataRow(${values.entries.joinToString(", ") { "${it.key}=${it.value}" }})"
+        return "DataRow(${entries.joinToString(", ") { "${it.first}=${it.second}" }})"
     }
 
     override fun equals(other: Any?) =
         other is DataRow
-                && values.size == other.values.size
-                && values.all { (key, value) -> Objects.deepEquals(value, other.values[key]) }
+                && columnNames == other.columnNames
+                && entries.all { (key, value) -> Objects.deepEquals(value, other[key]) }
 
-    override fun hashCode() = values.hashCode()
-
-    companion object {
-        fun from(obj: Any) =
-            obj as? DataRow ?: DataRow(
-                (obj::class as KClass<Any>)
-                    .memberProperties
-                    .associate { field -> field.name to field.get(obj) })
-    }
+    override fun hashCode() = entries.hashCode()
 }

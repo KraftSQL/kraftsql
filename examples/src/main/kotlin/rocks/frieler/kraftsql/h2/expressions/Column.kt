@@ -20,5 +20,5 @@ class Column<T>(val parent: Column<*>?, qualifiers: List<String>, name: String) 
         return sql
     }
 
-    override fun get(field: String) = Column<Any?>(this, field)
+    override fun get(column: String) = Column<Any?>(this, column)
 }

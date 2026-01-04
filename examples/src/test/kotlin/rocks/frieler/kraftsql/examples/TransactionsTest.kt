@@ -25,13 +25,13 @@ class TransactionsTest {
         val table = Table<DataRow>(name = "something", columns = listOf(Column("number", INTEGER))).also {
             it.create()
         }
-        DataRow(mapOf("number" to 1)).insertInto(table)
-        DataRow(mapOf("number" to 2)).insertInto(table)
+        DataRow("number" to 1).insertInto(table)
+        DataRow("number" to 2).insertInto(table)
 
         shouldThrow<IllegalArgumentException> {
             transaction {
                 Delete(table, table["number"] `=` Constant(1)).execute()
-                DataRow(mapOf("number" to 3, "foo" to "bar")).insertInto(table)
+                DataRow("number" to 3, "foo" to "bar").insertInto(table)
             }
         }
 
