@@ -7,9 +7,8 @@ import rocks.frieler.kraftsql.examples.data.products
 import rocks.frieler.kraftsql.h2.ddl.create
 import rocks.frieler.kraftsql.h2.ddl.drop
 import rocks.frieler.kraftsql.h2.dml.insertInto
-import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.dsl.Select
-import rocks.frieler.kraftsql.h2.objects.ConstantData
+import rocks.frieler.kraftsql.h2.expressions.`||`
 import rocks.frieler.kraftsql.h2.objects.Data
 import rocks.frieler.kraftsql.h2.objects.collect
 import rocks.frieler.kraftsql.objects.DataRow
@@ -37,23 +36,16 @@ fun main() {
 }
 
 fun collectProductKeywords(products: Data<Product>) : Data<DataRow> =
-    Select<DataRow> {
+    Select {
         from(products)
         columns(
             rocks.frieler.kraftsql.expressions.Array(
                 products[Product::name],
                 products[Product::category][Category::name]
-            ) `as` "part1",
-            products[Product::tags] `as` "part2",
+            ) `||`
+            products[Product::tags] `as` "keywords",
         )
     }
-        .execute()
-        .map {
-            // TODO: Concat arrays in SQL, once this is implemented.
-            @Suppress("UNCHECKED_CAST")
-            DataRow("keywords" to (it["part1"] as Array<String> + it["part2"] as Array<String>))
-        }
-        .let { result -> if (result.isNotEmpty()) ConstantData(result) else ConstantData.empty(listOf("keywords")) }
 
 fun countKeywords(words: Data<DataRow>): Map<String, Long> {
     val wordCounts = words.collect()
