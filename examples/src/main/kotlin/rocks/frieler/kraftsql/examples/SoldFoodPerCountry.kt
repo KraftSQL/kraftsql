@@ -10,9 +10,8 @@ import rocks.frieler.kraftsql.examples.data.customers
 import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.h2.dsl.Select
-import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.h2.dql.execute
-import rocks.frieler.kraftsql.objects.Data
+import rocks.frieler.kraftsql.h2.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.examples.data.Category
 import rocks.frieler.kraftsql.examples.data.Country
@@ -33,10 +32,10 @@ fun main() {
 }
 
 fun calculateSoldFoodPerCountry(
-    products: Data<H2Engine, Product>,
-    customers: Data<H2Engine, Customer>,
-    purchases: Data<H2Engine, Purchase>,
-    purchaseItems: Data<H2Engine, PurchaseItem>,
+    products: Data<Product>,
+    customers: Data<Customer>,
+    purchases: Data<Purchase>,
+    purchaseItems: Data<PurchaseItem>,
 ) = Select<DataRow> {
     from(purchaseItems)
     val purchases = innerJoin(purchases `as` "purchases") { this[Purchase::id] `=` purchaseItems[PurchaseItem::purchaseId] }

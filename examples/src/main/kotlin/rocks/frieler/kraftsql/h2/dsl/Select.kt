@@ -5,7 +5,7 @@ import rocks.frieler.kraftsql.dsl.SqlDsl
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.h2.dql.QuerySource
 import rocks.frieler.kraftsql.h2.dql.Select
-import rocks.frieler.kraftsql.objects.Data
+import rocks.frieler.kraftsql.h2.objects.Data
 import rocks.frieler.kraftsql.objects.HasColumns
 
 fun <T : Any> Select(configurator: @SqlDsl SelectBuilder<T>.() -> Unit) : Select<T> =
@@ -17,7 +17,7 @@ class SelectBuilder<T : Any> : rocks.frieler.kraftsql.dsl.SelectBuilder<H2Engine
         return super.from(source)
     }
 
-    override fun <S : Any> from(source: Data<H2Engine, S>): HasColumns<H2Engine, S> {
+    override fun <S : Any> from(source: Data<S>): HasColumns<H2Engine, S> {
         return super.from(QuerySource(source))
     }
 
@@ -30,7 +30,7 @@ class SelectBuilder<T : Any> : rocks.frieler.kraftsql.dsl.SelectBuilder<H2Engine
     }
 
     override fun <J : Any> innerJoin(
-        data: Data<H2Engine, J>,
+        data: Data<J>,
         condition: @SqlDsl (rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>.() -> Expression<H2Engine, Boolean>),
     ): HasColumns<H2Engine, J> {
         return super.innerJoin(QuerySource(data), condition)
@@ -42,4 +42,4 @@ class SelectBuilder<T : Any> : rocks.frieler.kraftsql.dsl.SelectBuilder<H2Engine
     }
 }
 
-infix fun <T : Any> Data<H2Engine, T>.`as`(alias: String) = QuerySource(this, alias)
+infix fun <T : Any> Data<T>.`as`(alias: String) = QuerySource(this, alias)

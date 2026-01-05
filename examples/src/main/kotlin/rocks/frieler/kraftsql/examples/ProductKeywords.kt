@@ -10,9 +10,8 @@ import rocks.frieler.kraftsql.h2.ddl.drop
 import rocks.frieler.kraftsql.h2.dml.insertInto
 import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.dsl.Select
-import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.h2.objects.ConstantData
-import rocks.frieler.kraftsql.objects.Data
+import rocks.frieler.kraftsql.h2.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
 
 fun main() {
@@ -37,7 +36,7 @@ fun main() {
     }
 }
 
-fun collectProductKeywords(products: Data<H2Engine, Product>) =
+fun collectProductKeywords(products: Data<Product>) : Data<DataRow> =
     Select<DataRow> {
         from(products)
         columns(
@@ -56,7 +55,7 @@ fun collectProductKeywords(products: Data<H2Engine, Product>) =
         }
         .let { result -> if (result.isNotEmpty()) ConstantData(result) else ConstantData.empty(listOf("keywords")) }
 
-fun countKeywords(words: Data<H2Engine, DataRow>): Map<String, Long> {
+fun countKeywords(words: Data<DataRow>): Map<String, Long> {
     val wordCounts = Select<DataRow> {
         from(words)
         columns(Projection(words["keywords"]))
