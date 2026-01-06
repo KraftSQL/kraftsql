@@ -6,6 +6,7 @@ import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.HasColumns
 import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.Join
+import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
@@ -13,6 +14,26 @@ import rocks.frieler.kraftsql.expressions.knownNotNull
 import kotlin.reflect.KProperty
 import kotlin.reflect.typeOf
 
+/**
+ * Creates a new [Select] statement defined via the DSL.
+ *
+ * Example:
+ * ```kotlin
+ * val select = SELECT<DataRow> {
+ *     from(data)
+ *     column(data["id"] `as` "match")
+ *     where(data["type"] `=` Constant("A"))
+ * }
+ * ```
+ * would render to ``SELECT `id` AS `match` FROM data WHERE `type` = 'A'``.
+ *
+ * See [SelectBuilder] for all available options to define the SELECT statement.
+ *
+ * @param E the [Engine] where the resulting [Select] statement can be executed
+ * @param T the Kotlin type of the rows returned by the resulting [Select] statement
+ * @param configurator a function on a [SelectBuilder] to configure the [Select] statement
+ * @return the [Select] statement
+ */
 fun <E : Engine<E>, T : Any> Select(configurator: @SqlDsl SelectBuilder<E, T>.() -> Unit) : Select<E, T> {
     return SelectBuilder<E, T>().apply { configurator() }.build()
 }
@@ -52,6 +73,11 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
 
     open fun <J : Any> innerJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) =
         innerJoin(QuerySource(data), condition)
+
+    open fun <J : Any> leftJoin(data: QuerySource<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) : HasColumns<E, J> {
+        return data
+            .also { joins.add(LeftJoin(it, condition(data))) }
+    }
 
     fun where(filter: Expression<E, Boolean>) {
         check(!::filter.isInitialized) { "SELECT already has a WHERE-filter." }
