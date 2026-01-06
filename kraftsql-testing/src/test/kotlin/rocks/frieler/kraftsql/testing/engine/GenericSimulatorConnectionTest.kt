@@ -14,6 +14,7 @@ import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.engine.Type
 import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.Cast
+import rocks.frieler.kraftsql.expressions.Coalesce
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Count
@@ -171,6 +172,18 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["equals"] shouldBe true
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate the COALESCE function`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
+                columns = listOf(Projection(Coalesce(Constant(null), Constant(42L)), "answer")),
+            ), DataRow::class
+        )
+
+        result.single()["answer"] shouldBe 42L
     }
 
     @Test
