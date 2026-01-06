@@ -81,6 +81,7 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                         valueColumnType == typeOf<Boolean>() -> queryResult.getBoolean(name)
                                         valueColumnType == typeOf<Int>() -> queryResult.getInt(name)
                                         valueColumnType == typeOf<Long>() -> queryResult.getLong(name)
+                                        valueColumnType == typeOf<BigDecimal>() -> queryResult.getBigDecimal(name).stripTrailingZeros()
                                         valueColumnType == typeOf<String>() -> queryResult.getString(name)
                                         valueColumnType == typeOf<LocalDate>() -> queryResult.getDate(name).toLocalDate()
                                         valueColumnType.jvmErasure.starProjectedType == typeOf<Array<*>>() -> {
@@ -107,7 +108,7 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                     else
                                         queryResult.getBoolean(columnOffset + param.index + 1)
                                 }
-                                param.type == typeOf<Integer>() -> {
+                                param.type == typeOf<Int>() -> {
                                     if (resultSchema.any { it.name == param.name })
                                         queryResult.getInt(param.name)
                                     else
@@ -145,13 +146,19 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                     return@associateWith array
                                 }
                                 else -> {
-                                    val jdbcRowValue = if (resultSchema.any { it.name == param.name })
+                                    if (resultSchema.any { it.name == param.name }) {
                                         queryResult.getObject(param.name, ResultSet::class.java)
-                                    else
+                                    } else {
                                         queryResult.getObject(columnOffset + param.index + 1, ResultSet::class.java)
-                                    deserializeQueryResultInternal(jdbcRowValue, param.type.jvmErasure).single()
+                                    }
+                                        ?.let { deserializeQueryResultInternal(it, param.type.jvmErasure).single() }
                                 }
                             }
+                                ?.takeIf { !queryResult.wasNull() }
+                                .also {
+                                    if (it == null && !param.type.isMarkedNullable)
+                                        throw NullPointerException("Cannot create '$type' with NULL for non-nullable field '${param.name}'.")
+                                }
                         })
                     }
                     else -> throw IllegalArgumentException("Unsupported target type ${type.qualifiedName}.")

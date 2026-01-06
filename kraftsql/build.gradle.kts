@@ -14,6 +14,7 @@ dependencies {
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.mockito)
+    testImplementation(libs.h2.database)
     testRuntimeOnly(libs.junit.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
