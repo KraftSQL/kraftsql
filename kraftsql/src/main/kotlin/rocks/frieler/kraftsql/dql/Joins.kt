@@ -30,3 +30,18 @@ class InnerJoin<E : Engine<E>>(
 ) : Join<E>(data, condition) {
     override fun sql() = "INNER JOIN ${data.sql()} ON ${condition.sql()}"
 }
+
+/**
+ * SQL LEFT JOIN that keeps all rows from the left side, either once per matching row from the right side, or once with
+ * the columns from the right side set to NULL, if there is no matching row.
+ *
+ * @param <E> the [Engine] to execute this [Join]
+ * @param data the data to join
+ * @param condition the condition to join on
+ */
+class LeftJoin<E : Engine<E>>(
+    data: QuerySource<E, *>,
+    condition: Expression<E, Boolean>,
+) : Join<E>(data, condition) {
+    override fun sql() = "LEFT JOIN ${data.sql()} ON ${condition.sql()}"
+}

@@ -15,4 +15,9 @@ class JoinsTest {
     fun `InnerJoin renders INNER JOIN SQL`() {
         InnerJoin(right, condition).sql() shouldBe "INNER JOIN right ON condition"
     }
+
+    @Test
+    fun `LeftJoin renders LEFT JOIN SQL`() {
+        LeftJoin(right, condition).sql() shouldBe "LEFT JOIN right ON condition"
+    }
 }

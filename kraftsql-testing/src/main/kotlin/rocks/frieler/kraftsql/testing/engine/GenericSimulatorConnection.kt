@@ -13,6 +13,7 @@ import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.objects.Table
 import rocks.frieler.kraftsql.dql.InnerJoin
+import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
@@ -64,6 +65,14 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                         dataToJoin
                             .map { rowToJoin -> row + rowToJoin }
                             .filter { row -> joinCondition.invoke(row) ?: false }
+                    }
+                }
+                is LeftJoin<E> -> {
+                    rows = rows.flatMap { row ->
+                        dataToJoin
+                            .map { rowToJoin -> row + rowToJoin }
+                            .filter { row -> joinCondition.invoke(row) ?: false }
+                            .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
                     }
                 }
                 else -> throw NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")

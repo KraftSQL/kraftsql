@@ -6,6 +6,7 @@ import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.HasColumns
 import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.Join
+import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
@@ -86,6 +87,28 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
      */
     open fun <J : Any> innerJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) =
         innerJoin(QuerySource(data), condition)
+
+    /**
+     * [LEFT JOIN][LeftJoin]s the given data on the given condition.
+     *
+     * @param data the data to join
+     * @param condition the condition to join on
+     * @return the data to join for further usage
+     */
+    open fun <J : Any> leftJoin(data: QuerySource<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) : HasColumns<E, J> {
+        return data
+            .also { joins.add(LeftJoin(it, condition(data))) }
+    }
+
+    /**
+     * [LEFT JOIN][LeftJoin]s the given data on the given condition.
+     *
+     * @param data the data to join
+     * @param condition the condition to join on
+     * @return the data to join for further usage
+     */
+    open fun <J : Any> leftJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) =
+        leftJoin(QuerySource(data), condition)
 
     fun where(filter: Expression<E, Boolean>) {
         check(!::filter.isInitialized) { "SELECT already has a WHERE-filter." }

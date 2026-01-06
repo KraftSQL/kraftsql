@@ -7,31 +7,35 @@ import rocks.frieler.kraftsql.examples.data.customers
 import rocks.frieler.kraftsql.examples.data.purchases
 import rocks.frieler.kraftsql.examples.data.withSampleData
 import rocks.frieler.kraftsql.expressions.`=`
+import rocks.frieler.kraftsql.expressions.Coalesce
 import rocks.frieler.kraftsql.expressions.Sum
-import rocks.frieler.kraftsql.expressions.knownNotNull
-import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.dsl.Select
 import rocks.frieler.kraftsql.h2.dsl.`as`
+import rocks.frieler.kraftsql.h2.expressions.Constant
 import rocks.frieler.kraftsql.h2.objects.Data
+import rocks.frieler.kraftsql.h2.objects.collect
 import java.math.BigDecimal
 
 fun main() {
     withSampleData {
         aggregatePurchaseValuePerCustomer(customers, purchases)
-            .execute()
+            .collect()
             .forEach { println(it) }
     }
 }
 
 data class CustomerPurchaseValue(val customerId: Long, val totalAmount: BigDecimal)
 
-fun aggregatePurchaseValuePerCustomer(customers: Data<Customer>, purchases: Data<Purchase>) =
-    Select<CustomerPurchaseValue> {
-        from(purchases)
-        val customers = innerJoin(customers `as` "customers") { this[Customer::id] `=` purchases[Purchase::customerId] }
+fun aggregatePurchaseValuePerCustomer(customers: Data<Customer>, purchases: Data<Purchase>) : Data<CustomerPurchaseValue> =
+    Select {
+        val c = from(customers `as` "c")
+        val p = leftJoin(purchases `as` "p") { this[Purchase::customerId] `=` c[Customer::id] }
         columns(
-            customers[Customer::id] `as` CustomerPurchaseValue::customerId,
-            Sum(purchases[Purchase::totalPrice]).knownNotNull() `as` CustomerPurchaseValue::totalAmount,
+            c[Customer::id] `as` CustomerPurchaseValue::customerId,
+            Coalesce(
+                Sum(p[Purchase::totalPrice]),
+                nonNullableExpression = Constant(BigDecimal.ZERO),
+            ) `as` CustomerPurchaseValue::totalAmount,
         )
-        groupBy(customers[Customer::id])
+        groupBy(c[Customer::id])
     }
