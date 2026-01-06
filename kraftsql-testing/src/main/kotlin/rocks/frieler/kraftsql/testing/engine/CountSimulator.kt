@@ -11,12 +11,12 @@ import kotlin.reflect.KClass
  *
  * @param <E> the [Engine] to simulate
  */
-class CountSimulator<E : Engine<E>> : AggregationSimulator<E, Long?, Count<E>>("COUNT") {
+class CountSimulator<E : Engine<E>> : AggregationSimulator<E, Long, Count<E>>("COUNT") {
     @Suppress("UNCHECKED_CAST")
     override val expression = Count::class as KClass<out Count<E>>
 
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateAggregation(expression: Count<E>): (List<DataRow>) -> Long? = { rows ->
+    override fun simulateAggregation(expression: Count<E>): (List<DataRow>) -> Long = { rows ->
         rows.size.toLong()
     }
 }

@@ -7,7 +7,7 @@ import rocks.frieler.kraftsql.engine.Engine
  *
  * @param <E> the [Engine] that implements [Count] and for which the SQL code is rendered
  */
-class Count<E : Engine<E>> : Aggregation<E, Long?> {
+class Count<E : Engine<E>> : Aggregation<E, Long> {
     override fun sql() = "COUNT(*)"
 
     override fun defaultColumnName() = "COUNT(*)"
