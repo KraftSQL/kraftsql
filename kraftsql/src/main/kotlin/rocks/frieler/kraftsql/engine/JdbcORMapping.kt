@@ -108,7 +108,7 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                     else
                                         queryResult.getBoolean(columnOffset + param.index + 1)
                                 }
-                                param.type == typeOf<Integer>() -> {
+                                param.type == typeOf<Int>() -> {
                                     if (resultSchema.any { it.name == param.name })
                                         queryResult.getInt(param.name)
                                     else
@@ -146,17 +146,19 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                     return@associateWith array
                                 }
                                 else -> {
-                                    val jdbcRowValue = if (resultSchema.any { it.name == param.name })
+                                    if (resultSchema.any { it.name == param.name }) {
                                         queryResult.getObject(param.name, ResultSet::class.java)
-                                    else
-                                        queryResult.getObject(columnOffset + param.index + 1, ResultSet::class.java)
-                                    if (jdbcRowValue == null && param.type.isMarkedNullable) {
-                                        null
                                     } else {
-                                        deserializeQueryResultInternal(jdbcRowValue, param.type.jvmErasure).single()
+                                        queryResult.getObject(columnOffset + param.index + 1, ResultSet::class.java)
                                     }
+                                        ?.let { deserializeQueryResultInternal(it, param.type.jvmErasure).single() }
                                 }
                             }
+                                ?.takeIf { !queryResult.wasNull() }
+                                .also {
+                                    if (it == null && !param.type.isMarkedNullable)
+                                        throw NullPointerException("Cannot create '$type' with NULL for non-nullable field '${param.name}'.")
+                                }
                         })
                     }
                     else -> throw IllegalArgumentException("Unsupported target type ${type.qualifiedName}.")
