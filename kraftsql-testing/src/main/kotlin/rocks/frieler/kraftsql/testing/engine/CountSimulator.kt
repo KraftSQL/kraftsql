@@ -16,7 +16,12 @@ class CountSimulator<E : Engine<E>> : AggregationSimulator<E, Long, Count<E>>("C
     override val expression = Count::class as KClass<out Count<E>>
 
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateAggregation(expression: Count<E>): (List<DataRow>) -> Long = { rows ->
-        rows.size.toLong()
+    override fun simulateAggregation(expression: Count<E>): (List<DataRow>) -> Long {
+        val expressionToCount = expression.expression?.let { subexpressionCallbacks.simulateExpression(it) }
+        return if (expressionToCount != null) { rows ->
+            rows.mapNotNull { expressionToCount.invoke(it) }.size.toLong()
+        } else { rows ->
+            rows.size.toLong()
+        }
     }
 }
