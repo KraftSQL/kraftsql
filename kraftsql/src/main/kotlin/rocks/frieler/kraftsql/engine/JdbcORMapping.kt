@@ -81,6 +81,7 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                         valueColumnType == typeOf<Boolean>() -> queryResult.getBoolean(name)
                                         valueColumnType == typeOf<Int>() -> queryResult.getInt(name)
                                         valueColumnType == typeOf<Long>() -> queryResult.getLong(name)
+                                        valueColumnType == typeOf<BigDecimal>() -> queryResult.getBigDecimal(name).stripTrailingZeros()
                                         valueColumnType == typeOf<String>() -> queryResult.getString(name)
                                         valueColumnType == typeOf<LocalDate>() -> queryResult.getDate(name).toLocalDate()
                                         valueColumnType.jvmErasure.starProjectedType == typeOf<Array<*>>() -> {
@@ -149,7 +150,11 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                         queryResult.getObject(param.name, ResultSet::class.java)
                                     else
                                         queryResult.getObject(columnOffset + param.index + 1, ResultSet::class.java)
-                                    deserializeQueryResultInternal(jdbcRowValue, param.type.jvmErasure).single()
+                                    if (jdbcRowValue == null && param.type.isMarkedNullable) {
+                                        null
+                                    } else {
+                                        deserializeQueryResultInternal(jdbcRowValue, param.type.jvmErasure).single()
+                                    }
                                 }
                             }
                         })
