@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
  * @param <T> the Kotlin result type of the [Expression] and thereby its simulation
  * @param <X> the [Expression] type to simulate
  */
-interface ExpressionSimulator<E : Engine<E>, T, X : Expression<E, T>> {
+interface ExpressionSimulator<E : Engine<E>, out T, X : Expression<E, T>> {
     /**
      * The [Expression] type to simulate.
      */

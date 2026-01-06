@@ -39,7 +39,7 @@ interface ORMapping<E : Engine<E>, R : Any> {
      * @param value the value to serialize
      * @return an [Expression] that constantly evaluates to the SQL equivalent of the value
      */
-    fun <T : Any> serialize(value: T?): Expression<E, out T?> =
+    fun <T : Any> serialize(value: T?): Expression<E, T?> =
         when {
             value == null -> Constant(null)
             value is Boolean -> Constant(value)

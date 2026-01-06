@@ -8,7 +8,7 @@ import rocks.frieler.kraftsql.engine.Engine
  * @param <E> the [Engine] that implements and executes this [Expression]
  * @param <T> the Kotlin type of the [Expression]'s value
  */
-interface Expression<E: Engine<E>, T> {
+interface Expression<E: Engine<E>, out T> {
     /**
      * Generates the SQL code for this [Expression].
      *

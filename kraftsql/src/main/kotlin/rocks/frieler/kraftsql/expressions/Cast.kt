@@ -30,10 +30,10 @@ class Cast<E : Engine<E>, T> : Expression<E, T> {
 
     companion object {
         @JvmName("CastNullable")
-        operator fun <E : Engine<E>, T : Any>invoke(expression: Expression<E, out Any?>, type: Type<E, T>) : Cast<E, T?> =
+        operator fun <E : Engine<E>, T : Any> invoke(expression: Expression<E, Any?>, type: Type<E, T>) : Cast<E, T?> =
             Cast(expression, type)
 
-        operator fun <E : Engine<E>, T : Any>invoke(expression: Expression<E, out Any>, type: Type<E, T>) : Cast<E, T> =
+        operator fun <E : Engine<E>, T : Any> invoke(expression: Expression<E, Any>, type: Type<E, T>) : Cast<E, T> =
             Cast(expression, type)
     }
 }

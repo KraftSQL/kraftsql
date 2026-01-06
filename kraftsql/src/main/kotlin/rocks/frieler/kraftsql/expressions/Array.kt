@@ -10,7 +10,7 @@ import rocks.frieler.kraftsql.engine.Engine
  * @param elements the sub-[Expression]s to create the array from
  */
 class Array<E : Engine<E>, T>(
-    val elements: kotlin.Array<Expression<E, out T>>?,
+    val elements: kotlin.Array<Expression<E, T>>?,
 ) : Expression<E, kotlin.Array<T>?> {
     override fun sql(): String {
         if (elements == null) {
@@ -38,6 +38,6 @@ class Array<E : Engine<E>, T>(
          * @param <T> the Kotlin type of the array's elements
          * @param elements the sub-[Expression]s to create the array from
          */
-        operator fun <E : Engine<E>, T : Any> invoke(vararg elements: Expression<E, out T>) = Array(elements.toList().toTypedArray())
+        operator fun <E : Engine<E>, T : Any> invoke(vararg elements: Expression<E, T>) = Array(elements.toList().toTypedArray())
     }
 }
