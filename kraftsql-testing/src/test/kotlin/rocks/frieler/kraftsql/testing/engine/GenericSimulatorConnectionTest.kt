@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.testing.engine
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -8,6 +9,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.dml.InsertInto
+import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
@@ -64,6 +66,20 @@ class GenericSimulatorConnectionTest {
 
         result.single()["integer"] shouldBe 42
         result.single()["string"] shouldBe "foo"
+    }
+
+    @Test
+    fun `GenericSimulatorConnection selects columns from source and joins when selecting all columns`() {
+
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow("left" to "foo"))),
+                joins = listOf(
+                    InnerJoin(QuerySource(ConstantData(DummyEngine.orm, DataRow("right" to "bar"))), Constant(true)),
+                )
+            ), DataRow::class)
+
+        result.single().columnNames shouldContainExactly listOf("left", "right")
     }
 
     @Test
