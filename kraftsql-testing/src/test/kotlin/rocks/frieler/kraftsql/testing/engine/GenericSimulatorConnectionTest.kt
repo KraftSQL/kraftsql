@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.testing.engine
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -8,10 +9,12 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.dml.InsertInto
+import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.engine.Type
+import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Coalesce
@@ -64,6 +67,26 @@ class GenericSimulatorConnectionTest {
 
         result.single()["integer"] shouldBe 42
         result.single()["string"] shouldBe "foo"
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate INNER JOIN`() {
+        val left = QuerySource(ConstantData(DummyEngine.orm,
+            DataRow("key" to 41, "entity" to "foo"),
+            DataRow("key" to 42, "entity" to "bar"),
+        ), "l")
+        val right = QuerySource(ConstantData(DummyEngine.orm,
+            DataRow("key" to 42, "attribute" to "zip"),
+            DataRow("key" to 43, "attribute" to "zap"),
+        ), "r")
+
+        val result = connection.execute(
+            Select(
+                source = left,
+                joins = listOf(InnerJoin(right, Equals(left["key"], right["key"])))
+            ), DataRow::class)
+
+        result shouldContainExactly listOf(DataRow("l.key" to 42, "l.entity" to "bar", "r.key" to 42, "r.attribute" to "zip"))
     }
 
     @Test
