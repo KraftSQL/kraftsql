@@ -34,7 +34,7 @@ class HasColumnsTest {
 
         shouldThrow<IllegalArgumentException> {
             testableHasColumnsInstance["bar"]
-        }
+        }.message shouldBe "No column 'bar'; did you mean one of [foo]?"
     }
 
     @Test

@@ -29,7 +29,10 @@ interface HasColumns<E : Engine<E>, T> {
      * @param column the name of the column
      * @return a [Column] expression for the named column
      */
-    operator fun get(column: String) = Column<E, Any?>(column.also { require(column in columnNames) })
+    operator fun get(column: String) : Column<E, Any?> {
+        require(column in columnNames) { "No column '$column'; did you mean one of $columnNames?" }
+        return Column(column)
+    }
 
     /**
      * Retrieves a [Column] expression for the column specified by a [property][KProperty1] of the rows' type.
