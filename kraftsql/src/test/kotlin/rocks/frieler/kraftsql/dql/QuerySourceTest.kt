@@ -29,6 +29,7 @@ class QuerySourceTest {
     @Test
     fun `get operator provides column expression by name from underlying data`() {
         val column = mock<Column<TestableDummyEngine, Any?>> { whenever(it.name).thenReturn("c1") }
+        whenever(data.columnNames).thenReturn(listOf("c1"))
         whenever(data["c1"]).thenReturn(column)
 
         QuerySource(data)["c1"] shouldBe column
@@ -39,10 +40,26 @@ class QuerySourceTest {
         val column = mock<Column<TestableDummyEngine, Any?>> {
             whenever(it.name).thenReturn("c1")
         }
+        whenever(data.columnNames).thenReturn(listOf("c1"))
         whenever(data["c1"]).thenReturn(column)
         whenever(column.withQualifier("a")).thenReturn(Column(listOf("a"), "c1"))
 
         val prefixedColumn = QuerySource(data, "a")["c1"]
+
+        prefixedColumn.qualifiers shouldBe listOf("a")
+        prefixedColumn.name shouldBe column.name
+    }
+
+    @Test
+    fun `get operator provides column expression by qualified name prefixed with the alias`() {
+        val column = mock<Column<TestableDummyEngine, Any?>> {
+            whenever(it.name).thenReturn("c1")
+        }
+        whenever(data.columnNames).thenReturn(listOf("c1"))
+        whenever(data["c1"]).thenReturn(column)
+        whenever(column.withQualifier("a")).thenReturn(Column(listOf("a"), "c1"))
+
+        val prefixedColumn = QuerySource(data, "a")["a.c1"]
 
         prefixedColumn.qualifiers shouldBe listOf("a")
         prefixedColumn.name shouldBe column.name

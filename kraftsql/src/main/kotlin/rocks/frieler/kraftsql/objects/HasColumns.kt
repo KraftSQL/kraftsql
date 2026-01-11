@@ -24,7 +24,7 @@ interface HasColumns<E : Engine<E>, T> {
      * The name must be in the available [columnNames].
      *
      * If the data object adds any qualifier, such as an alias, to the columns, this qualifier is added to the [Column]
-     * expression, but must not be part of the given column name.
+     * expression, but optional in the given column name.
      *
      * @param column the name of the column
      * @return a [Column] expression for the named column

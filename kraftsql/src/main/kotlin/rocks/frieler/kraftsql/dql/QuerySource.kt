@@ -31,7 +31,10 @@ open class QuerySource<E: Engine<E>, T : Any>(
      * @param column the name of the column
      * @return a [Column] expression for the named column
      */
-    override operator fun get(column: String) =
-        data[column]
-        .let { if (alias != null) it.withQualifier(alias) else it }
+    override operator fun get(column: String) : Column<E, Any?> =
+        if (alias != null && column.startsWith("$alias.") && column.removePrefix("$alias.") in data.columnNames) {
+            get(column.removePrefix("$alias."))
+        } else {
+            data[column].let { if (alias != null) it.withQualifier(alias) else it }
+        }
 }
