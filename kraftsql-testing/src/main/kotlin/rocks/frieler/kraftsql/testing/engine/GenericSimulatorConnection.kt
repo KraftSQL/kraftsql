@@ -16,6 +16,7 @@ import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
+import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.dql.Select
 import kotlin.reflect.KClass
 
@@ -55,6 +56,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
 
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> {
         var rows = fetchData(select.source)
+        val columnsNames = select.source.columnNames.toMutableList()
 
         for (join in select.joins) {
             val dataToJoin = fetchData(join.data)
@@ -75,8 +77,17 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                             .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
                     }
                 }
+                is RightJoin<E> -> {
+                    rows = dataToJoin.flatMap { rowToJoin ->
+                            rows
+                            .map { row -> row + rowToJoin }
+                            .filter { row -> joinCondition.invoke(row) ?: false }
+                            .ifEmpty { listOf(DataRow(columnsNames.map { it to null }) + rowToJoin) }
+                    }
+                }
                 else -> throw NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")
             }
+            columnsNames += join.data.columnNames
         }
 
         select.filter?.let { filter ->

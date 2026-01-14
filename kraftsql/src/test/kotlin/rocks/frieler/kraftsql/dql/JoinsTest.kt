@@ -20,4 +20,9 @@ class JoinsTest {
     fun `LeftJoin renders LEFT JOIN SQL`() {
         LeftJoin(right, condition).sql() shouldBe "LEFT JOIN right ON condition"
     }
+
+    @Test
+    fun `RightJoin renders RIGHT JOIN SQL`() {
+        RightJoin(right, condition).sql() shouldBe "RIGHT JOIN right ON condition"
+    }
 }

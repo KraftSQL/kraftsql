@@ -10,6 +10,7 @@ import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
+import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.engine.TestableDummyEngine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.Data
@@ -107,6 +108,44 @@ class SelectDSLTest {
         }
 
         select.joins.single().shouldBeInstanceOf<LeftJoin<TestableDummyEngine>> { join ->
+            join.data.shouldBeInstanceOf<QuerySource<TestableDummyEngine, *>> { it.data shouldBe dataToJoin }
+            join.condition shouldBe joinCondition
+        }
+    }
+
+    @Test
+    fun `rightJoin adds RIGHT JOIN of a QuerySource to the SELECT statement`() {
+        val source = mock<Data<TestableDummyEngine, *>>()
+        val dataToJoin = mock<QuerySource<TestableDummyEngine, *>>()
+        val joinCondition = mock<Expression<TestableDummyEngine, Boolean>>()
+
+        val select = Select<TestableDummyEngine, DataRow> {
+            from(source)
+            val joinedData = rightJoin(dataToJoin) { joinCondition }
+
+            joinedData shouldBe dataToJoin
+        }
+
+        select.joins.single().shouldBeInstanceOf<RightJoin<TestableDummyEngine>> { join ->
+            join.data shouldBe dataToJoin
+            join.condition shouldBe joinCondition
+        }
+    }
+
+    @Test
+    fun `rightJoin adds RIGHT JOIN of Data to the SELECT statement`() {
+        val source = mock<Data<TestableDummyEngine, *>>()
+        val dataToJoin = mock<Data<TestableDummyEngine, *>>()
+        val joinCondition = mock<Expression<TestableDummyEngine, Boolean>>()
+
+        val select = Select<TestableDummyEngine, DataRow> {
+            from(source)
+            val joinedData = rightJoin(dataToJoin) { joinCondition }
+
+            joinedData.shouldBeInstanceOf<QuerySource<TestableDummyEngine, *>> { it.data shouldBe dataToJoin }
+        }
+
+        select.joins.single().shouldBeInstanceOf<RightJoin<TestableDummyEngine>> { join ->
             join.data.shouldBeInstanceOf<QuerySource<TestableDummyEngine, *>> { it.data shouldBe dataToJoin }
             join.condition shouldBe joinCondition
         }
