@@ -13,6 +13,26 @@ import rocks.frieler.kraftsql.expressions.knownNotNull
 import kotlin.reflect.KProperty
 import kotlin.reflect.typeOf
 
+/**
+ * Creates a new [Select] statement defined via the DSL.
+ *
+ * Example:
+ * ```kotlin
+ * val select = SELECT<DataRow> {
+ *     from(data)
+ *     column(data["id"] `as` "match")
+ *     where(data["type"] `=` Constant("A"))
+ * }
+ * ```
+ * would render to ``SELECT `id` AS `match` FROM data WHERE `type` = 'A'``.
+ *
+ * See [SelectBuilder] for all available options to define the SELECT statement.
+ *
+ * @param E the [Engine] where the resulting [Select] statement can be executed
+ * @param T the Kotlin type of the rows returned by the resulting [Select] statement
+ * @param configurator a function on a [SelectBuilder] to configure the [Select] statement
+ * @return the [Select] statement
+ */
 fun <E : Engine<E>, T : Any> Select(configurator: @SqlDsl SelectBuilder<E, T>.() -> Unit) : Select<E, T> {
     return SelectBuilder<E, T>().apply { configurator() }.build()
 }
@@ -45,11 +65,25 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
         this.columns.addAll(columns)
     }
 
+    /**
+     * [INNER JOIN][InnerJoin]s the given data on the given condition.
+     *
+     * @param data the data to join
+     * @param condition the condition to join on
+     * @return the data to join for further usage
+     */
     open fun <J : Any> innerJoin(data: QuerySource<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) : HasColumns<E, J> {
         return data
             .also { joins.add(InnerJoin(it, condition(data))) }
     }
 
+    /**
+     * [INNER JOIN][InnerJoin]s the given data on the given condition.
+     *
+     * @param data the data to join
+     * @param condition the condition to join on
+     * @return the data to join for further usage
+     */
     open fun <J : Any> innerJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) =
         innerJoin(QuerySource(data), condition)
 

@@ -14,6 +14,7 @@ import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.engine.Type
+import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Coalesce
@@ -101,6 +102,29 @@ class GenericSimulatorConnectionTest {
         result.forEach { row ->
             row.columnNames shouldBe listOf("integer")
         }
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate INNER JOIN`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm,
+                    DataRow("key" to  41, "entity" to "x"),
+                    DataRow("key" to  42, "entity" to "y"),
+                ), "left"),
+                joins = listOf(
+                    InnerJoin(
+                        QuerySource(ConstantData(DummyEngine.orm,
+                            DataRow("key" to 42, "attribute" to "foo"),
+                            DataRow("key" to 43, "attribute" to "bar"),
+                        ), "right"),
+                        Column<DummyEngine, Int>("left.key") `=` Column<DummyEngine, Int>("right.key"))
+                )
+            ), DataRow::class)
+
+        result shouldContainExactly listOf(
+            DataRow("left.key" to 42, "left.entity" to "y", "right.key" to 42, "right.attribute" to "foo"),
+        )
     }
 
     @Test
