@@ -49,7 +49,7 @@ class CoalesceTest {
     }
 
     @Test
-    fun `Coalesce with different arguments is equal`() {
+    fun `Coalesce with different arguments is not equal`() {
         val expression1 = mock<Expression<TestableDummyEngine, Any?>>()
         val expression2 = mock<Expression<TestableDummyEngine, Any?>>()
         val expression3 = mock<Expression<TestableDummyEngine, Any?>>()
