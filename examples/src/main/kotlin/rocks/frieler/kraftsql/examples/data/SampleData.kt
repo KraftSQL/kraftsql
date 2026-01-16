@@ -30,6 +30,8 @@ fun withSampleData(action: () -> Unit) {
         val customer1 = Customer(1, germany, LocalDate.of(1987, 5, 17)).also { it.insertInto(customers) }
         val customer2 = Customer(2, austria, LocalDate.of(1995, 3, 4)).also { it.insertInto(customers) }
         val customer3 = Customer(3, germany, LocalDate.of(2001, 11, 30)).also { it.insertInto(customers) }
+        @Suppress("UnusedVariable", "unused") // this customer has not bought anything yet
+        val customer4 = Customer(4, germany, LocalDate.of(2006, 8, 3)).also { it.insertInto(customers) }
 
         Purchase(1, customer1, Instant.parse("2025-01-03T08:22:14+01:00"), 43.80.toBigDecimal()).also {
             it.insertInto(purchases)

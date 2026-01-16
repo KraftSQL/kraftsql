@@ -6,8 +6,8 @@ import rocks.frieler.kraftsql.examples.data.Country
 import rocks.frieler.kraftsql.examples.data.Customer
 import rocks.frieler.kraftsql.examples.data.Purchase
 import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
-import rocks.frieler.kraftsql.h2.dql.execute
 import rocks.frieler.kraftsql.h2.objects.ConstantData
+import rocks.frieler.kraftsql.h2.objects.collect
 import rocks.frieler.kraftsql.testing.kotest.inspectors.filterForOne
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -30,13 +30,28 @@ class TotalPurchaseValuePerCustomerTest {
         )
 
         val customerPurchaseValues = aggregatePurchaseValuePerCustomer(customers, purchases)
-            .execute()
+            .collect()
 
         (customerPurchaseValues.filterForOne { it.customerId shouldBe customer1.id }).also {
             it.totalAmount shouldBe BigDecimal("3.00")
         }
         (customerPurchaseValues.filterForOne { it.customerId shouldBe customer2.id }).also {
             it.totalAmount shouldBe BigDecimal("30.00")
+        }
+    }
+
+    @Test
+    fun `returns zero for Customer without any purchases`() {
+        val customer = Customer(1, country, LocalDate.EPOCH)
+        val customers = ConstantData(customer)
+
+        val purchases = ConstantData.empty<Purchase>()
+
+        val customerPurchaseValues = aggregatePurchaseValuePerCustomer(customers, purchases)
+            .collect()
+
+        (customerPurchaseValues.filterForOne { it.customerId shouldBe customer.id }).also {
+            it.totalAmount shouldBe BigDecimal.ZERO
         }
     }
 }
