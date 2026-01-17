@@ -21,8 +21,8 @@ fun withSampleData(action: () -> Unit) {
         val food = Category(1, "Food")
         val clothes = Category(2, "Clothes")
 
-        val chocolate = Product(1, "Chocolate", food).also { it.insertInto(products) }
-        val banana = Product(2, "Banana", food).also { it.insertInto(products) }
+        val chocolate = Product(1, "Chocolate", food, arrayOf("sweets", "snacks")).also { it.insertInto(products) }
+        val banana = Product(2, "Banana", food, arrayOf("fruit")).also { it.insertInto(products) }
         val pants = Product(3, "Pants", clothes).also { it.insertInto(products) }
 
         val germany = Country("DE", "Deutschland")
