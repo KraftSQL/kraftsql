@@ -72,6 +72,11 @@ class DataRowTest {
     }
 
     @Test
+    fun `toString renders array entry elements`() {
+        DataRow("c" to arrayOf("foo", "bar")).toString() shouldBe "DataRow(c=[foo, bar])"
+    }
+
+    @Test
     fun `DataRows with equal schema and values are not equal`() {
         (DataRow("column" to "foo") == DataRow("column" to "foo")) shouldBe true
     }

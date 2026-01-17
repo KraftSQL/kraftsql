@@ -3,7 +3,7 @@ package rocks.frieler.kraftsql.objects
 import java.util.Objects
 
 /**
- * A row of data, i.e. a sequence of values associated with the column names of a schema.
+ * A row of data, i.e., a sequence of values associated with the column names of a schema.
  */
 class DataRow(
     val entries: Iterable<Pair<String, Any?>>
@@ -36,7 +36,14 @@ class DataRow(
     operator fun plus(other: DataRow) = DataRow(this.entries + other.entries)
 
     override fun toString(): String {
-        return "DataRow(${entries.joinToString(", ") { "${it.first}=${it.second}" }})"
+        return "DataRow(${entries.joinToString(", ") { (field, value) ->
+            "${field}=${
+                when (value) {
+                    is Array<*> -> value.contentDeepToString()
+                    else -> value
+                }
+            }"
+        }})"
     }
 
     override fun equals(other: Any?) =
