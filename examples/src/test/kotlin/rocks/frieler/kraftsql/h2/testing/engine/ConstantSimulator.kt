@@ -7,5 +7,5 @@ import kotlin.reflect.KClass
 
 class ConstantSimulator<T> : ConstantSimulator<H2Engine, T>() {
     @Suppress("UNCHECKED_CAST")
-    override val expression = Constant::class as KClass<Constant<H2Engine, T>>
+    override val expression = Constant::class as KClass<Constant<T>>
 }
