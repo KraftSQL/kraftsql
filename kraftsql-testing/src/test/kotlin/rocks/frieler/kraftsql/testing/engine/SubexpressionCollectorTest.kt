@@ -67,6 +67,16 @@ class SubexpressionCollectorTest {
     }
 
     @Test
+    fun `GenericSubexpressionCollector can collect array expression of ArrayLength`() {
+        val arrayExpression = mock<Expression<DummyEngine, Array<*>>>()
+        val arrayLength = rocks.frieler.kraftsql.expressions.ArrayLength(arrayExpression)
+
+        val subexpressions = subexpressionCollector.getSubexpressions(arrayLength)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(arrayLength.array)
+    }
+
+    @Test
     fun `GenericSubexpressionCollector can collect expression of Cast`() {
         val cast = Cast<DummyEngine, String>(mock<Expression<DummyEngine, Any?>>(), mock())
 
