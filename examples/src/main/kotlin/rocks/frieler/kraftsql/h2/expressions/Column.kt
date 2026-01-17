@@ -21,4 +21,6 @@ class Column<T>(val parent: Column<*>?, qualifiers: List<String>, name: String) 
     }
 
     override fun get(column: String) = Column<Any?>(this, column)
+
+    override fun withQualifier(qualifier: String) = super.withQualifier(qualifier).let { Column<T>(it.qualifiers, it.name) }
 }
