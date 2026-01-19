@@ -12,7 +12,7 @@ import rocks.frieler.kraftsql.expressions.Expression
  */
 abstract class Join<E : Engine<E>>(
     val data: QuerySource<E, *>,
-    val condition: Expression<E, Boolean>,
+    open val condition: Expression<E, Boolean>? = null,
 ) {
     abstract fun sql(): String
 }
@@ -24,9 +24,9 @@ abstract class Join<E : Engine<E>>(
  * @param data the data to join
  * @param condition the condition to join on
  */
-class InnerJoin<E : Engine<E>>(
+open class InnerJoin<E : Engine<E>>(
     data: QuerySource<E, *>,
-    condition: Expression<E, Boolean>,
+    override val condition: Expression<E, Boolean>,
 ) : Join<E>(data, condition) {
     override fun sql() = "INNER JOIN ${data.sql()} ON ${condition.sql()}"
 }
@@ -41,7 +41,7 @@ class InnerJoin<E : Engine<E>>(
  */
 class LeftJoin<E : Engine<E>>(
     data: QuerySource<E, *>,
-    condition: Expression<E, Boolean>,
+    override val condition: Expression<E, Boolean>,
 ) : Join<E>(data, condition) {
     override fun sql() = "LEFT JOIN ${data.sql()} ON ${condition.sql()}"
 }
@@ -56,7 +56,7 @@ class LeftJoin<E : Engine<E>>(
  */
 class RightJoin<E : Engine<E>>(
     data: QuerySource<E, *>,
-    condition: Expression<E, Boolean>,
+    override val condition: Expression<E, Boolean>,
 ) : Join<E>(data, condition) {
     override fun sql() = "RIGHT JOIN ${data.sql()} ON ${condition.sql()}"
 }

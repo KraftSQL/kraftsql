@@ -60,9 +60,9 @@ open class GenericSimulatorConnection<E : Engine<E>>(
 
         for (join in select.joins) {
             val dataToJoin = fetchData(join.data)
-            val joinCondition = simulateExpression(join.condition)
             when (join) {
                 is InnerJoin<E> -> {
+                    val joinCondition = simulateExpression(join.condition)
                     rows = rows.flatMap { row ->
                         dataToJoin
                             .map { rowToJoin -> row + rowToJoin }
@@ -70,6 +70,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                     }
                 }
                 is LeftJoin<E> -> {
+                    val joinCondition = simulateExpression(join.condition)
                     rows = rows.flatMap { row ->
                         dataToJoin
                             .map { rowToJoin -> row + rowToJoin }
@@ -78,6 +79,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                     }
                 }
                 is RightJoin<E> -> {
+                    val joinCondition = simulateExpression(join.condition)
                     rows = dataToJoin.flatMap { rowToJoin ->
                             rows
                             .map { row -> row + rowToJoin }
