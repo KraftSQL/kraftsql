@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.DeploymentValidation
+
 plugins {
     id("com.vanniktech.maven.publish")
 }
@@ -20,7 +22,9 @@ mavenPublishing {
             developer { name = "Christopher Frieler" }
         }
     }
-    publishToMavenCentral(automaticRelease = true)
+    publishToMavenCentral(
+        automaticRelease = true,
+        validateDeployment = DeploymentValidation.PUBLISHED)
     signAllPublications()
 }
 
