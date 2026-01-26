@@ -25,4 +25,9 @@ class JoinsTest {
     fun `RightJoin renders RIGHT JOIN SQL`() {
         RightJoin(right, condition).sql() shouldBe "RIGHT JOIN right ON condition"
     }
+
+    @Test
+    fun `CrossJoin renders CROSS JOIN SQL`() {
+        CrossJoin(right).sql() shouldBe "CROSS JOIN right"
+    }
 }

@@ -23,7 +23,7 @@ class SelectBuilder<T : Any> : rocks.frieler.kraftsql.dsl.SelectBuilder<H2Engine
 
     override fun <J : Any> innerJoin(
         data: rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>,
-        condition: @SqlDsl (rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>.() -> Expression<H2Engine, Boolean>),
+        condition: @SqlDsl rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>.() -> Expression<H2Engine, Boolean>,
     ): HasColumns<H2Engine, J> {
         require(data is QuerySource) { "h2 requires its own QuerySource implementation." }
         return super.innerJoin(data, condition)
@@ -31,10 +31,47 @@ class SelectBuilder<T : Any> : rocks.frieler.kraftsql.dsl.SelectBuilder<H2Engine
 
     override fun <J : Any> innerJoin(
         data: Data<J>,
-        condition: @SqlDsl (rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>.() -> Expression<H2Engine, Boolean>),
+        condition: @SqlDsl rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>.() -> Expression<H2Engine, Boolean>,
     ): HasColumns<H2Engine, J> {
         return super.innerJoin(QuerySource(data), condition)
     }
+
+    override fun <J : Any> leftJoin(
+        data: rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>,
+        condition: @SqlDsl rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>.() -> Expression<H2Engine, Boolean>,
+    ): HasColumns<H2Engine, J> {
+        require(data is QuerySource) { "h2 requires its own QuerySource implementation." }
+        return super.leftJoin(data, condition)
+    }
+
+    override fun <J : Any> leftJoin(
+        data: Data<J>,
+        condition: @SqlDsl rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>.() -> Expression<H2Engine, Boolean>,
+    ): HasColumns<H2Engine, J> {
+        return super.leftJoin(QuerySource(data), condition)
+    }
+
+    override fun <J : Any> rightJoin(
+        data: rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>,
+        condition: @SqlDsl rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>.() -> Expression<H2Engine, Boolean>,
+    ): HasColumns<H2Engine, J> {
+        require(data is QuerySource) { "h2 requires its own QuerySource implementation." }
+        return super.rightJoin(data, condition)
+    }
+
+    override fun <J : Any> rightJoin(
+        data: Data<J>,
+        condition: @SqlDsl rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>.() -> Expression<H2Engine, Boolean>,
+    ): HasColumns<H2Engine, J> {
+        return super.rightJoin(QuerySource(data), condition)
+    }
+
+    override fun <J : Any> crossJoin(data: rocks.frieler.kraftsql.dql.QuerySource<H2Engine, J>): HasColumns<H2Engine, J> {
+        require(data is QuerySource) { "h2 requires its own QuerySource implementation." }
+        return super.crossJoin(data)
+    }
+
+    override fun <J : Any> crossJoin(data: Data<J>) = super.crossJoin(QuerySource(data))
 
     override fun build(): Select<T> {
         val pureSelect = super.build()

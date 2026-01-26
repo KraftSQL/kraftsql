@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.dsl
 
+import rocks.frieler.kraftsql.dql.CrossJoin
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.Data
@@ -132,6 +133,23 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
      */
     open fun <J : Any> rightJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) =
         rightJoin(QuerySource(data), condition)
+
+    /**
+     * [CROSS JOIN][CrossJoin]s the given data.
+     *
+     * @param data the data to join
+     * @return the data to join for further usage
+     */
+    open fun <J : Any> crossJoin(data: QuerySource<E, J>) : HasColumns<E, J> =
+        data.also { joins.add(CrossJoin(it)) }
+
+    /**
+     * [CROSS JOIN][CrossJoin]s the given data.
+     *
+     * @param data the data to join
+     * @return the data to join for further usage
+     */
+    open fun <J : Any> crossJoin(data: Data<E, J>) = crossJoin(QuerySource(data))
 
     fun where(filter: Expression<E, Boolean>) {
         check(!::filter.isInitialized) { "SELECT already has a WHERE-filter." }

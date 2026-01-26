@@ -2,6 +2,7 @@ package rocks.frieler.kraftsql.testing.engine
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -9,6 +10,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.dml.InsertInto
+import rocks.frieler.kraftsql.dql.CrossJoin
 import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
@@ -174,6 +176,31 @@ class GenericSimulatorConnectionTest {
         result shouldContainExactly listOf(
             DataRow("left.key" to 42, "left.entity" to "y", "right.key" to 42, "right.attribute" to "foo"),
             DataRow("left.key" to null, "left.entity" to null, "right.key" to 43, "right.attribute" to "bar"),
+        )
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate CROSS JOIN`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm,
+                    DataRow("entity" to "x"),
+                    DataRow("entity" to "y"),
+                )),
+                joins = listOf(
+                    CrossJoin(
+                        QuerySource(ConstantData(DummyEngine.orm,
+                            DataRow("attribute" to "foo"),
+                            DataRow("attribute" to "bar"),
+                        )))
+                )
+            ), DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(
+            DataRow("entity" to "x", "attribute" to "foo"),
+            DataRow("entity" to "x", "attribute" to "bar"),
+            DataRow("entity" to "y", "attribute" to "foo"),
+            DataRow("entity" to "y", "attribute" to "bar"),
         )
     }
 
