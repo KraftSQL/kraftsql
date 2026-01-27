@@ -6,6 +6,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import rocks.frieler.kraftsql.dql.CrossJoin
 import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
@@ -148,6 +149,40 @@ class SelectDSLTest {
         select.joins.single().shouldBeInstanceOf<RightJoin<TestableDummyEngine>> { join ->
             join.data.shouldBeInstanceOf<QuerySource<TestableDummyEngine, *>> { it.data shouldBe dataToJoin }
             join.condition shouldBe joinCondition
+        }
+    }
+
+    @Test
+    fun `crossJoin adds CROSS JOIN of a QuerySource to the SELECT statement`() {
+        val source = mock<Data<TestableDummyEngine, *>>()
+        val dataToJoin = mock<QuerySource<TestableDummyEngine, *>>()
+
+        val select = Select<TestableDummyEngine, DataRow> {
+            from(source)
+            val joinedData = crossJoin(dataToJoin)
+
+            joinedData shouldBe dataToJoin
+        }
+
+        select.joins.single().shouldBeInstanceOf<CrossJoin<TestableDummyEngine>> { join ->
+            join.data shouldBe dataToJoin
+        }
+    }
+
+    @Test
+    fun `crossJoin adds CROSS JOIN of Data to the SELECT statement`() {
+        val source = mock<Data<TestableDummyEngine, *>>()
+        val dataToJoin = mock<Data<TestableDummyEngine, *>>()
+
+        val select = Select<TestableDummyEngine, DataRow> {
+            from(source)
+            val joinedData = crossJoin(dataToJoin)
+
+            joinedData.shouldBeInstanceOf<QuerySource<TestableDummyEngine, *>> { it.data shouldBe dataToJoin }
+        }
+
+        select.joins.single().shouldBeInstanceOf<CrossJoin<TestableDummyEngine>> { join ->
+            join.data.shouldBeInstanceOf<QuerySource<TestableDummyEngine, *>> { it.data shouldBe dataToJoin }
         }
     }
 

@@ -12,7 +12,7 @@ import rocks.frieler.kraftsql.expressions.Expression
  */
 abstract class Join<E : Engine<E>>(
     val data: QuerySource<E, *>,
-    val condition: Expression<E, Boolean>,
+    open val condition: Expression<E, Boolean>? = null,
 ) {
     abstract fun sql(): String
 }
@@ -26,7 +26,7 @@ abstract class Join<E : Engine<E>>(
  */
 class InnerJoin<E : Engine<E>>(
     data: QuerySource<E, *>,
-    condition: Expression<E, Boolean>,
+    override val condition: Expression<E, Boolean>,
 ) : Join<E>(data, condition) {
     override fun sql() = "INNER JOIN ${data.sql()} ON ${condition.sql()}"
 }
@@ -41,7 +41,7 @@ class InnerJoin<E : Engine<E>>(
  */
 class LeftJoin<E : Engine<E>>(
     data: QuerySource<E, *>,
-    condition: Expression<E, Boolean>,
+    override val condition: Expression<E, Boolean>,
 ) : Join<E>(data, condition) {
     override fun sql() = "LEFT JOIN ${data.sql()} ON ${condition.sql()}"
 }
@@ -56,7 +56,19 @@ class LeftJoin<E : Engine<E>>(
  */
 class RightJoin<E : Engine<E>>(
     data: QuerySource<E, *>,
-    condition: Expression<E, Boolean>,
+    override val condition: Expression<E, Boolean>,
 ) : Join<E>(data, condition) {
     override fun sql() = "RIGHT JOIN ${data.sql()} ON ${condition.sql()}"
+}
+
+/**
+ * SQL CROSS JOIN that results in the cartesian product of both sides.
+ *
+ * @param <E> the [Engine] to execute this [Join]
+ * @param data the data to join
+ */
+class CrossJoin<E : Engine<E>>(
+    data: QuerySource<E, *>,
+) : Join<E>(data) {
+    override fun sql() = "CROSS JOIN ${data.sql()}"
 }

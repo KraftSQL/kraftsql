@@ -7,6 +7,7 @@ import rocks.frieler.kraftsql.dml.CommitTransaction
 import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dml.RollbackTransaction
+import rocks.frieler.kraftsql.dql.CrossJoin
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.ConstantData
@@ -56,13 +57,12 @@ open class GenericSimulatorConnection<E : Engine<E>>(
 
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> {
         var rows = fetchData(select.source)
-        val columnsNames = select.source.columnNames.toMutableList()
 
         for (join in select.joins) {
             val dataToJoin = fetchData(join.data)
-            val joinCondition = simulateExpression(join.condition)
             when (join) {
                 is InnerJoin<E> -> {
+                    val joinCondition = simulateExpression(join.condition)
                     rows = rows.flatMap { row ->
                         dataToJoin
                             .map { rowToJoin -> row + rowToJoin }
@@ -70,6 +70,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                     }
                 }
                 is LeftJoin<E> -> {
+                    val joinCondition = simulateExpression(join.condition)
                     rows = rows.flatMap { row ->
                         dataToJoin
                             .map { rowToJoin -> row + rowToJoin }
@@ -78,16 +79,19 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                     }
                 }
                 is RightJoin<E> -> {
+                    val joinCondition = simulateExpression(join.condition)
                     rows = dataToJoin.flatMap { rowToJoin ->
                             rows
                             .map { row -> row + rowToJoin }
                             .filter { row -> joinCondition.invoke(row) ?: false }
-                            .ifEmpty { listOf(DataRow(columnsNames.map { it to null }) + rowToJoin) }
+                            .ifEmpty { listOf(DataRow(ConstantData(orm, rows).columnNames.map { it to null }) + rowToJoin) }
                     }
+                }
+                is CrossJoin<E> -> {
+                    rows = rows.flatMap { row -> dataToJoin.map { row + it } }
                 }
                 else -> throw NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")
             }
-            columnsNames += join.data.columnNames
         }
 
         select.filter?.let { filter ->
