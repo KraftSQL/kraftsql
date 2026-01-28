@@ -6,11 +6,14 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dql.CrossJoin
+import rocks.frieler.kraftsql.dql.DataExpressionData
 import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
@@ -31,6 +34,7 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.ConstantData
+import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.objects.Table
 import kotlin.reflect.typeOf
@@ -69,6 +73,18 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["data.answer"] shouldBe 42L
+    }
+
+    @Test
+    fun `Empty column names of a QuerySource are just named by the alias`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow("" to 42L)), "answer"),
+                columns = listOf(Projection(Column<DummyEngine, Long>("answer"))),
+            ), DataRow::class
+        )
+
+        result.single()["answer"] shouldBe 42L
     }
 
     @Test
@@ -492,5 +508,41 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["count"] shouldBe 1
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can fetch Data by evaluating an expression`() {
+        val data = ConstantData(DummyEngine.orm, DataRow("string" to "foo"), DataRow("string" to "bar"), DataRow("string" to "baz"))
+        val dataExpression = mock<Expression<DummyEngine, Data<DummyEngine, DataRow>>> {
+            whenever(it.defaultColumnName()).thenReturn("string")
+        }
+        val dataExpressionSimulator = mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
+            whenever(it.expression).thenReturn(dataExpression::class)
+            whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(dataExpression)) })
+                .thenReturn { data }
+        }
+
+        connection.registerExpressionSimulator(dataExpressionSimulator)
+        val result = connection.execute(Select(QuerySource(DataExpressionData(dataExpression))), DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(DataRow("string" to "foo"), DataRow("string" to "bar"), DataRow("string" to "baz"))
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can fetch Data by evaluating an expression that resolves to Data of primitives`() {
+        val data = ConstantData(DummyEngine.orm, "foo", "bar", "baz")
+        val dataExpression = mock<Expression<DummyEngine, Data<DummyEngine, DataRow>>> {
+            whenever(it.defaultColumnName()).thenReturn("")
+        }
+        val dataExpressionSimulator = mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
+            whenever(it.expression).thenReturn(dataExpression::class)
+            whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(dataExpression)) })
+                .thenReturn { data }
+        }
+
+        connection.registerExpressionSimulator(dataExpressionSimulator)
+        val result = connection.execute(Select(QuerySource(DataExpressionData(dataExpression), "string")), DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(DataRow("string" to "foo"), DataRow("string" to "bar"), DataRow("string" to "baz"))
     }
 }
