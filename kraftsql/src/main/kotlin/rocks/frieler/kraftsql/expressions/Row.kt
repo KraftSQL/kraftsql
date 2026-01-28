@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.expressions
 
 import rocks.frieler.kraftsql.engine.Engine
+import rocks.frieler.kraftsql.objects.HasColumns
 
 /**
  * The SQL `Row(...)` [Expression] that creates a row from the given named sub-[Expression].
@@ -11,7 +12,10 @@ import rocks.frieler.kraftsql.engine.Engine
  */
 open class Row<E : Engine<E>, T>(
     val values: Map<String, Expression<E, *>>?
-) : Expression<E, T> {
+) : Expression<E, T>, HasColumns<E, T> {
+
+    override val columnNames = values?.keys?.toList() ?: emptyList()
+
     override fun sql(): String {
         if (values == null) {
             return "NULL"
