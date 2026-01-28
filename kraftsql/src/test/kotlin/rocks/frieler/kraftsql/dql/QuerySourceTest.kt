@@ -60,6 +60,13 @@ class QuerySourceTest {
     }
 
     @Test
+    fun `empty column name is replaced by alias`() {
+        whenever(data.columnNames).thenReturn(listOf(""))
+
+        QuerySource(data, "a").columnNames shouldBe listOf("a")
+    }
+
+    @Test
     fun `get operator provides column expression by name from underlying data`() {
         val column = mock<Column<TestableDummyEngine, Any?>> { whenever(it.name).thenReturn("c1") }
         whenever(data.columnNames).thenReturn(listOf("c1"))
@@ -96,5 +103,14 @@ class QuerySourceTest {
 
         prefixedColumn.qualifiers shouldBe listOf("a")
         prefixedColumn.name shouldBe column.name
+    }
+
+    @Test
+    fun `get operator provides only column like alias when underlying data has only one column with empty name`() {
+        whenever(data.columnNames).thenReturn(listOf(""))
+
+        val column = QuerySource(data, "a")["a"]
+
+        column shouldBe Column("a")
     }
 }

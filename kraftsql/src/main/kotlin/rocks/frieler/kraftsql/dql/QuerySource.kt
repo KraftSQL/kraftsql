@@ -34,21 +34,25 @@ open class QuerySource<E: Engine<E>, T : Any>(
      * [Data], prefixed with this [QuerySource]'s alias if set.
      */
     override val columnNames: List<String>
-        get() = data.columnNames.map { if (alias == null) it else "$alias.${it}" }
+        get() = data.columnNames.map { if (alias == null) it else "$alias${if (it.isNotEmpty()) ".$it" else ""}" }
 
     /**
      * Retrieves a [Column] expression for the named column.
      *
      * The name must be available in the underlying [Data].
      *
-     * If set, this [QuerySource]'s alias is added as qualifier to the [Column] expression, but must not be part of the
-     * given column name.
+     * If set, this [QuerySource]'s alias is added as qualifier to the [Column] expression. It may optionally be part of
+     * the given column name.
+     *
+     * If the underlying data has only one column with an empty name, the alias is used as the column's name.
      *
      * @param column the name of the column
      * @return a [Column] expression for the named column
      */
     override operator fun get(column: String) : Column<E, Any?> =
-        if (alias != null && column.startsWith("$alias.") && column.removePrefix("$alias.") in data.columnNames) {
+        if (column == alias && data.columnNames == listOf("")) {
+            Column(alias)
+        } else if (alias != null && column.startsWith("$alias.") && column.removePrefix("$alias.") in data.columnNames) {
             get(column.removePrefix("$alias."))
         } else {
             data[column].let { if (alias != null) it.withQualifier(alias) else it }
