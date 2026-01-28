@@ -33,7 +33,7 @@ open class QuerySource<E: Engine<E>, T : Any>(
      * [Data], prefixed with this [QuerySource]'s alias if set.
      */
     override val columnNames: List<String>
-        get() = data.columnNames.map { if (alias == null) it else "$alias.${it}" }
+        get() = data.columnNames.map { if (alias == null) it else "$alias${if (it.isNotEmpty()) ".$it" else ""}" }
 
     /**
      * Retrieves a [Column] expression for the named column.
