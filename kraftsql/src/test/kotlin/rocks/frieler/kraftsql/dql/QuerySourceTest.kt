@@ -4,6 +4,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import rocks.frieler.kraftsql.commands.Command
 import rocks.frieler.kraftsql.engine.TestableDummyEngine
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.objects.Data
@@ -11,6 +12,29 @@ import rocks.frieler.kraftsql.objects.DataRow
 
 class QuerySourceTest {
     private val data = mock<Data<TestableDummyEngine, DataRow>>()
+
+    @Test
+    fun `sql() returns the data's sql`() {
+        whenever(data.sql()).thenReturn("data")
+
+        QuerySource(data).sql() shouldBe "data"
+    }
+
+    @Test
+    fun `sql() wraps subqueries in parentheses`() {
+        val command = mock<Data<TestableDummyEngine, DataRow>>(extraInterfaces = arrayOf(Command::class))
+        whenever(command.sql()).thenReturn("SELECT * FROM table")
+
+        QuerySource(command).sql() shouldBe "(SELECT * FROM table)"
+    }
+
+    @Test
+    fun `sql() adds alias if set`() {
+        whenever(data.sql()).thenReturn("data")
+
+        QuerySource(data, "d").sql() shouldBe "data AS `d`"
+    }
+
 
     @Test
     fun `column names are forwarded from underlying data`() {

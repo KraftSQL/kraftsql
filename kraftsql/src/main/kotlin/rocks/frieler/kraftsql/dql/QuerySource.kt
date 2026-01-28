@@ -1,16 +1,31 @@
 package rocks.frieler.kraftsql.dql
 
+import rocks.frieler.kraftsql.commands.Command
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.HasColumns
 
+/**
+ * A wrapper around [Data] to use it in a query.
+ *
+ * @param E the [Engine] targeted
+ * @param T the Kotlin type of the [Data]'s rows
+ * @param data the [Data] to use in the query
+ * @param alias an optional alias for the [Data]
+ */
 open class QuerySource<E: Engine<E>, T : Any>(
     val data: Data<E, T>,
     val alias: String? = null,
 ) : HasColumns<E, T> {
+
+    /**
+     * Renders the SQL portion to embed this [QuerySource] in a query.
+     *
+     * @return the SQL portion to embed this [QuerySource] in a query
+     */
     fun sql() = data.sql()
-        .let { sql -> if (sql.contains(" ")) "($sql)" else sql }
+        .let { sql -> if (data is Command<*, *>) "($sql)" else sql }
         .let { sql -> if (alias != null) "$sql AS `$alias`" else sql }
 
     /**
