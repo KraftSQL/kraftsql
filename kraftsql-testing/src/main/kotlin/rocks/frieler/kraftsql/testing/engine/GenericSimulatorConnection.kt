@@ -8,6 +8,7 @@ import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dml.RollbackTransaction
 import rocks.frieler.kraftsql.dql.CrossJoin
+import rocks.frieler.kraftsql.dql.DataExpressionData
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.ConstantData
@@ -19,6 +20,8 @@ import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.dql.Select
+import rocks.frieler.kraftsql.objects.Data
+import rocks.frieler.kraftsql.objects.collect
 import kotlin.reflect.KClass
 
 /**
@@ -213,6 +216,10 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                     val value = simulateExpression(expression).invoke(DataRow())
                     value as? DataRow ?: DataRow(expression.defaultColumnName() to value)
                 }
+            }
+            is DataExpressionData<E, *> -> {
+                @Suppress("UNCHECKED_CAST") val actualData = simulateExpression(data.expression).invoke(DataRow()) as Data<E, DataRow>
+                actualData.collect(this)
             }
             else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
         }}
