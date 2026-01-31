@@ -17,6 +17,7 @@ import java.math.BigDecimal
 abstract class Sum<E : Engine<E>, T : Number> protected constructor(
     val expression: Expression<E, *>,
 ) : Aggregation<E, T?> {
+    override val subexpressions = listOf(expression)
 
     override fun sql() = "SUM(${expression.sql()})"
 

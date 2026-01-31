@@ -26,6 +26,7 @@ class Coalesce<E : Engine<E>, T>(
     }
 
     val expressions: List<Expression<E, T>> = expressions.toList()
+    override val subexpressions = expressions.toList()
 
     override fun sql() = "COALESCE(${this@Coalesce.expressions.joinToString(",") { it.sql() }})"
 

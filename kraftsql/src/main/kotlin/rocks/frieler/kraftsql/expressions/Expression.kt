@@ -9,6 +9,8 @@ import rocks.frieler.kraftsql.engine.Engine
  * @param T the Kotlin type of the [Expression]'s value
  */
 interface Expression<E: Engine<E>, out T> {
+    val subexpressions: List<Expression<E, *>>
+
     /**
      * Generates the SQL code for this [Expression].
      *
@@ -40,3 +42,5 @@ interface Expression<E: Engine<E>, out T> {
  */
 @Suppress("UNCHECKED_CAST")
 fun <E: Engine<E>, T : Any> Expression<E, T?>.knownNotNull() = this as Expression<E, T>
+
+fun <E: Engine<E>> Expression<E, *>.allSubexpressions() : List<Expression<E, *>> = listOf(this) + subexpressions.flatMap { it.allSubexpressions() }

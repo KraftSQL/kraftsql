@@ -12,6 +12,8 @@ import java.util.Objects
 class IsNotNull<E : Engine<E>>(
     val expression: Expression<E, *>,
 ) : Expression<E, Boolean> {
+    override val subexpressions = listOf(expression)
+
     override fun sql() = "${expression.sql()} IS NOT NULL"
 
     override fun defaultColumnName() = "${expression.defaultColumnName()}_IS_NOT_NULL"

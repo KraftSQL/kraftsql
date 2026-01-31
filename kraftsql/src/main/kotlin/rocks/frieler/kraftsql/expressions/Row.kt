@@ -12,6 +12,8 @@ import rocks.frieler.kraftsql.engine.Engine
 open class Row<E : Engine<E>, T>(
     val values: Map<String, Expression<E, *>>?
 ) : Expression<E, T> {
+    override val subexpressions = (values?.values ?: emptySet()).toList()
+
     override fun sql(): String {
         if (values == null) {
             return "NULL"

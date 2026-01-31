@@ -12,6 +12,8 @@ import java.util.Objects
 class Count<E : Engine<E>>(
     val expression: Expression<E, *>? = null
 ) : Aggregation<E, Long> {
+    override val subexpressions = listOfNotNull(expression)
+
     override fun sql() = "COUNT(${expression?.sql() ?: "*"})"
 
     override fun defaultColumnName() = "COUNT(${expression?.defaultColumnName() ?: "*"})"

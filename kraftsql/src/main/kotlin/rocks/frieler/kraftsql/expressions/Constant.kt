@@ -14,6 +14,8 @@ import java.time.LocalDate
 open class Constant<E : Engine<E>, T>(
     val value: T,
 ) : Expression<E, T> {
+    override val subexpressions = emptyList<Expression<E, *>>()
+
     override fun sql(): String {
         return when (value) {
             null -> "NULL"

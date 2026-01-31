@@ -12,6 +12,8 @@ import rocks.frieler.kraftsql.engine.Engine
 class Array<E : Engine<E>, T>(
     val elements: kotlin.Array<Expression<E, T>>?,
 ) : Expression<E, kotlin.Array<T>?> {
+    override val subexpressions = (elements ?: emptyArray()).toList()
+
     override fun sql(): String {
         if (elements == null) {
             return "NULL"

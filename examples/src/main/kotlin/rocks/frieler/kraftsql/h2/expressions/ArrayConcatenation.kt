@@ -7,6 +7,8 @@ class ArrayConcatenation<T>(
     private val left: Expression<H2Engine, Array<T>?>,
     private val right: Expression<H2Engine, Array<T>?>,
 ) : rocks.frieler.kraftsql.expressions.ArrayConcatenation<H2Engine, T>(arrayOf(left, right)) {
+    override val subexpressions = listOf(left, right)
+
     override fun sql() = "(${left.sql()}) || (${right.sql()})"
 
     override fun defaultColumnName() = "${left.defaultColumnName()} || ${right.defaultColumnName()}"
