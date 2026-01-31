@@ -13,10 +13,12 @@ import rocks.frieler.kraftsql.engine.Type
  */
 class Cast<E : Engine<E>, T> : Expression<E, T> {
     val expression: Expression<E, *>
+    override val subexpressions: List<Expression<E, *>>
     val type: Type<E, T & Any>
 
     private constructor(expression: Expression<E, *>, type: Type<E, T & Any>) {
         this.expression = expression
+        this.subexpressions = listOf(expression)
         this.type = type
     }
 

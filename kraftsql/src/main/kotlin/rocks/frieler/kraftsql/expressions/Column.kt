@@ -21,6 +21,8 @@ open class Column<E: Engine<E>, T>(
     open val qualifiedName: String
         get() = "${qualifiers.joinToString("") { "$it." }}$name"
 
+    override val subexpressions = emptyList<Expression<E, *>>()
+
     override fun sql(): String = "${qualifiers.joinToString("") { "`$it`." }}`$name`"
 
     override fun defaultColumnName() = qualifiedName

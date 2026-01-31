@@ -14,6 +14,8 @@ class Equals<E : Engine<E>>(
     val left: Expression<E, *>,
     val right: Expression<E, *>,
 ) : Expression<E, Boolean> {
+    override val subexpressions = listOf(left, right)
+
     override fun sql() = "(${left.sql()})=(${right.sql()})"
 
     override fun defaultColumnName() = "${left.defaultColumnName()} = ${right.defaultColumnName()}"
