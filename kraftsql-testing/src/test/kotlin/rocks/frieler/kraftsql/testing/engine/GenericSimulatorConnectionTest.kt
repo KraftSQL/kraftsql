@@ -36,7 +36,6 @@ import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
-import rocks.frieler.kraftsql.objects.HasColumns
 import rocks.frieler.kraftsql.objects.Table
 import kotlin.reflect.typeOf
 
@@ -219,6 +218,42 @@ class GenericSimulatorConnectionTest {
             DataRow("entity" to "x", "attribute" to "bar"),
             DataRow("entity" to "y", "attribute" to "foo"),
             DataRow("entity" to "y", "attribute" to "bar"),
+        )
+    }
+
+    @Test
+    fun `WIP - Correlated Join`() {
+        val unnest = mock<Expression<DummyEngine, Data<DummyEngine, Int>>> {
+            whenever(it.defaultColumnName()).thenReturn("")
+            whenever(it.subexpressions).thenReturn(listOf(Column<DummyEngine, Int>("values")))
+        }
+        connection.registerExpressionSimulator(mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
+            whenever(it.expression).thenReturn(unnest::class)
+            whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(unnest)) })
+                .thenReturn { row -> ConstantData(DummyEngine.orm, (row["values"] as kotlin.Array<Int>).map { element -> DataRow("" to element) }) }
+        })
+        connection.correlatedJoinsEnabled = true
+
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm,
+                    DataRow("entity" to "x", "values" to arrayOf(1, 2)),
+                    DataRow("entity" to "y", "values" to arrayOf(3, 4)),
+                )),
+                joins = listOf(
+                    CrossJoin(QuerySource(DataExpressionData(unnest), "value"))
+                ),
+                columns = listOf(
+                    Projection(Column<DummyEngine, String>("entity")),
+                    Projection(Column<DummyEngine, Int>("value")),
+                )
+            ), DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(
+            DataRow("entity" to "x", "value" to 1),
+            DataRow("entity" to "x", "value" to 2),
+            DataRow("entity" to "y", "value" to 3),
+            DataRow("entity" to "y", "value" to 4),
         )
     }
 

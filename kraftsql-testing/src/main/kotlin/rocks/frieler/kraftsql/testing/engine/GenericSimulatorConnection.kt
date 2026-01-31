@@ -15,11 +15,14 @@ import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.objects.Table
 import rocks.frieler.kraftsql.dql.InnerJoin
+import rocks.frieler.kraftsql.dql.Join
 import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.dql.Select
+import rocks.frieler.kraftsql.expressions.Column
+import rocks.frieler.kraftsql.expressions.allSubexpressions
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.collect
 import kotlin.reflect.KClass
@@ -62,39 +65,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         var rows = fetchData(select.source)
 
         for (join in select.joins) {
-            val dataToJoin = fetchData(join.data)
-            when (join) {
-                is InnerJoin<E> -> {
-                    val joinCondition = simulateExpression(join.condition)
-                    rows = rows.flatMap { row ->
-                        dataToJoin
-                            .map { rowToJoin -> row + rowToJoin }
-                            .filter { row -> joinCondition.invoke(row) ?: false }
-                    }
-                }
-                is LeftJoin<E> -> {
-                    val joinCondition = simulateExpression(join.condition)
-                    rows = rows.flatMap { row ->
-                        dataToJoin
-                            .map { rowToJoin -> row + rowToJoin }
-                            .filter { row -> joinCondition.invoke(row) ?: false }
-                            .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
-                    }
-                }
-                is RightJoin<E> -> {
-                    val joinCondition = simulateExpression(join.condition)
-                    rows = dataToJoin.flatMap { rowToJoin ->
-                            rows
-                            .map { row -> row + rowToJoin }
-                            .filter { row -> joinCondition.invoke(row) ?: false }
-                            .ifEmpty { listOf(DataRow(ConstantData(orm, rows).columnNames.map { it to null }) + rowToJoin) }
-                    }
-                }
-                is CrossJoin<E> -> {
-                    rows = rows.flatMap { row -> dataToJoin.map { row + it } }
-                }
-                else -> throw NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")
-            }
+            rows = handleJoin(join, rows)
         }
 
         select.filter?.let { filter ->
@@ -121,6 +92,52 @@ open class GenericSimulatorConnection<E : Engine<E>>(
 
         return orm.deserializeQueryResult(rows, type)
     }
+
+    private fun handleJoin(join: Join<E>, leftSide: List<DataRow>): List<DataRow> =
+        when (join) {
+            is InnerJoin<E> -> {
+                val dataToJoin = fetchData(join.data)
+                val joinCondition = simulateExpression(join.condition)
+                leftSide.flatMap { row ->
+                    dataToJoin
+                        .map { rowToJoin -> row + rowToJoin }
+                        .filter { row -> joinCondition.invoke(row) ?: false }
+                }
+            }
+
+            is LeftJoin<E> -> {
+                val dataToJoin = fetchData(join.data)
+                val joinCondition = simulateExpression(join.condition)
+                leftSide.flatMap { row ->
+                    dataToJoin
+                        .map { rowToJoin -> row + rowToJoin }
+                        .filter { row -> joinCondition.invoke(row) ?: false }
+                        .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
+                }
+            }
+
+            is RightJoin<E> -> {
+                val dataToJoin = fetchData(join.data)
+                val joinCondition = simulateExpression(join.condition)
+                dataToJoin.flatMap { rowToJoin ->
+                    leftSide
+                        .map { row -> row + rowToJoin }
+                        .filter { row -> joinCondition.invoke(row) ?: false }
+                        .ifEmpty { listOf(DataRow(ConstantData(orm, leftSide).columnNames.map { it to null }) + rowToJoin) }
+                }
+            }
+
+            is CrossJoin<E> -> {
+                if (correlatedJoinsEnabled && isCorrelatedJoin(join, ConstantData(orm, leftSide))) {
+                    leftSide.flatMap { row -> fetchData(join.data, row).map { row + it } }
+                } else {
+                    val dataToJoin = fetchData(join.data)
+                    leftSide.flatMap { row -> dataToJoin.map { row + it } }
+                }
+            }
+
+            else -> throw NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")
+        }
 
     override fun execute(createTable: CreateTable<E>) {
         commitAllOpenTransactions()
@@ -200,7 +217,17 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         }
     }
 
-    protected open fun fetchData(source: QuerySource<E, *>) : List<DataRow> {
+    var correlatedJoinsEnabled = false
+
+    protected open fun isCorrelatedJoin(join: Join<E>, left: Data<E, *>) : Boolean = join.data.data.let { data ->
+        when (data) {
+            is Select<E, *> -> data.columns.orEmpty().flatMap { it.value.allSubexpressions() }.any { it is Column<E, *> && it.qualifiedName in left.columnNames }
+            is DataExpressionData<E, *> -> data.expression.allSubexpressions().any { it is Column<E, *> && it.qualifiedName in left.columnNames }
+            else -> false
+        }
+    }
+
+    protected open fun fetchData(source: QuerySource<E, *>, correlatedData: DataRow? = null) : List<DataRow> {
         var rows = source.data.let { data -> when (data) {
             is Table<E, *> -> topState.getTable(data.qualifiedName).second
             is Select<E, *> -> {
@@ -215,7 +242,8 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                 }
             }
             is DataExpressionData<E, *> -> {
-                @Suppress("UNCHECKED_CAST") val actualData = simulateExpression(data.expression).invoke(DataRow()) as Data<E, DataRow>
+                @Suppress("UNCHECKED_CAST") val actualData =
+                    simulateExpression(data.expression).invoke(correlatedData ?: DataRow()) as Data<E, DataRow>
                 actualData.collect(this)
             }
             else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
