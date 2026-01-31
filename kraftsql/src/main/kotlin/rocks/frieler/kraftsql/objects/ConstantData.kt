@@ -7,8 +7,8 @@ import rocks.frieler.kraftsql.expressions.Row
 /**
  * Constant [Data].
  *
- * @param <E> the [Engine] where this [ConstantData] can be rendered as SQL and worked with
- * @param <T> the Kotlin type of the [ConstantData]'s items, either a data class or generically [DataRow]
+ * @param E the [Engine] where this [ConstantData] can be rendered as SQL and worked with
+ * @param T the Kotlin type of the [ConstantData]'s items, either a data class or generically [DataRow]
  */
 open class ConstantData<E : Engine<E>, T : Any> protected constructor(
     private val orm: ORMapping<E, *>,
@@ -55,7 +55,7 @@ open class ConstantData<E : Engine<E>, T : Any> protected constructor(
          * data-class, you should prefer the overloaded version that derives the column names from that class.
          *
          * @param E the [Engine] where this [ConstantData] can be rendered as SQL and worked with
-         * @param <T> the Kotlin type of the [ConstantData]'s items, either a data class or generically [DataRow]
+         * @param T the Kotlin type of the [ConstantData]'s items, either a data class or generically [DataRow]
          */
         fun <E : Engine<E>, T : Any> empty(orm: ORMapping<E, *>, columnNames: List<String>) =
             ConstantData<E, T>(orm, columnNames)
@@ -65,7 +65,7 @@ open class ConstantData<E : Engine<E>, T : Any> protected constructor(
          * using [ORMapping.getSchemaFor].
          *
          * @param E the [Engine] where this [ConstantData] can be rendered as SQL and worked with
-         * @param <T> the Kotlin type of the [ConstantData]'s items; must be a data class
+         * @param T the Kotlin type of the [ConstantData]'s items; must be a data class
          */
         inline fun <E : Engine<E>, reified T : Any> empty(orm: ORMapping<E, *>) =
             empty<E, T>(orm, orm.getSchemaFor(T::class).map { it.name })

@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
  * In a simulation, the [Row] expression always returns a [DataRow]. The mapping to another Kotlin class is done by
  * the [SimulatorORMapping].
  *
- * @param <E> the [Engine] to simulate
+ * @param E the [Engine] to simulate
  */
 open class RowSimulator<E : Engine<E>> : ExpressionSimulator<E, DataRow?, Row<E, DataRow?>> {
     @Suppress("UNCHECKED_CAST")

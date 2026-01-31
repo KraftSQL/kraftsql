@@ -6,7 +6,7 @@ import java.util.Objects
 /**
  * `IS NOT NULL`-[Expression] that checks, if the given expression is not `NULL`.
  *
- * @param <E> the SQL [Engine]
+ * @param E the SQL [Engine]
  * @param expression the expression to check
  */
 class IsNotNull<E : Engine<E>>(

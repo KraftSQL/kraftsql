@@ -10,8 +10,8 @@ import kotlin.reflect.KClass
 /**
  * Simulator for [Column] expressions.
  *
- * @param <E> the [Engine] to simulate
- * @param <T> the Kotlin type of the [Column] and thereby the return type of its simulation
+ * @param E the [Engine] to simulate
+ * @param T the Kotlin type of the [Column] and thereby the return type of its simulation
  */
 open class ColumnSimulator<E : Engine<E>, T> : ExpressionSimulator<E, T, Column<E, T>> {
     @Suppress("UNCHECKED_CAST")

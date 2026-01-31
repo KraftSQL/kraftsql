@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
  * Simulator for [SumAsLong] expressions, the [rocks.frieler.kraftsql.expressions.Sum] that results in an integer-valued
  * result.
  *
- * @param <E> the [Engine] to simulate
+ * @param E the [Engine] to simulate
  */
 class SumAsLongSimulator<E : Engine<E>> : AggregationSimulator<E, Long?, SumAsLong<E>>("SUM") {
     @Suppress("UNCHECKED_CAST")
@@ -30,7 +30,7 @@ class SumAsLongSimulator<E : Engine<E>> : AggregationSimulator<E, Long?, SumAsLo
  * Simulator for [SumAsDouble] expressions, the [rocks.frieler.kraftsql.expressions.Sum] that results in a double-valued
  * result.
  *
- * @param <E> the [Engine] to simulate
+ * @param E the [Engine] to simulate
  */
 class SumAsDoubleSimulator<E : Engine<E>> : AggregationSimulator<E, Double?, SumAsDouble<E>>("SUM") {
     @Suppress("UNCHECKED_CAST")
@@ -47,7 +47,7 @@ class SumAsDoubleSimulator<E : Engine<E>> : AggregationSimulator<E, Double?, Sum
  * Simulator for [SumAsBigDecimal] expressions, the [rocks.frieler.kraftsql.expressions.Sum] that results in a
  * [BigDecimal]-valued result.
  *
- * @param <E> the [Engine] to simulate
+ * @param E the [Engine] to simulate
  */
 class SumAsBigDecimalSimulator<E : Engine<E>> : AggregationSimulator<E, BigDecimal?, SumAsBigDecimal<E>>("SUM") {
     @Suppress("UNCHECKED_CAST")

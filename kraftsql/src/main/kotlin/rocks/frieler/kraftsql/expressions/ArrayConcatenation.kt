@@ -11,8 +11,8 @@ import kotlin.Array
  * and behaviors. Hence, the **Kraft**SQL core provides this partial support for connectors to build on by implementing
  * this class.
  *
- * @param <E> the [Engine] that implements [ArrayConcatenation] and for which the SQL code is rendered
- * @param <T> the Kotlin type of the arrays' elements
+ * @param E the [Engine] that implements [ArrayConcatenation] and for which the SQL code is rendered
+ * @param T the Kotlin type of the arrays' elements
  * @param arguments the Array-typed [Expression]s to concatenate
  */
 abstract class ArrayConcatenation<E : Engine<E>, T>(

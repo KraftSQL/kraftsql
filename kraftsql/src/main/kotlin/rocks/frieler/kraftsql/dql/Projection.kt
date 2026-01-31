@@ -6,8 +6,8 @@ import rocks.frieler.kraftsql.expressions.Expression
 /**
  * Projection of an [Expression] as column in a [Select] statement.
  *
- * @param <E> the [Engine] that implements this [Projection]
- * @param <T> the Kotlin type of the [Expression]'s value
+ * @param E the [Engine] that implements this [Projection]
+ * @param T the Kotlin type of the [Expression]'s value
  * @param value the [Expression] to project
  * @param alias an optional alias for the resulting column
  */

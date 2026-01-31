@@ -26,7 +26,7 @@ import kotlin.reflect.KClass
  *
  * The [GenericSimulatorConnection] is configurable and extendable to simulate specific SQL engines and dialects.
  *
- * @param <E> the [Engine] to simulate
+ * @param E the [Engine] to simulate
  */
 open class GenericSimulatorConnection<E : Engine<E>>(
     private val orm: SimulatorORMapping<E> = SimulatorORMapping(),

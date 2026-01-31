@@ -10,8 +10,8 @@ import java.math.BigDecimal
  * values. Since this is not directly representable in Kotlin, this is an abstract class with factory methods for
  * different implementations for each numeric type.
  *
- * @param <E> the [Engine] that implements [Sum] and for which the SQL code is rendered
- * @param <T> the Kotlin type of the [Sum]'s result value
+ * @param E the [Engine] that implements [Sum] and for which the SQL code is rendered
+ * @param T the Kotlin type of the [Sum]'s result value
  * @param expression the [Expression] to sum the values of
  */
 abstract class Sum<E : Engine<E>, T : Number> protected constructor(

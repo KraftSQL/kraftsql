@@ -6,7 +6,7 @@ import java.util.Objects
 /**
  * The SQL '=' operator.
  *
- * @param <E> the [Engine] that implements this [Equals] and for which the SQL code is rendered
+ * @param E the [Engine] that implements this [Equals] and for which the SQL code is rendered
  * @param left the left-hand side of the '='-expression
  * @param right the right-hand side of the '='-expression
  */

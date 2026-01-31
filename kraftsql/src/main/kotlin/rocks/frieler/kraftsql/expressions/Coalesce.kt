@@ -5,8 +5,8 @@ import rocks.frieler.kraftsql.engine.Engine
 /**
  * SQL `COALESCE(...)` function that returns the first non-`NULL` value from its arguments or `NULL` if all are `NULL`.
  *
- * @param <E> the [Engine] targeted
- * @param <T> the Kotlin type of all arguments
+ * @param E the [Engine] targeted
+ * @param T the Kotlin type of all arguments
  */
 class Coalesce<E : Engine<E>, T>(
     vararg expressions: Expression<E, T>,

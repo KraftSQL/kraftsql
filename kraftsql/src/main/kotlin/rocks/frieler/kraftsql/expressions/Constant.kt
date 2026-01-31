@@ -7,8 +7,8 @@ import java.time.LocalDate
 /**
  * [Expression] that implements a constant value in SQL.
  *
- * @param <E> the [Engine] that implements this [Constant] and for which the SQL code is rendered
- * @param <T> the Kotlin type of the [Constant] value
+ * @param E the [Engine] that implements this [Constant] and for which the SQL code is rendered
+ * @param T the Kotlin type of the [Constant] value
  * @param value the constant value
  */
 open class Constant<E : Engine<E>, T>(

@@ -5,8 +5,8 @@ import rocks.frieler.kraftsql.engine.Engine
 /**
  * An SQL expression.
  *
- * @param <E> the [Engine] that implements and executes this [Expression]
- * @param <T> the Kotlin type of the [Expression]'s value
+ * @param E the [Engine] that implements and executes this [Expression]
+ * @param T the Kotlin type of the [Expression]'s value
  */
 interface Expression<E: Engine<E>, out T> {
     /**
@@ -34,8 +34,8 @@ interface Expression<E: Engine<E>, out T> {
  * Most [Expression]s are nullable, because SQL tends to return `NULL` in many error cases. However, sometimes the
  * developer knows (and has verified by tests) that an [Expression] will never be `NULL`.
  *
- * @param <E> the [Engine] that implements and executes this [Expression]
- * @param <T> the non-nullable Kotlin type of the [Expression]'s value
+ * @param E the [Engine] that implements and executes this [Expression]
+ * @param T the non-nullable Kotlin type of the [Expression]'s value
  * @return the same [Expression] as this one, but not-nullable
  */
 @Suppress("UNCHECKED_CAST")

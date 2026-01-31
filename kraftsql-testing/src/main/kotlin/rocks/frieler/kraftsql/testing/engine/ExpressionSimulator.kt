@@ -8,9 +8,9 @@ import kotlin.reflect.KClass
 /**
  * Simulator for a certain [Expression].
  *
- * @param <E> the [Engine] to simulate
- * @param <T> the Kotlin result type of the [Expression] and thereby its simulation
- * @param <X> the [Expression] type to simulate
+ * @param E the [Engine] to simulate
+ * @param T the Kotlin result type of the [Expression] and thereby its simulation
+ * @param X the [Expression] type to simulate
  */
 interface ExpressionSimulator<E : Engine<E>, out T, X : Expression<E, T>> {
     /**
@@ -21,7 +21,7 @@ interface ExpressionSimulator<E : Engine<E>, out T, X : Expression<E, T>> {
     /**
      * Callbacks to simulate sub-expressions in the current evaluation context.
      *
-     * @param <E> the [Engine] to simulate
+     * @param E the [Engine] to simulate
      */
     interface SubexpressionCallbacks<E : Engine<E>> {
         fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T

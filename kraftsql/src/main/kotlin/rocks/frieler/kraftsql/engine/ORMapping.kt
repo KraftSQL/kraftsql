@@ -16,8 +16,8 @@ import kotlin.reflect.full.primaryConstructor
 /**
  * Base interface for mapping between Kotlin and SQL type-system.
  *
- * @param <E> the SQL [Engine] to map to and from
- * @param <R> the result-type of a query from a connection to that [Engine]
+ * @param E the SQL [Engine] to map to and from
+ * @param R the result-type of a query from a connection to that [Engine]
  */
 interface ORMapping<E : Engine<E>, R : Any> {
     fun getTypeFor(type: KType): Type<E, *>

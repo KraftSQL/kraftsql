@@ -9,8 +9,8 @@ import kotlin.reflect.KClass
 /**
  * Simulator for [Constant] expressions.
  *
- * @param <E> the [Engine] to simulate
- * @param <T> the Kotlin type of the [Constant]
+ * @param E the [Engine] to simulate
+ * @param T the Kotlin type of the [Constant]
  */
 open class ConstantSimulator<E : Engine<E>, T> : ExpressionSimulator<E, T, Constant<E, T>> {
     @Suppress("UNCHECKED_CAST")

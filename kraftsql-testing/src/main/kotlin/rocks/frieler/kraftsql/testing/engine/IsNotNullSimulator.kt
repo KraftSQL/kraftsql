@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
 /**
  * Simulator for the [IsNotNull] operator.
  *
- * @param <E> the SQL [Engine]
+ * @param E the SQL [Engine]
  */
 class IsNotNullSimulator<E : Engine<E>> : ExpressionSimulator<E, Boolean, IsNotNull<E>> {
     @Suppress("UNCHECKED_CAST")

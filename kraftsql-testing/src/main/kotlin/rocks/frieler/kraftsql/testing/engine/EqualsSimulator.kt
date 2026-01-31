@@ -10,7 +10,7 @@ import kotlin.reflect.KClass
 /**
  * Simulator for the [Equals] operator.
  *
- * @param <E> the [Engine] to simulate
+ * @param E the [Engine] to simulate
  */
 class EqualsSimulator<E : Engine<E>> : ExpressionSimulator<E, Boolean, Equals<E>> {
     @Suppress("UNCHECKED_CAST")

@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
 /**
  * Simulator for [Count] expressions.
  *
- * @param <E> the [Engine] to simulate
+ * @param E the [Engine] to simulate
  */
 class CountSimulator<E : Engine<E>> : AggregationSimulator<E, Long, Count<E>>("COUNT") {
     @Suppress("UNCHECKED_CAST")

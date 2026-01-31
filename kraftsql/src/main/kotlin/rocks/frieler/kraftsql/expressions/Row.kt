@@ -5,8 +5,8 @@ import rocks.frieler.kraftsql.engine.Engine
 /**
  * The SQL `Row(...)` [Expression] that creates a row from the given named sub-[Expression].
  *
- * @param <E> the [Engine] that implements [Row] and for which the SQL code is rendered
- * @param <T> the Kotlin type of the row's value
+ * @param E the [Engine] that implements [Row] and for which the SQL code is rendered
+ * @param T the Kotlin type of the row's value
  * @param values the named sub-[Expression]s to create the row from
  */
 open class Row<E : Engine<E>, T>(

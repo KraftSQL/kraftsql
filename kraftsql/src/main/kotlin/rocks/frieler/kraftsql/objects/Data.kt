@@ -9,8 +9,8 @@ import rocks.frieler.kraftsql.engine.Engine
  * Such a [Data] representation can be resolved against an [Engine], to work with that data, usually by rendering and
  * executing SQL code.
  *
- * @param <E> the [Engine] where this [Data] resides and can be worked with
- * @param <T> the Kotlin type of the [Data]'s rows
+ * @param E the [Engine] where this [Data] resides and can be worked with
+ * @param T the Kotlin type of the [Data]'s rows
  */
 interface Data<E : Engine<E>, T : Any> : HasColumns<E, T> {
     /**

@@ -11,8 +11,8 @@ import kotlin.reflect.full.isSubclassOf
 /**
  * Simulator for [Array] expressions.
  *
- * @param <E> the [Engine] to simulate
- * @param <T> the Kotlin type of the [Array]s elements, which defines the return type of the is simulation to be
+ * @param E the [Engine] to simulate
+ * @param T the Kotlin type of the [Array]s elements, which defines the return type of the is simulation to be
  * `Array<T>?`
  */
 class ArraySimulator<E : Engine<E>, T> : ExpressionSimulator<E, kotlin.Array<T>?, Array<E, T>> {

@@ -15,8 +15,8 @@ import kotlin.reflect.KClass
  *
  * See [simulate] for the behavior simulated for [ArrayConcatenation] - and override it if necessary.
  *
- * @param <E> the [Engine] to simulate
- * @param <T> the Kotlin type of the arrays' elements
+ * @param E the [Engine] to simulate
+ * @param T the Kotlin type of the arrays' elements
  */
 open class ArrayConcatenationSimulator<E : Engine<E>, T>(
     override val expression : KClass<out ArrayConcatenation<E, T>>

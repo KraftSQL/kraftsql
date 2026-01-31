@@ -14,8 +14,8 @@ import kotlin.reflect.typeOf
 /**
  * Simulator for the [Cast] function.
  *
- * @param <E> the [Engine] to simulate
- * @param <T> the Kotlin type of the [Cast]s target type and thereby the return type of its simulation
+ * @param E the [Engine] to simulate
+ * @param T the Kotlin type of the [Cast]s target type and thereby the return type of its simulation
  */
 class CastSimulator<E : Engine<E>, T> : ExpressionSimulator<E, T, Cast<E, T>> {
     @Suppress("UNCHECKED_CAST")

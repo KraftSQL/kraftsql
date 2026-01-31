@@ -9,8 +9,8 @@ import kotlin.reflect.KClass
 /**
  * Simulator for [Coalesce] function.
  *
- * @param <E> the [Engine] to simulate
- * @param <T> the Kotlin result type of the [Coalesce] function and thereby its simulation
+ * @param E the [Engine] to simulate
+ * @param T the Kotlin result type of the [Coalesce] function and thereby its simulation
  */
 class CoalesceSimulator<E : Engine<E>, T> : ExpressionSimulator<E, T, Coalesce<E, T>> {
     @Suppress("UNCHECKED_CAST")
