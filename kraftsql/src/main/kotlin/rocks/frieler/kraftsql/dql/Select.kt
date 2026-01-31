@@ -17,7 +17,7 @@ open class Select<E : Engine<E>, T : Any>(
     val source: QuerySource<E, *>,
     val joins: List<Join<E>> = emptyList(),
     val columns: List<Projection<E, *>>? = null,
-    val filter: Expression<E, Boolean>? = null,
+    val filter: Expression<E, Boolean?>? = null,
     val grouping: List<Expression<E, *>> = emptyList(),
 ) : Command<E, List<T>>, Data<E, T> {
 

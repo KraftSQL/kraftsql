@@ -103,7 +103,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             val groupingExtractors = select.grouping.map { expression -> simulateExpression(expression) }
             val rowGroups = rows.groupBy { row -> groupingExtractors.map { it.invoke(row) } }.values
 
-            val projections = (select.columns ?: select.grouping.map { Projection<E, _>(it) })
+            val projections = (select.columns ?: select.grouping.map { Projection(it) })
                 .associate { (it.alias ?: it.value.defaultColumnName()) to simulateAggregation(it.value, select.grouping) }
             rows = rowGroups.map { rowGroup ->
                 DataRow(projections.map { (name, expression) -> name to expression.invoke(rowGroup) })
@@ -257,7 +257,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         registerExpressionSimulator(SumAsBigDecimalSimulator())
     }
 
-    protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T? {
+    protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T {
         context(
             object : ExpressionSimulator.SubexpressionCallbacks<E> {
                 override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T = { row ->
@@ -273,7 +273,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         }
     }
 
-    protected open fun <T> simulateAggregation(expression: Expression<E, T>, groupExpressions: List<Expression<E, *>>): (List<DataRow>) -> T? {
+    protected open fun <T> simulateAggregation(expression: Expression<E, T>, groupExpressions: List<Expression<E, *>>): (List<DataRow>) -> T {
         context(
             groupExpressions,
             object : ExpressionSimulator.SubexpressionCallbacks<E> {

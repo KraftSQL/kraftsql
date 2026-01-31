@@ -45,7 +45,7 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
     private lateinit var source: QuerySource<E, *>
     private val joins: MutableList<Join<E>> = mutableListOf()
     private val columns: MutableList<Projection<E, *>> = mutableListOf()
-    private lateinit var filter: Expression<E, Boolean>
+    private lateinit var filter: Expression<E, Boolean?>
     private val grouping: MutableList<Expression<E, *>> = mutableListOf()
 
     open fun <S: Any> from(source: QuerySource<E, S>) : HasColumns<E, S> {
@@ -75,7 +75,7 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
      * @param condition the condition to join on
      * @return the data to join for further usage
      */
-    open fun <J : Any> innerJoin(data: QuerySource<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) : HasColumns<E, J> {
+    open fun <J : Any> innerJoin(data: QuerySource<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean?>) : HasColumns<E, J> {
         return data
             .also { joins.add(InnerJoin(it, condition(data))) }
     }
@@ -87,7 +87,7 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
      * @param condition the condition to join on
      * @return the data to join for further usage
      */
-    open fun <J : Any> innerJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) =
+    open fun <J : Any> innerJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean?>) =
         innerJoin(QuerySource(data), condition)
 
     /**
@@ -97,7 +97,7 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
      * @param condition the condition to join on
      * @return the data to join for further usage
      */
-    open fun <J : Any> leftJoin(data: QuerySource<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) : HasColumns<E, J> {
+    open fun <J : Any> leftJoin(data: QuerySource<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean?>) : HasColumns<E, J> {
         return data
             .also { joins.add(LeftJoin(it, condition(data))) }
     }
@@ -109,7 +109,7 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
      * @param condition the condition to join on
      * @return the data to join for further usage
      */
-    open fun <J : Any> leftJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) =
+    open fun <J : Any> leftJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean?>) =
         leftJoin(QuerySource(data), condition)
 
     /**
@@ -119,7 +119,7 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
      * @param condition the condition to join on
      * @return the data to join for further usage
      */
-    open fun <J : Any> rightJoin(data: QuerySource<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) : HasColumns<E, J> {
+    open fun <J : Any> rightJoin(data: QuerySource<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean?>) : HasColumns<E, J> {
         return data
             .also { joins.add(RightJoin(it, condition(data))) }
     }
@@ -131,7 +131,7 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
      * @param condition the condition to join on
      * @return the data to join for further usage
      */
-    open fun <J : Any> rightJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean>) =
+    open fun <J : Any> rightJoin(data: Data<E, J>, condition: @SqlDsl QuerySource<E, J>.() -> Expression<E, Boolean?>) =
         rightJoin(QuerySource(data), condition)
 
     /**
@@ -151,7 +151,7 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
      */
     open fun <J : Any> crossJoin(data: Data<E, J>) = crossJoin(QuerySource(data))
 
-    fun where(filter: Expression<E, Boolean>) {
+    fun where(filter: Expression<E, Boolean?>) {
         check(!::filter.isInitialized) { "SELECT already has a WHERE-filter." }
         this.filter = filter
     }

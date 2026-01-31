@@ -13,7 +13,7 @@ class Select<T : Any> : Select<H2Engine, T> {
         source: QuerySource<H2Engine, *>,
         joins: List<Join<H2Engine>> = emptyList(),
         columns: List<Projection<H2Engine, *>>? = null,
-        filter: Expression<H2Engine, Boolean>? = null,
+        filter: Expression<H2Engine, Boolean?>? = null,
         grouping: List<Expression<H2Engine, *>> = emptyList(),
     ) : super(source, joins, columns, filter, grouping)
 }

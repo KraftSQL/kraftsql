@@ -8,7 +8,7 @@ import rocks.frieler.kraftsql.objects.Table
 
 open class Delete<E : Engine<E>>(
     val table: Table<E, *>,
-    val condition: Expression<E, Boolean>? = null,
+    val condition: Expression<E, Boolean?>? = null,
 ) : Command<E, Int> {
     override fun sql(): String = "DELETE FROM ${table.sql()}${condition?.let { " WHERE ${it.sql()}" } ?: ""}"
 }

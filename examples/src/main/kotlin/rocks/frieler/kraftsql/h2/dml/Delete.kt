@@ -8,5 +8,5 @@ import rocks.frieler.kraftsql.h2.objects.Table
 
 fun Delete<H2Engine>.execute() = execute(H2Engine.DefaultConnection.get())
 
-fun Table<*>.delete(condition: Expression<H2Engine, Boolean>? = null) =
+fun Table<*>.delete(condition: Expression<H2Engine, Boolean?>? = null) =
     Delete(this, condition).execute()
