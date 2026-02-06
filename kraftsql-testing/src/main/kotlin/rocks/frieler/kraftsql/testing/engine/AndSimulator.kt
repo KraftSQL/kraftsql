@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
  *
  * @param E the [Engine] to simulate
  */
-class AndSimulator<E : Engine<E>> : ExpressionSimulator<E, Boolean, And<E>> {
+open class AndSimulator<E : Engine<E>> : ExpressionSimulator<E, Boolean, And<E>> {
     @Suppress("UNCHECKED_CAST")
     override val expression = And::class as KClass<And<E>>
 
@@ -31,6 +31,6 @@ class AndSimulator<E : Engine<E>> : ExpressionSimulator<E, Boolean, And<E>> {
         }
     }
 
-    private fun simulate(left: Boolean?, right: Boolean?) =
+    protected open fun simulate(left: Boolean?, right: Boolean?) =
         left != null && right != null && left && right
 }

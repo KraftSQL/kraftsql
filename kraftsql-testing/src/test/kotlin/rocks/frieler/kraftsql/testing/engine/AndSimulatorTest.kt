@@ -13,31 +13,18 @@ import rocks.frieler.kraftsql.objects.DataRow
 class AndSimulatorTest {
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
     @ParameterizedTest
-    @CsvSource(
+    @CsvSource(value = [
         "true, true, true",
         "true, false, false",
+        "true, NULL, false",
         "false, true, false",
         "false, false, false",
-    )
-    fun `AndSimulator can simulate AND-operator to combine two expressions`(left: Boolean, right: Boolean, expectedResult: Boolean) {
-        val row = mock<DataRow>()
-        val leftHandSide = mock<Expression<DummyEngine, Boolean>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> left} }
-        val rightHandSide = mock<Expression<DummyEngine, Boolean>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> right} }
-
-        val simulation = context(subexpressionCallbacks) {
-            AndSimulator<DummyEngine>().simulateExpression(And(leftHandSide, rightHandSide))
-        }
-        val result = simulation(row)
-
-        result shouldBe expectedResult
-    }
-
-    @ParameterizedTest
-    @CsvSource(value = [
-        "true, NULL",
-        "NULL, true",
+        "false, NULL, false",
+        "NULL, true, false",
+        "NULL, false, false",
+        "NULL, NULL, false",
     ], nullValues = ["NULL"])
-    fun `AndSimulator returns false when one side is NULL`(left: Boolean?, right: Boolean?) {
+    fun `AndSimulator can simulate AND-operator to combine two expressions`(left: Boolean?, right: Boolean?, expectedResult: Boolean?) {
         val row = mock<DataRow>()
         val leftHandSide = mock<Expression<DummyEngine, Boolean?>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> left} }
         val rightHandSide = mock<Expression<DummyEngine, Boolean?>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> right} }
@@ -47,7 +34,7 @@ class AndSimulatorTest {
         }
         val result = simulation(row)
 
-        result shouldBe false
+        result shouldBe expectedResult
     }
 
     @Test
