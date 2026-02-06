@@ -11,12 +11,12 @@ import kotlin.reflect.KClass
  *
  * @param E the [Engine] to simulate
  */
-open class AndSimulator<E : Engine<E>> : ExpressionSimulator<E, Boolean, And<E>> {
+open class AndSimulator<E : Engine<E>> : ExpressionSimulator<E, Boolean?, And<E>> {
     @Suppress("UNCHECKED_CAST")
     override val expression = And::class as KClass<And<E>>
 
     context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateExpression(expression: And<E>): (DataRow) -> Boolean {
+    override fun simulateExpression(expression: And<E>): (DataRow) -> Boolean? {
         return { row -> simulate(
             subexpressionCallbacks.simulateExpression(expression.left)(row),
             subexpressionCallbacks.simulateExpression(expression.right)(row))
@@ -24,13 +24,13 @@ open class AndSimulator<E : Engine<E>> : ExpressionSimulator<E, Boolean, And<E>>
     }
 
     context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
-    override fun simulateAggregation(expression: And<E>): (List<DataRow>) -> Boolean {
+    override fun simulateAggregation(expression: And<E>): (List<DataRow>) -> Boolean? {
         return { rows -> simulate(
             subexpressionCallbacks.simulateAggregation(expression.left)(rows),
             subexpressionCallbacks.simulateAggregation(expression.right)(rows))
         }
     }
 
-    protected open fun simulate(left: Boolean?, right: Boolean?) =
+    protected open fun simulate(left: Boolean?, right: Boolean?) : Boolean? =
         left != null && right != null && left && right
 }
