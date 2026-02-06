@@ -14,39 +14,22 @@ class OrSimulatorTest {
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @ParameterizedTest
-    @CsvSource(
+    @CsvSource(value = [
         "true, true, true",
         "true, false, true",
+        "true, NULL, true",
         "false, true, true",
         "false, false, false",
-    )
+        "false, NULL, false",
+        "NULL, true, true",
+        "NULL, false, false",
+        "NULL, null, false",
+    ], nullValues = ["NULL"])
     fun `OrSimulator can simulate OR-operator to combine two expressions`(
-        left: Boolean,
-        right: Boolean,
-        expectedResult: Boolean
+        left: Boolean?,
+        right: Boolean?,
+        expectedResult: Boolean?
     ) {
-        val row = mock<DataRow>()
-        val leftHandSide =
-            mock<Expression<DummyEngine, Boolean>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> left } }
-        val rightHandSide =
-            mock<Expression<DummyEngine, Boolean>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> right } }
-
-        val simulation = context(subexpressionCallbacks) {
-            OrSimulator<DummyEngine>().simulateExpression(Or(leftHandSide, rightHandSide))
-        }
-        val result = simulation(row)
-
-        result shouldBe expectedResult
-    }
-
-    @ParameterizedTest
-    @CsvSource(
-        value = [
-            "true, NULL",
-            "NULL, true",
-        ], nullValues = ["NULL"]
-    )
-    fun `OrSimulator returns true when one side is NULL`(left: Boolean?, right: Boolean?) {
         val row = mock<DataRow>()
         val leftHandSide =
             mock<Expression<DummyEngine, Boolean?>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> left } }
@@ -58,7 +41,7 @@ class OrSimulatorTest {
         }
         val result = simulation(row)
 
-        result shouldBe true
+        result shouldBe expectedResult
     }
 
     @Test
