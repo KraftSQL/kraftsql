@@ -10,13 +10,13 @@ import rocks.frieler.kraftsql.engine.TestableDummyEngine
 
 class AndTest {
     @Test
-    fun `SQL combines left AND right expression`() {
+    fun `SQL combines left AND right expression in parentheses`() {
         val left = mock<Expression<TestableDummyEngine, Boolean>> { whenever(it.sql()).thenReturn("left") }
         val right = mock<Expression<TestableDummyEngine, Boolean>> { whenever(it.sql()).thenReturn("right") }
 
         val and = And(left, right)
 
-        and.sql() shouldBe "left AND right"
+        and.sql() shouldBe "(left) AND (right)"
     }
 
     @Test

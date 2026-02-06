@@ -14,7 +14,7 @@ class And<E : Engine<E>>(
     val left: Expression<E, Boolean?>,
     val right: Expression<E, Boolean?>,
 ) : Expression<E, Boolean> {
-    override fun sql() = "${left.sql()} AND ${right.sql()}"
+    override fun sql() = "(${left.sql()}) AND (${right.sql()})"
 
     override fun defaultColumnName() = "${left.defaultColumnName()}_AND_${right.defaultColumnName()}"
 
