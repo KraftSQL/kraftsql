@@ -19,6 +19,7 @@ import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.engine.Type
 import rocks.frieler.kraftsql.expressions.`=`
+import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Coalesce
@@ -289,6 +290,18 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["equals"] shouldBe true
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate the AND-operator`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
+                columns = listOf(Projection(And(Constant(true), Constant(false)), "and")),
+            ), DataRow::class
+        )
+
+        result.single()["and"] shouldBe false
     }
 
     @Test
