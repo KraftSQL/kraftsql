@@ -3,6 +3,7 @@ package rocks.frieler.kraftsql.dql
 import rocks.frieler.kraftsql.commands.Command
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Column
+import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.HasColumns
 
@@ -25,7 +26,7 @@ open class QuerySource<E: Engine<E>, T : Any>(
      * @return the SQL portion to embed this [QuerySource] in a query
      */
     fun sql() = data.sql()
-        .let { sql -> if (data is Command<*, *>) "($sql)" else sql }
+        .let { sql -> if (data is Command<*, *> || data is ConstantData) "($sql)" else sql }
         .let { sql -> if (alias != null) "$sql AS `$alias`" else sql }
 
     /**

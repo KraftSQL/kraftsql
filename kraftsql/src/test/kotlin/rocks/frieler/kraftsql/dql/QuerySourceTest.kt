@@ -7,6 +7,7 @@ import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.commands.Command
 import rocks.frieler.kraftsql.engine.TestableDummyEngine
 import rocks.frieler.kraftsql.expressions.Column
+import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
 
@@ -26,6 +27,14 @@ class QuerySourceTest {
         whenever(command.sql()).thenReturn("SELECT * FROM table")
 
         QuerySource(command).sql() shouldBe "(SELECT * FROM table)"
+    }
+
+    @Test
+    fun `sql() wraps sub-SELECT for ConstantData in parentheses`() {
+        val constantData = mock<ConstantData<TestableDummyEngine, DataRow>>()
+        whenever(constantData.sql()).thenReturn("SELECT 'hello' AS `message`")
+
+        QuerySource(constantData).sql() shouldBe "(SELECT 'hello' AS `message`)"
     }
 
     @Test
