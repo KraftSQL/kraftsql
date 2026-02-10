@@ -29,6 +29,7 @@ import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
+import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
@@ -302,6 +303,18 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["and"] shouldBe false
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate the OR-operator`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
+                columns = listOf(Projection(Or(Constant(true), Constant(false)), "or")),
+            ), DataRow::class
+        )
+
+        result.single()["or"] shouldBe true
     }
 
     @Test
