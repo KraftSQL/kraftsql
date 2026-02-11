@@ -7,7 +7,7 @@ h2 = "2.4.240"
 junit = "6.0.2"
 kotest = "6.1.2"
 mockito = "6.2.3"
-kover = "0.9.5"
+kover = "0.9.6"
 
 [libraries]
 maven-publish-plugin = { group = "com.vanniktech.maven.publish", name = "com.vanniktech.maven.publish.gradle.plugin", version.ref = "maven-publish-plugin" }
