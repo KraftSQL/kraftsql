@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.dql.CrossJoin
+import rocks.frieler.kraftsql.dql.DataExpressionData
 import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
@@ -184,6 +185,26 @@ class SelectDSLTest {
         select.joins.single().shouldBeInstanceOf<CrossJoin<TestableDummyEngine>> { join ->
             join.data.shouldBeInstanceOf<QuerySource<TestableDummyEngine, *>> { it.data shouldBe dataToJoin }
         }
+    }
+
+    @Test
+    fun `as() wraps Data into a QuerySource with alias`() {
+        val data = mock<Data<TestableDummyEngine, *>>()
+
+        val querySource = data `as` "alias"
+
+        querySource.data shouldBe data
+        querySource.alias shouldBe "alias"
+    }
+
+    @Test
+    fun `as() wraps Data-valued Expression into a QuerySource with alias`() {
+        val expression = mock<Expression<TestableDummyEngine, Data<TestableDummyEngine, DataRow>>>()
+
+        val querySource : QuerySource<TestableDummyEngine, DataRow> = expression `as` "alias"
+
+        querySource.data shouldBe DataExpressionData(expression)
+        querySource.alias shouldBe "alias"
     }
 
     @Test
