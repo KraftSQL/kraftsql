@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.dsl
 
 import rocks.frieler.kraftsql.dql.CrossJoin
+import rocks.frieler.kraftsql.dql.DataExpressionData
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.Data
@@ -169,7 +170,25 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
     )
 }
 
+/**
+ * Assigns an alias to the specified [Data] instance wrapping it into a [QuerySource].
+ *
+ * @param E the [Engine] where this [Data] resides and can be worked with
+ * @param T the Kotlin type of the [Data]'s rows
+ * @param alias the alias to assign to the [Data]
+ * @return a [QuerySource] wrapping the [Data] with the specified alias
+ */
 infix fun <E : Engine<E>, T : Any> Data<E, T>.`as`(alias: String) = QuerySource(this, alias)
+
+/**
+ * Assigns an alias to the specified [Data]-valued [Expression] instance wrapping it into a [QuerySource].
+ *
+ * @param E the [Engine] where this [Expression] is executed
+ * @param T the Kotlin type of the rows of the [Expression]'s result
+ * @param alias the alias to assign to the [Expression]
+ * @return a [QuerySource] wrapping the [Expression] with the specified alias
+ */
+infix fun <E : Engine<E>, T : Any> Expression<E, Data<E, T>>.`as`(alias: String) = DataExpressionData(this) `as` alias
 
 infix fun <E : Engine<E>, T> Expression<E, T>.`as`(alias: String) = Projection(this, alias)
 
