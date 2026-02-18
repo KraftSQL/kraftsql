@@ -2,6 +2,7 @@ package rocks.frieler.kraftsql.objects
 
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.engine.ORMapping
+import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Row
 
 /**
@@ -40,7 +41,11 @@ open class ConstantData<E : Engine<E>, T : Any> protected constructor(
                 }
             }
         },
-        items.first().let { item -> if (item is DataRow) item.columnNames else orm.getSchemaFor(item::class).map { it.name } }
+        items.first().let { item ->
+            if (item is DataRow) item.columnNames
+            else if (item::class.isData) orm.getSchemaFor(item::class).map { it.name }
+            else listOf("")
+        }
     )
 
     constructor(orm: ORMapping<E, *>, vararg items: T) : this(orm, items.toList())
@@ -76,11 +81,11 @@ open class ConstantData<E : Engine<E>, T : Any> protected constructor(
             "SELECT ${columnNames.joinToString(", ") { column -> "NULL AS `$column`" }} WHERE FALSE"
         } else {
             items.joinToString(separator = " UNION ALL ") { item ->
-                val serializedItem = orm.serialize(item)
-                if (serializedItem is Row && serializedItem.values != null) {
-                    "SELECT ${serializedItem.values.entries.joinToString(", ") { (name, expression) -> "${expression.sql()} AS `$name`" }}"
-                } else {
-                    error("Item was serialized to something else than Row; this is illegal.")
+                when (val serializedItem = orm.serialize(item)) {
+                    is Constant -> "SELECT ${serializedItem.sql()}"
+                    is Row if serializedItem.values != null ->
+                        "SELECT ${serializedItem.values.entries.joinToString(", ") { (name, expression) -> "${expression.sql()} AS `$name`" }}"
+                    else -> error("Item was serialized to ${item::class.qualifiedName}; this is illegal.")
                 }
             }
         }
