@@ -51,6 +51,15 @@ class GenericSimulatorConnectionTest {
     }
 
     @Test
+    fun `GenericSimulatorConnection can simulate SELECT from primitive ConstantData`() {
+        val result = connection.execute(
+            Select(source = QuerySource(ConstantData(DummyEngine.orm, 1, 2, 3))),
+            DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(DataRow("" to 1), DataRow("" to 2), DataRow("" to 3))
+    }
+
+    @Test
     fun `GenericSimulatorConnection can simulate SELECT from source with alias`() {
         val result = connection.execute(
             Select(

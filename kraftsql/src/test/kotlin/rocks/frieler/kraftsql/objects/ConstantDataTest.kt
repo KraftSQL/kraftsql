@@ -41,6 +41,14 @@ class ConstantDataTest {
     }
 
     @Test
+    fun `ConstantData can hold primitives as items in a single unnamed column`() {
+        val data = ConstantData(orm, 1, 2, 3)
+
+        data.items shouldBe listOf(1, 2, 3)
+        data.columnNames shouldBe listOf("")
+    }
+
+    @Test
     fun `ConstantData rejects empty items`() {
         shouldThrow<IllegalArgumentException> {
             ConstantData(orm, emptyList())
@@ -104,6 +112,16 @@ class ConstantDataTest {
     }
 
     @Test
+    fun `SQL selects union of constants`() {
+        whenever(orm.serialize(1)).thenReturn(Constant(1))
+        whenever(orm.serialize(2)).thenReturn(Constant(2))
+
+        val data = ConstantData(orm, 1, 2)
+
+        data.sql() shouldBe "SELECT 1 UNION ALL SELECT 2"
+    }
+
+    @Test
     fun `SQL selects union constant rows`() {
         val item1 = mock<DataRow> {
             whenever(it.columnNames).thenReturn(listOf("c1", "c2"))
@@ -120,7 +138,7 @@ class ConstantDataTest {
     }
 
     @Test
-    fun `SQL cannot be generated when ORM does not serialize item to Row`() {
+    fun `SQL cannot be generated when ORM does not serialize item to Constant or Row`() {
         val item = mock<DataRow> { whenever(it.columnNames).thenReturn(listOf("c1")) }
         whenever(orm.serialize(item)).thenReturn(mock())
         val data = ConstantData(orm, item)

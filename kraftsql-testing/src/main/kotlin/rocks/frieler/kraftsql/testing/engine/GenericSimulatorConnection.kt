@@ -208,7 +208,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                 data.items.map { item ->
                     val expression = orm.serialize(item)
                     val value = simulateExpression(expression).invoke(DataRow())
-                    value as? DataRow ?: DataRow(expression.defaultColumnName() to value)
+                    value as? DataRow ?: DataRow("" to value)
                 }
             }
             else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
