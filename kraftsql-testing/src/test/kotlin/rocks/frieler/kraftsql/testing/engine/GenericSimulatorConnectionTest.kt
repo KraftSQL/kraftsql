@@ -72,6 +72,58 @@ class GenericSimulatorConnectionTest {
     }
 
     @Test
+    fun `GenericSimulatorConnection can simulate SELECT from table`() {
+        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT)))
+
+        connection.execute(CreateTable(table))
+        connection.execute(InsertInto(table, ConstantData(DummyEngine.orm, DataRow("c" to "foo"))))
+        val result = connection.execute(Select(source = QuerySource(table)), DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(DataRow("c" to "foo"))
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate SELECT from empty table`() {
+        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT)))
+
+        connection.execute(CreateTable(table))
+        val result = connection.execute(Select(source = QuerySource(table)), DataRow::class)
+
+        result shouldBe emptyList()
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate SELECT from sub-query`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(Select(source = QuerySource(ConstantData(DummyEngine.orm, DataRow("c" to "foo")))))
+            ), DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(DataRow("c" to "foo"))
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate SELECT from empty sub-query`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(Select(source = QuerySource(ConstantData.empty(DummyEngine.orm, listOf("c")))))
+            ), DataRow::class)
+
+        result shouldBe emptyList()
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate SELECT of certain columns of empty data`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData.empty(DummyEngine.orm, listOf("c1", "c2"))),
+                columns = listOf(Projection(Column<DummyEngine, String>("c1")))
+            ), DataRow::class)
+
+        result shouldBe emptyList()
+    }
+
+    @Test
     fun `GenericSimulatorConnection can simulate SELECT of all columns`() {
         val result = connection.execute(
             Select(
@@ -142,6 +194,25 @@ class GenericSimulatorConnectionTest {
     }
 
     @Test
+    fun `GenericSimulatorConnection can simulate INNER JOIN with empty result`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm,
+                    DataRow("key" to  41, "entity" to "x"),
+                ), "left"),
+                joins = listOf(
+                    InnerJoin(
+                        QuerySource(ConstantData(DummyEngine.orm,
+                            DataRow("key" to 43, "attribute" to "bar"),
+                        ), "right"),
+                        Column<DummyEngine, Int>("left.key") `=` Column<DummyEngine, Int>("right.key"))
+                )
+            ), DataRow::class)
+
+        result shouldBe emptyList()
+    }
+
+    @Test
     fun `GenericSimulatorConnection can simulate LEFT JOIN`() {
         val result = connection.execute(
             Select(
@@ -162,6 +233,24 @@ class GenericSimulatorConnectionTest {
         result shouldContainExactly listOf(
             DataRow("left.key" to 41, "left.entity" to "x", "right.key" to null, "right.attribute" to null),
             DataRow("left.key" to 42, "left.entity" to "y", "right.key" to 42, "right.attribute" to "foo"),
+        )
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate LEFT JOIN with empty right side`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm,
+                    DataRow("key" to  42, "entity" to "y"),
+                ), "left"),
+                joins = listOf(
+                    LeftJoin(
+                        QuerySource(ConstantData.empty(DummyEngine.orm, listOf("key", "attribute")), "right"),
+                        Column<DummyEngine, Int>("left.key") `=` Column<DummyEngine, Int>("right.key")))
+            ), DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(
+            DataRow("left.key" to 42, "left.entity" to "y", "right.key" to null, "right.attribute" to null),
         )
     }
 
@@ -190,6 +279,26 @@ class GenericSimulatorConnectionTest {
     }
 
     @Test
+    fun `GenericSimulatorConnection can simulate RIGHT JOIN with empty left side`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData.empty(DummyEngine.orm, listOf("key", "entity")), "left"),
+                joins = listOf(
+                    RightJoin(
+                        QuerySource(ConstantData(DummyEngine.orm,
+                            DataRow("key" to 42, "attribute" to "foo"),
+                        ), "right"),
+                        Column<DummyEngine, Int>("left.key") `=` Column<DummyEngine, Int>("right.key"))
+                )
+            ), DataRow::class)
+
+        result.single().columnNames shouldBe listOf("left.key", "left.entity", "right.key", "right.attribute")
+        result shouldContainExactly listOf(
+            DataRow("left.key" to null, "left.entity" to null, "right.key" to 42, "right.attribute" to "foo"),
+        )
+    }
+
+    @Test
     fun `GenericSimulatorConnection can simulate CROSS JOIN`() {
         val result = connection.execute(
             Select(
@@ -212,6 +321,17 @@ class GenericSimulatorConnectionTest {
             DataRow("entity" to "y", "attribute" to "foo"),
             DataRow("entity" to "y", "attribute" to "bar"),
         )
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate SELECT with filter to empty result`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow("id" to 42))),
+                filter = Constant(false),
+            ), DataRow::class)
+
+        result shouldBe emptyList()
     }
 
     @Test
