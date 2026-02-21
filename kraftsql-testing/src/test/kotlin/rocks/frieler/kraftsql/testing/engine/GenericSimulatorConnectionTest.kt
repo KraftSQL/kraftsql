@@ -340,6 +340,42 @@ class GenericSimulatorConnectionTest {
     }
 
     @Test
+    fun `GenericSimulatorConnection can simulate correlated CROSS JOIN with Data expression`() {
+        val unnest = mock<Expression<DummyEngine, Data<DummyEngine, Int>>> {
+            whenever(it.defaultColumnName()).thenReturn("")
+            whenever(it.subexpressions).thenReturn(listOf(Column<DummyEngine, Int>("values")))
+        }
+        connection.registerExpressionSimulator(mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
+            whenever(it.expression).thenReturn(unnest::class)
+            whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(unnest)) })
+                .thenReturn { row -> ConstantData(DummyEngine.orm, (row["values"] as kotlin.Array<*>).map { element -> DataRow("" to element) }) }
+        })
+        connection.correlatedJoinsEnabled = true
+
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm,
+                    DataRow("entity" to "x", "values" to arrayOf(1, 2)),
+                    DataRow("entity" to "y", "values" to arrayOf(3, 4)),
+                )),
+                joins = listOf(
+                    CrossJoin(QuerySource(DataExpressionData(unnest), "value"))
+                ),
+                columns = listOf(
+                    Projection(Column<DummyEngine, String>("entity")),
+                    Projection(Column<DummyEngine, Int>("value")),
+                )
+            ), DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(
+            DataRow("entity" to "x", "value" to 1),
+            DataRow("entity" to "x", "value" to 2),
+            DataRow("entity" to "y", "value" to 3),
+            DataRow("entity" to "y", "value" to 4),
+        )
+    }
+
+    @Test
     fun `GenericSimulatorConnection can simulate SELECT with filter to empty result`() {
         val result = connection.execute(
             Select(

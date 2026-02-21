@@ -21,6 +21,9 @@ import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.dql.Select
+import rocks.frieler.kraftsql.expressions.Column
+import rocks.frieler.kraftsql.expressions.allSubexpressions
+import rocks.frieler.kraftsql.objects.Data
 import kotlin.reflect.KClass
 
 /**
@@ -93,10 +96,38 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         return orm.deserializeQueryResult(resultRows, type)
     }
 
+    protected open fun fetchData(source: QuerySource<E, *>, correlatedData: DataRow? = null) : ConstantData<E, DataRow> {
+        val rows = when (val data = source.data) {
+            is Table<E, *> -> topState.getTable(data.qualifiedName).second
+            is Select<E, *> -> @Suppress("UNCHECKED_CAST") execute(data as Select<E, DataRow>, DataRow::class)
+            is ConstantData<E, *> -> {
+                data.items.map { item ->
+                    val expression = orm.serialize(item)
+                    val value = simulateExpression(expression).invoke(DataRow())
+                    value as? DataRow ?: DataRow("" to value)
+                }
+            }
+            is DataExpressionData<E, *> -> {
+                fetchData(QuerySource(simulateExpression(data.expression).invoke(correlatedData ?: DataRow()))).items.toList()
+            }
+            else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
+        }
+
+        return if (rows.isEmpty()) {
+            ConstantData.empty(orm, source.columnNames)
+        } else if (source.alias == null) {
+            ConstantData(orm, rows)
+        } else {
+            ConstantData(orm, rows.map { row ->
+                DataRow(row.entries.map { (field, value) -> "${source.alias}${if (field.isNotEmpty()) ".$field" else ""}" to value })
+            })
+        }
+    }
+
     private fun handleJoin(leftSide: ConstantData<E, DataRow>, join: Join<E>): ConstantData<E, DataRow> {
-        val dataToJoin = fetchData(join.data)
         val rows = when (join) {
             is InnerJoin<E> -> {
+                val dataToJoin = fetchData(join.data)
                 val joinCondition = simulateExpression(join.condition)
                 leftSide.items.flatMap { row ->
                     dataToJoin.items
@@ -105,6 +136,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                 }
             }
             is LeftJoin<E> -> {
+                val dataToJoin = fetchData(join.data)
                 val joinCondition = simulateExpression(join.condition)
                 leftSide.items.flatMap { row ->
                     dataToJoin.items
@@ -114,6 +146,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                 }
             }
             is RightJoin<E> -> {
+                val dataToJoin = fetchData(join.data)
                 val joinCondition = simulateExpression(join.condition)
                 dataToJoin.items.flatMap { rowToJoin ->
                     leftSide.items
@@ -122,11 +155,28 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                         .ifEmpty { listOf(DataRow(leftSide.columnNames.map { it to null }) + rowToJoin) }
                 }
             }
-            is CrossJoin<E> -> leftSide.items.flatMap { row -> dataToJoin.items.map { row + it } }
+            is CrossJoin<E> -> {
+                if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
+                    leftSide.items.flatMap { row -> fetchData(join.data, row).items.map { row + it } }
+                } else {
+                    val dataToJoin = fetchData(join.data)
+                    leftSide.items.flatMap { row -> dataToJoin.items.map { row + it } }
+                }
+            }
             else -> throw NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")
         }
 
-        return if (rows.isNotEmpty()) ConstantData(orm, rows) else ConstantData.empty(orm, leftSide.columnNames + dataToJoin.columnNames)
+        return if (rows.isNotEmpty()) ConstantData(orm, rows) else ConstantData.empty(orm, leftSide.columnNames + join.data.columnNames)
+    }
+
+    var correlatedJoinsEnabled = false
+
+    protected open fun isCorrelatedJoin(join: Join<E>, left: Data<E, *>) : Boolean = join.data.data.let { data ->
+        when (data) {
+            is Select<E, *> -> data.columns.orEmpty().flatMap { it.value.allSubexpressions() }.any { it is Column<E, *> && it.qualifiedName in left.columnNames }
+            is DataExpressionData<E, *> -> data.expression.allSubexpressions().any { it is Column<E, *> && it.qualifiedName in left.columnNames }
+            else -> false
+        }
     }
 
     override fun execute(createTable: CreateTable<E>) {
@@ -204,32 +254,6 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             } else {
                 throw IllegalStateException("No open transaction to roll back.")
             }
-        }
-    }
-
-    protected open fun fetchData(source: QuerySource<E, *>) : ConstantData<E, DataRow> {
-        val rows = when (val data = source.data) {
-            is Table<E, *> -> topState.getTable(data.qualifiedName).second
-            is Select<E, *> -> @Suppress("UNCHECKED_CAST") execute(data as Select<E, DataRow>, DataRow::class)
-            is ConstantData<E, *> -> {
-                data.items.map { item ->
-                    val expression = orm.serialize(item)
-                    val value = simulateExpression(expression).invoke(DataRow())
-                    value as? DataRow ?: DataRow("" to value)
-                }
-            }
-            is DataExpressionData<E, *> -> fetchData(QuerySource(simulateExpression(data.expression).invoke(DataRow()))).items.toList()
-            else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
-        }
-
-        return if (rows.isEmpty()) {
-            ConstantData.empty(orm, source.columnNames)
-        } else if (source.alias == null) {
-            ConstantData(orm, rows)
-        } else {
-            ConstantData(orm, rows.map { row ->
-                DataRow(row.entries.map { (field, value) -> "${source.alias}${if (field.isNotEmpty()) ".$field" else ""}" to value })
-            })
         }
     }
 
