@@ -21,6 +21,10 @@ import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.dql.Select
+import rocks.frieler.kraftsql.expressions.Column
+import rocks.frieler.kraftsql.objects.Data
+import kotlin.collections.component1
+import kotlin.collections.component2
 import kotlin.reflect.KClass
 
 /**
@@ -29,9 +33,13 @@ import kotlin.reflect.KClass
  * The [GenericSimulatorConnection] is configurable and extendable to simulate specific SQL engines and dialects.
  *
  * @param E the [Engine] to simulate
+ * @param orm the [SimulatorORMapping] to use, defaults to the generic [SimulatorORMapping]
+ * @param subexpressionCollector the [SubexpressionCollector] to use, defaults to a [GenericSubexpressionCollector]
+ * @param rootState the [EngineState] to use as root state, defaults to a new [EngineState]
  */
 open class GenericSimulatorConnection<E : Engine<E>>(
     private val orm: SimulatorORMapping<E> = SimulatorORMapping(),
+    private val subexpressionCollector: SubexpressionCollector<E> = GenericSubexpressionCollector(),
     protected val rootState: EngineState<E> = EngineState(),
 ) : SimulatorConnection<E> {
     protected var topState:  EngineState<E> = rootState
@@ -58,7 +66,16 @@ open class GenericSimulatorConnection<E : Engine<E>>(
     }
 
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> {
+        val resultRows = selectRows(select, null)
+        return orm.deserializeQueryResult(resultRows, type)
+    }
+
+    private fun selectRows(select: Select<E, *>, correlatedData: DataRow? = null) : List<DataRow> {
         var data = fetchData(select.source)
+
+        if (correlatedData != null) {
+            data = ConstantData(orm, data.items.map { row -> correlatedData + row })
+        }
 
         for (join in select.joins) {
             data = handleJoin(data, join)
@@ -90,30 +107,78 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             data.items.toList()
         }
 
-        return orm.deserializeQueryResult(resultRows, type)
+        return resultRows
+    }
+
+    protected open fun fetchData(source: QuerySource<E, *>, correlatedData: DataRow? = null) : ConstantData<E, DataRow> {
+        val rows = when (val data = source.data) {
+            is Table<E, *> -> topState.getTable(data.qualifiedName).second
+            is Select<E, *> -> @Suppress("UNCHECKED_CAST") selectRows(data as Select<E, DataRow>, correlatedData)
+            is ConstantData<E, *> -> {
+                data.items.map { item ->
+                    val expression = orm.serialize(item)
+                    val value = simulateExpression(expression).invoke(DataRow())
+                    value as? DataRow ?: DataRow("" to value)
+                }
+            }
+            is DataExpressionData<E, *> -> {
+                fetchData(QuerySource(simulateExpression(data.expression).invoke(correlatedData ?: DataRow()))).items.toList()
+            }
+            else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
+        }
+
+        return if (rows.isEmpty()) {
+            ConstantData.empty(orm, source.columnNames)
+        } else if (source.alias == null) {
+            ConstantData(orm, rows)
+        } else {
+            ConstantData(orm, rows.map { row ->
+                DataRow(row.entries.map { (field, value) -> "${source.alias}${if (field.isNotEmpty()) ".$field" else ""}" to value })
+            })
+        }
     }
 
     private fun handleJoin(leftSide: ConstantData<E, DataRow>, join: Join<E>): ConstantData<E, DataRow> {
-        val dataToJoin = fetchData(join.data)
         val rows = when (join) {
             is InnerJoin<E> -> {
                 val joinCondition = simulateExpression(join.condition)
-                leftSide.items.flatMap { row ->
-                    dataToJoin.items
-                        .map { rowToJoin -> row + rowToJoin }
-                        .filter { row -> joinCondition.invoke(row) ?: false }
+                if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
+                    leftSide.items.flatMap { row ->
+                        val dataToJoin = fetchData(join.data, row)
+                        dataToJoin.items
+                            .map { rowToJoin -> row + rowToJoin }
+                            .filter { row -> joinCondition.invoke(row) ?: false }
+                    }
+                } else {
+                    val dataToJoin = fetchData(join.data)
+                    leftSide.items.flatMap { row ->
+                        dataToJoin.items
+                            .map { rowToJoin -> row + rowToJoin }
+                            .filter { row -> joinCondition.invoke(row) ?: false }
+                    }
                 }
             }
             is LeftJoin<E> -> {
                 val joinCondition = simulateExpression(join.condition)
-                leftSide.items.flatMap { row ->
-                    dataToJoin.items
-                        .map { rowToJoin -> row + rowToJoin }
-                        .filter { row -> joinCondition.invoke(row) ?: false }
-                        .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
+                if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
+                    leftSide.items.flatMap { row ->
+                        fetchData(join.data, row).items
+                            .map { rowToJoin -> row + rowToJoin }
+                            .filter { row -> joinCondition.invoke(row) ?: false }
+                            .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
+                    }
+                } else {
+                    val dataToJoin = fetchData(join.data)
+                    leftSide.items.flatMap { row ->
+                        dataToJoin.items
+                            .map { rowToJoin -> row + rowToJoin }
+                            .filter { row -> joinCondition.invoke(row) ?: false }
+                            .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
+                    }
                 }
             }
             is RightJoin<E> -> {
+                val dataToJoin = fetchData(join.data)
                 val joinCondition = simulateExpression(join.condition)
                 dataToJoin.items.flatMap { rowToJoin ->
                     leftSide.items
@@ -122,11 +187,41 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                         .ifEmpty { listOf(DataRow(leftSide.columnNames.map { it to null }) + rowToJoin) }
                 }
             }
-            is CrossJoin<E> -> leftSide.items.flatMap { row -> dataToJoin.items.map { row + it } }
+            is CrossJoin<E> -> {
+                if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
+                    leftSide.items.flatMap { row -> fetchData(join.data, row).items.map { row + it } }
+                } else {
+                    val dataToJoin = fetchData(join.data)
+                    leftSide.items.flatMap { row -> dataToJoin.items.map { row + it } }
+                }
+            }
             else -> throw NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")
         }
 
-        return if (rows.isNotEmpty()) ConstantData(orm, rows) else ConstantData.empty(orm, leftSide.columnNames + dataToJoin.columnNames)
+        return if (rows.isNotEmpty()) ConstantData(orm, rows) else ConstantData.empty(orm, leftSide.columnNames + join.data.columnNames)
+    }
+
+    /**
+     * Controls whether correlated [Join]s are supported. Defaults to `false`.
+     *
+     * Correlated joins are joins where the right side of the join depends on the current row of the left side.
+     */
+    var correlatedJoinsEnabled = false
+
+    protected open fun isCorrelatedJoin(join: Join<E>, left: Data<E, *>) : Boolean = join.data.data.let { data ->
+        when (data) {
+            is Select<E, *> -> {
+                (data.columns.orEmpty().map { it.value } + listOfNotNull(data.filter) + data.grouping)
+                    .flatMap { subexpressionCollector.collectAllSubexpressions(it) }
+                    .any { it is Column<E, *> && it.qualifiedName in left.columnNames }
+            }
+            is DataExpressionData<E, *> -> {
+                subexpressionCollector
+                    .collectAllSubexpressions(data.expression)
+                    .any { it is Column<E, *> && it.qualifiedName in left.columnNames }
+            }
+            else -> false
+        }
     }
 
     override fun execute(createTable: CreateTable<E>) {
@@ -204,32 +299,6 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             } else {
                 throw IllegalStateException("No open transaction to roll back.")
             }
-        }
-    }
-
-    protected open fun fetchData(source: QuerySource<E, *>) : ConstantData<E, DataRow> {
-        val rows = when (val data = source.data) {
-            is Table<E, *> -> topState.getTable(data.qualifiedName).second
-            is Select<E, *> -> @Suppress("UNCHECKED_CAST") execute(data as Select<E, DataRow>, DataRow::class)
-            is ConstantData<E, *> -> {
-                data.items.map { item ->
-                    val expression = orm.serialize(item)
-                    val value = simulateExpression(expression).invoke(DataRow())
-                    value as? DataRow ?: DataRow("" to value)
-                }
-            }
-            is DataExpressionData<E, *> -> fetchData(QuerySource(simulateExpression(data.expression).invoke(DataRow()))).items.toList()
-            else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
-        }
-
-        return if (rows.isEmpty()) {
-            ConstantData.empty(orm, source.columnNames)
-        } else if (source.alias == null) {
-            ConstantData(orm, rows)
-        } else {
-            ConstantData(orm, rows.map { row ->
-                DataRow(row.entries.map { (field, value) -> "${source.alias}${if (field.isNotEmpty()) ".$field" else ""}" to value })
-            })
         }
     }
 
