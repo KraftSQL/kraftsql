@@ -8,6 +8,7 @@ import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dml.RollbackTransaction
 import rocks.frieler.kraftsql.dql.CrossJoin
+import rocks.frieler.kraftsql.dql.DataExpressionData
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.ConstantData
@@ -217,6 +218,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                     value as? DataRow ?: DataRow("" to value)
                 }
             }
+            is DataExpressionData<E, *> -> fetchData(QuerySource(simulateExpression(data.expression).invoke(DataRow()))).items.toList()
             else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
         }
 
@@ -226,7 +228,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             ConstantData(orm, rows)
         } else {
             ConstantData(orm, rows.map { row ->
-                DataRow(row.entries.map { (field, value) -> "${source.alias}.$field" to value })
+                DataRow(row.entries.map { (field, value) -> "${source.alias}${if (field.isNotEmpty()) ".$field" else ""}" to value })
             })
         }
     }
