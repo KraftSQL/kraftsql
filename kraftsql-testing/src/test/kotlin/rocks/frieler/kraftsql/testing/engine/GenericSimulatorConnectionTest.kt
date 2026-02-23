@@ -229,6 +229,36 @@ class GenericSimulatorConnectionTest {
     }
 
     @Test
+    fun `GenericSimulatorConnection can simulate correlated INNER JOIN with SELECT statement`() {
+        connection.correlatedJoinsEnabled = true
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm,
+                    DataRow("entity" to "x", "value" to 1),
+                    DataRow("entity" to "y", "value" to 2),
+                )),
+                joins = listOf(
+                    InnerJoin(QuerySource(Select<DummyEngine, DataRow>(
+                        source = QuerySource(ConstantData(DummyEngine.orm, DataRow("addition" to "x"))),
+                        columns = listOf(
+                            Projection(Column<DummyEngine, String>("addition")),
+                            Projection(Column<DummyEngine, Int>("value"), "value_again"),
+                        ),
+                    )), Column<DummyEngine, String>("entity") `=` Column<DummyEngine, String>("addition"))
+                ),
+                columns = listOf(
+                    Projection(Column<DummyEngine, String>("entity")),
+                    Projection(Column<DummyEngine, Int>("value")),
+                    Projection(Column<DummyEngine, Int?>("value_again")),
+                )
+            ), DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(
+            DataRow("entity" to "x", "value" to 1, "value_again" to 1),
+        )
+    }
+
+    @Test
     fun `GenericSimulatorConnection can simulate LEFT JOIN`() {
         val result = connection.execute(
             Select(
@@ -267,6 +297,37 @@ class GenericSimulatorConnectionTest {
 
         result shouldContainExactlyInAnyOrder listOf(
             DataRow("left.key" to 42, "left.entity" to "y", "right.key" to null, "right.attribute" to null),
+        )
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate correlated LEFT JOIN with SELECT statement`() {
+        connection.correlatedJoinsEnabled = true
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm,
+                    DataRow("entity" to "x", "value" to 1),
+                    DataRow("entity" to "y", "value" to 2),
+                )),
+                joins = listOf(
+                    LeftJoin(QuerySource(Select<DummyEngine, DataRow>(
+                        source = QuerySource(ConstantData(DummyEngine.orm, DataRow("addition" to "x"))),
+                        columns = listOf(
+                            Projection(Column<DummyEngine, String>("addition")),
+                            Projection(Column<DummyEngine, Int>("value"), "value_again"),
+                        ),
+                    )), Column<DummyEngine, String>("entity") `=` Column<DummyEngine, String>("addition"))
+                ),
+                columns = listOf(
+                    Projection(Column<DummyEngine, String>("entity")),
+                    Projection(Column<DummyEngine, Int>("value")),
+                    Projection(Column<DummyEngine, Int?>("value_again")),
+                )
+            ), DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(
+            DataRow("entity" to "x", "value" to 1, "value_again" to 1),
+            DataRow("entity" to "y", "value" to 2, "value_again" to null),
         )
     }
 
@@ -336,6 +397,78 @@ class GenericSimulatorConnectionTest {
             DataRow("entity" to "x", "attribute" to "bar"),
             DataRow("entity" to "y", "attribute" to "foo"),
             DataRow("entity" to "y", "attribute" to "bar"),
+        )
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate correlated CROSS JOIN with SELECT statement`() {
+        connection.correlatedJoinsEnabled = true
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm,
+                    DataRow("entity" to "x", "value" to 1),
+                    DataRow("entity" to "y", "value" to 2),
+                )),
+                joins = listOf(
+                    CrossJoin(QuerySource(Select<DummyEngine, DataRow>(
+                        source = QuerySource(ConstantData(DummyEngine.orm, DataRow("addition" to "a"), DataRow("addition" to "b"))),
+                        columns = listOf(
+                            Projection(Column<DummyEngine, String>("addition")),
+                            Projection(Column<DummyEngine, Int>("value"), "value_again"),
+                        ),
+                    )))
+                ),
+                columns = listOf(
+                    Projection(Column<DummyEngine, String>("entity")),
+                    Projection(Column<DummyEngine, Int>("value")),
+                    Projection(Column<DummyEngine, String>("addition")),
+                    Projection(Column<DummyEngine, Int>("value_again")),
+                )
+            ), DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(
+            DataRow("entity" to "x", "value" to 1, "addition" to "a", "value_again" to 1),
+            DataRow("entity" to "x", "value" to 1, "addition" to "b", "value_again" to 1),
+            DataRow("entity" to "y", "value" to 2, "addition" to "a", "value_again" to 2),
+            DataRow("entity" to "y", "value" to 2, "addition" to "b", "value_again" to 2),
+        )
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate correlated CROSS JOIN with Data expression`() {
+        val unnest = mock<Expression<DummyEngine, Data<DummyEngine, Int>>> {
+            whenever(it.defaultColumnName()).thenReturn("")
+        }
+        val connection = GenericSimulatorConnection<DummyEngine>(
+            subexpressionCollector = mock { whenever(it.collectAllSubexpressions(unnest)).thenReturn(listOf(Column<DummyEngine, Int>("values"))) }
+        )
+        connection.registerExpressionSimulator(mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
+            whenever(it.expression).thenReturn(unnest::class)
+            whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(unnest)) })
+                .thenReturn { row -> ConstantData(DummyEngine.orm, (row["values"] as kotlin.Array<*>).map { element -> DataRow("" to element) }) }
+        })
+
+        connection.correlatedJoinsEnabled = true
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm,
+                    DataRow("entity" to "x", "values" to arrayOf(1, 2)),
+                    DataRow("entity" to "y", "values" to arrayOf(3, 4)),
+                )),
+                joins = listOf(
+                    CrossJoin(QuerySource(DataExpressionData(unnest), "value"))
+                ),
+                columns = listOf(
+                    Projection(Column<DummyEngine, String>("entity")),
+                    Projection(Column<DummyEngine, Int>("value")),
+                )
+            ), DataRow::class)
+
+        result shouldContainExactlyInAnyOrder listOf(
+            DataRow("entity" to "x", "value" to 1),
+            DataRow("entity" to "x", "value" to 2),
+            DataRow("entity" to "y", "value" to 3),
+            DataRow("entity" to "y", "value" to 4),
         )
     }
 
