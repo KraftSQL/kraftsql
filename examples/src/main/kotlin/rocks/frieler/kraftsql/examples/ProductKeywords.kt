@@ -4,60 +4,60 @@ import rocks.frieler.kraftsql.dsl.`as`
 import rocks.frieler.kraftsql.examples.data.Category
 import rocks.frieler.kraftsql.examples.data.Product
 import rocks.frieler.kraftsql.examples.data.products
-import rocks.frieler.kraftsql.h2.ddl.create
-import rocks.frieler.kraftsql.h2.ddl.drop
-import rocks.frieler.kraftsql.h2.dml.insertInto
+import rocks.frieler.kraftsql.examples.data.withSampleData
+import rocks.frieler.kraftsql.expressions.Array
+import rocks.frieler.kraftsql.expressions.ArrayElementReference.Companion.get
+import rocks.frieler.kraftsql.expressions.ArrayLength
+import rocks.frieler.kraftsql.expressions.Cast
+import rocks.frieler.kraftsql.expressions.Count
+import rocks.frieler.kraftsql.expressions.LessOrEqual
+import rocks.frieler.kraftsql.expressions.Max
+import rocks.frieler.kraftsql.expressions.knownNotNull
 import rocks.frieler.kraftsql.h2.dsl.Select
-import rocks.frieler.kraftsql.h2.expressions.`||`
+import rocks.frieler.kraftsql.h2.engine.H2Engine
+import rocks.frieler.kraftsql.h2.engine.Types
+import rocks.frieler.kraftsql.h2.expressions.ArrayConcatenation
+import rocks.frieler.kraftsql.h2.expressions.Column
+import rocks.frieler.kraftsql.h2.expressions.Constant
+import rocks.frieler.kraftsql.h2.expressions.SystemRange
 import rocks.frieler.kraftsql.h2.objects.Data
 import rocks.frieler.kraftsql.h2.objects.collect
 import rocks.frieler.kraftsql.objects.DataRow
 
 fun main() {
-    try {
-        val food = Category(1, "Food")
-        val clothes = Category(2, "Clothes")
-        val other = Category(3, "Other")
-
-        products.create()
-        Product(1, "Chocolate", food, tags = arrayOf("sweets", "snacks")).also { it.insertInto(products) }
-        Product(2, "Pants", clothes, tags = arrayOf()).also { it.insertInto(products) }
-        Product(3, "Crisps", food, tags = arrayOf("snacks")).also { it.insertInto(products) }
-        Product(4, "Crap", other, tags = arrayOf("bullshit")).also { it.insertInto(products) }
-
-        val productKeywords = collectProductKeywords(products)
-        val wordCounts = countKeywords(productKeywords)
-        wordCounts
-            .forEach { (keywords, count) -> println("$keywords: $count") }
-
-    } finally {
-        products.drop(ifExists = true)
+    withSampleData {
+        val keywordCounts = collectProductKeywords(products)
+        keywordCounts.collect()
+            .forEach { println(it) }
     }
 }
 
-fun collectProductKeywords(products: Data<Product>) : Data<DataRow> =
-    Select {
+fun collectProductKeywords(products: Data<Product>) : Data<DataRow> {
+    val keywordArrays = Select<DataRow> {
         from(products)
-        columns(
-            rocks.frieler.kraftsql.expressions.Array(
-                products[Product::name],
-                products[Product::category][Category::name]
-            ) `||`
-            products[Product::tags] `as` "keywords",
-        )
+        column(ArrayConcatenation(Array(products[Product::name], products[Product::category][Category::name]), products[Product::tags]) `as` "_keywords")
     }
 
-fun countKeywords(words: Data<DataRow>): Map<String, Long> {
-    val wordCounts = words.collect()
-        .map { row ->
-            @Suppress("UNCHECKED_CAST")
-            row["keywords"] as Array<String>
+    // TODO: allow single-valued Data as Expression instead of .collect() and Constant(...)
+    val maxKeywords = Select<DataRow> {
+        from(keywordArrays)
+        groupBy(Constant(1)) // TODO: allow aggregation over all rows without group-by. Important: NULL over no rows!!!
+        column(Max(ArrayLength(Column("_keywords"))) `as` "max")
+    }.collect().ifEmpty { listOf(DataRow("max" to 0)) }.single()["max"] as Int
+
+    val keywords = Select<DataRow> {
+        from(keywordArrays)
+        val indizes = innerJoin(
+            Select<DataRow> { from(SystemRange(Constant(1L), Constant(maxKeywords.toLong()))) }) {
+            LessOrEqual(this["X"], ArrayLength(Column("_keywords")))
         }
-        .fold(mutableMapOf<String, Long>()) { stats, tags ->
-            tags.forEach { tag ->
-                stats.compute(tag) { _, count -> count?.plus(1) ?: 1 }
-            }
-            stats
-        }
-    return wordCounts
+        column(Column<kotlin.Array<String>>("_keywords")[Cast(indizes["X"], Types.INTEGER).knownNotNull()] `as` "_keyword")
+    }
+
+    return Select {
+        from(keywords)
+        groupBy(Column<String>("_keyword"))
+        column(Column<String>("_keyword") `as` "keyword")
+        column(Count<H2Engine>() `as` "count")
+    }
 }
