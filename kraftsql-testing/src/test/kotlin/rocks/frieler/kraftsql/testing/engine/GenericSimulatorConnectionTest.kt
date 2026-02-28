@@ -34,6 +34,7 @@ import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
+import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.Data
@@ -668,6 +669,19 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["count"] shouldBe 1
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate a Max aggregation`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow("value" to 42L))),
+                grouping = listOf(Constant(1)),
+                columns = listOf(Projection(Max(Column<DummyEngine, Long>("value")), "max")),
+            ), DataRow::class
+        )
+
+        result.single()["max"] shouldBe 42L
     }
 
     @Test
