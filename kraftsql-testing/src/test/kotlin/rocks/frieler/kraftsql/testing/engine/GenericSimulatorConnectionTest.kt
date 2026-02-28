@@ -24,6 +24,7 @@ import rocks.frieler.kraftsql.engine.Type
 import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.Array
+import rocks.frieler.kraftsql.expressions.ArrayElementReference
 import rocks.frieler.kraftsql.expressions.ArrayLength
 import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Coalesce
@@ -606,6 +607,19 @@ class GenericSimulatorConnectionTest {
 
         result.single()["array"] shouldBe arrayOf(1, 2)
     }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate an ArrayElementReference`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
+                columns = listOf(Projection(ArrayElementReference(Array(Constant(42)), Constant(1)), "first")),
+            ), DataRow::class
+        )
+
+        result.single()["first"] shouldBe 42
+    }
+
 
     @Test
     fun `GenericSimulatorConnection can simulate an ArrayLength expression`() {

@@ -9,6 +9,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.ArrayConcatenation
+import rocks.frieler.kraftsql.expressions.ArrayElementReference
 import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Coalesce
 import rocks.frieler.kraftsql.expressions.Column
@@ -74,6 +75,17 @@ class SubexpressionCollectorTest {
         val subexpressions = subexpressionCollector.getSubexpressions(arrayLength)
 
         subexpressions shouldContainExactlyInAnyOrder listOf(arrayLength.array)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect array and index expressions of ArrayElementReference`() {
+        val arrayExpression = mock<Expression<DummyEngine, Array<Any>>>()
+        val indexExpression = mock<Expression<DummyEngine, Int>>()
+        val arrayElementReference = ArrayElementReference(arrayExpression, indexExpression)
+
+        val subexpressions = subexpressionCollector.getSubexpressions(arrayElementReference)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(arrayElementReference.array, arrayElementReference.index)
     }
 
     @Test
