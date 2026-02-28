@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.h2.dsl
 
+import rocks.frieler.kraftsql.dql.DataExpressionData
 import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.dsl.SqlDsl
 import rocks.frieler.kraftsql.expressions.Expression
@@ -80,3 +81,5 @@ class SelectBuilder<T : Any> : rocks.frieler.kraftsql.dsl.SelectBuilder<H2Engine
 }
 
 infix fun <T : Any> Data<T>.`as`(alias: String) = QuerySource(this, alias)
+
+infix fun <T : Any> Expression<H2Engine, Data<T>>.`as`(alias: String) = DataExpressionData(this) `as` alias

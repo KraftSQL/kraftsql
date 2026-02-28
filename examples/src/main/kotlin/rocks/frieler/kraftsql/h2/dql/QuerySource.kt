@@ -6,5 +6,7 @@ import rocks.frieler.kraftsql.h2.expressions.Column
 import rocks.frieler.kraftsql.h2.objects.Data
 
 class QuerySource<T: Any>(data: Data<T>, alias: String? = null) : QuerySource<H2Engine, T>(data, alias) {
-    override operator fun get(column: String) = Column<Any?>(listOfNotNull(alias), column)
+    override operator fun get(column: String) =
+        super.get(column)
+            .let { Column<Any?>(it.qualifiers, it.name) }
 }
