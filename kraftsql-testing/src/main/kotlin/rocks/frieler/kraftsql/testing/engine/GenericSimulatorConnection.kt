@@ -71,7 +71,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
     }
 
     private fun selectRows(select: Select<E, *>, correlatedData: DataRow? = null) : List<DataRow> {
-        var data = fetchData(select.source)
+        var data = resolveQuerySource(select.source)
 
         if (correlatedData != null) {
             data = ConstantData(orm, data.items.map { row -> correlatedData + row })
@@ -110,22 +110,8 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         return resultRows
     }
 
-    protected open fun fetchData(source: QuerySource<E, *>, correlatedData: DataRow? = null) : ConstantData<E, DataRow> {
-        val rows = when (val data = source.data) {
-            is Table<E, *> -> topState.getTable(data.qualifiedName).second
-            is Select<E, *> -> @Suppress("UNCHECKED_CAST") selectRows(data as Select<E, DataRow>, correlatedData)
-            is ConstantData<E, *> -> {
-                data.items.map { item ->
-                    val expression = orm.serialize(item)
-                    val value = simulateExpression(expression).invoke(DataRow())
-                    value as? DataRow ?: DataRow("" to value)
-                }
-            }
-            is DataExpressionData<E, *> -> {
-                fetchData(QuerySource(simulateExpression(data.expression).invoke(correlatedData ?: DataRow()))).items.toList()
-            }
-            else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
-        }
+    protected open fun resolveQuerySource(source: QuerySource<E, *>, correlatedData: DataRow? = null) : ConstantData<E, DataRow> {
+        val rows = fetchData(source.data, correlatedData)
 
         return if (rows.isEmpty()) {
             ConstantData.empty(orm, source.columnNames)
@@ -138,19 +124,35 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         }
     }
 
+    protected open fun fetchData(data: Data<E, *>, correlatedData: DataRow?): List<DataRow> = when (data) {
+        is Table<E, *> -> topState.getTable(data.qualifiedName).second
+        is Select<E, *> -> @Suppress("UNCHECKED_CAST") selectRows(data as Select<E, DataRow>, correlatedData)
+        is ConstantData<E, *> -> {
+            data.items.map { item ->
+                val expression = orm.serialize(item)
+                val value = simulateExpression(expression).invoke(DataRow())
+                value as? DataRow ?: DataRow("" to value)
+            }
+        }
+        is DataExpressionData<E, *> -> {
+            resolveQuerySource(QuerySource(simulateExpression(data.expression).invoke(correlatedData ?: DataRow()))).items.toList()
+        }
+        else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
+    }
+
     private fun handleJoin(leftSide: ConstantData<E, DataRow>, join: Join<E>): ConstantData<E, DataRow> {
         val rows = when (join) {
             is InnerJoin<E> -> {
                 val joinCondition = simulateExpression(join.condition)
                 if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
                     leftSide.items.flatMap { row ->
-                        val dataToJoin = fetchData(join.data, row)
+                        val dataToJoin = resolveQuerySource(join.data, row)
                         dataToJoin.items
                             .map { rowToJoin -> row + rowToJoin }
                             .filter { row -> joinCondition.invoke(row) ?: false }
                     }
                 } else {
-                    val dataToJoin = fetchData(join.data)
+                    val dataToJoin = resolveQuerySource(join.data)
                     leftSide.items.flatMap { row ->
                         dataToJoin.items
                             .map { rowToJoin -> row + rowToJoin }
@@ -162,13 +164,13 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                 val joinCondition = simulateExpression(join.condition)
                 if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
                     leftSide.items.flatMap { row ->
-                        fetchData(join.data, row).items
+                        resolveQuerySource(join.data, row).items
                             .map { rowToJoin -> row + rowToJoin }
                             .filter { row -> joinCondition.invoke(row) ?: false }
                             .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
                     }
                 } else {
-                    val dataToJoin = fetchData(join.data)
+                    val dataToJoin = resolveQuerySource(join.data)
                     leftSide.items.flatMap { row ->
                         dataToJoin.items
                             .map { rowToJoin -> row + rowToJoin }
@@ -178,7 +180,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
                 }
             }
             is RightJoin<E> -> {
-                val dataToJoin = fetchData(join.data)
+                val dataToJoin = resolveQuerySource(join.data)
                 val joinCondition = simulateExpression(join.condition)
                 dataToJoin.items.flatMap { rowToJoin ->
                     leftSide.items
@@ -189,9 +191,9 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             }
             is CrossJoin<E> -> {
                 if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
-                    leftSide.items.flatMap { row -> fetchData(join.data, row).items.map { row + it } }
+                    leftSide.items.flatMap { row -> resolveQuerySource(join.data, row).items.map { row + it } }
                 } else {
-                    val dataToJoin = fetchData(join.data)
+                    val dataToJoin = resolveQuerySource(join.data)
                     leftSide.items.flatMap { row -> dataToJoin.items.map { row + it } }
                 }
             }
