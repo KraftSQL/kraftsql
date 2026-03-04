@@ -30,50 +30,41 @@ class SoldFoodPerCountryTest {
 
     @Test
     fun `calculateSoldFoodPerCountry() sums up sold amounts`() {
-        val purchase = Purchase(1, germanCustomer, Instant.EPOCH, BigDecimal.ZERO)
+        val purchase = Purchase(1, germanCustomer, Instant.EPOCH, arrayOf(PurchaseItem(chocolate, BigDecimal.ZERO, 1), PurchaseItem(chocolate, BigDecimal.ZERO, 2)), BigDecimal.ZERO)
+
         val soldFoodPerCountry = calculateSoldFoodPerCountry(
             ConstantData(chocolate),
             ConstantData(germanCustomer),
             ConstantData(purchase),
-            ConstantData(
-                PurchaseItem(purchase, chocolate, BigDecimal.ZERO, 1),
-                PurchaseItem(purchase, chocolate, BigDecimal.ZERO, 2),
-            ),
         ).execute()
 
         val soldFoodInGermany = soldFoodPerCountry.filterForOne { it[Customer::country.name] shouldBe germanCustomer.country.code }
-        soldFoodInGermany["_totalAmount"] shouldBe 3L
+        soldFoodInGermany["totalAmount"] shouldBe 3L
     }
 
     @Test
     fun `calculateSoldFoodPerCountry() counts only Food`() {
-        val purchase = Purchase(1, germanCustomer, Instant.EPOCH, BigDecimal.ZERO)
+        val purchase = Purchase(1, germanCustomer, Instant.EPOCH, arrayOf(PurchaseItem(chocolate, BigDecimal.ZERO, 1), PurchaseItem(pants, BigDecimal.ZERO, 1)), BigDecimal.ZERO)
+
         val soldFoodPerCountry = calculateSoldFoodPerCountry(
             ConstantData(chocolate, pants),
             ConstantData(germanCustomer),
             ConstantData(purchase),
-            ConstantData(
-                PurchaseItem(purchase, chocolate, BigDecimal.ZERO, 1),
-                PurchaseItem(purchase, pants, BigDecimal.ZERO, 1),
-            ),
         ).execute()
 
         val soldFoodInGermany = soldFoodPerCountry.filterForOne { it[Customer::country.name] shouldBe germanCustomer.country.code }
-        soldFoodInGermany["_totalAmount"] shouldBe 1L
+        soldFoodInGermany["totalAmount"] shouldBe 1L
     }
 
     @Test
     fun `calculateSoldFoodPerCountry() sums up per country`() {
-        val purchaseInGermany = Purchase(1, germanCustomer, Instant.EPOCH, BigDecimal.ZERO)
-        val purchaseInAustria = Purchase(2, austrianCustomer, Instant.EPOCH, BigDecimal.ZERO)
+        val purchaseInGermany = Purchase(1, germanCustomer, Instant.EPOCH, arrayOf(PurchaseItem(chocolate, BigDecimal.ZERO, 1)), BigDecimal.ZERO)
+        val purchaseInAustria = Purchase(2, austrianCustomer, Instant.EPOCH, arrayOf(PurchaseItem(chocolate, BigDecimal.ZERO, 2)), BigDecimal.ZERO)
+
         val soldFoodPerCountry = calculateSoldFoodPerCountry(
             ConstantData(chocolate),
             ConstantData(germanCustomer, austrianCustomer),
             ConstantData(purchaseInGermany, purchaseInAustria),
-            ConstantData(
-                PurchaseItem(purchaseInGermany, chocolate, BigDecimal.ZERO, 1),
-                PurchaseItem(purchaseInAustria, chocolate, BigDecimal.ZERO, 2),
-            ),
         ).execute()
 
         soldFoodPerCountry.map { it[Customer::country.name] } shouldContainExactlyInAnyOrder listOf(germanCustomer.country.code, austrianCustomer.country.code)
@@ -82,38 +73,30 @@ class SoldFoodPerCountryTest {
     @Test
     fun `calculateSoldFoodPerCountry() ignores unknown products`() {
         val apple = Product(666, "Apple", food)
-        val purchase = Purchase(1, germanCustomer, Instant.EPOCH, BigDecimal.ZERO)
+        val purchase = Purchase(1, germanCustomer, Instant.EPOCH, arrayOf(PurchaseItem(chocolate, BigDecimal.ZERO, 1), PurchaseItem(apple, BigDecimal.ZERO, 1)),BigDecimal.ZERO)
 
         val soldFoodPerCountry = calculateSoldFoodPerCountry(
             ConstantData(chocolate),
             ConstantData(germanCustomer),
             ConstantData(purchase),
-            ConstantData(
-                PurchaseItem(purchase, chocolate, BigDecimal.ZERO, 1),
-                PurchaseItem(purchase, apple, BigDecimal.ZERO, 1),
-            ),
         ).execute()
 
         val soldFoodInGermany = soldFoodPerCountry.filterForOne { it[Customer::country.name] shouldBe germanCustomer.country.code }
-        soldFoodInGermany["_totalAmount"] shouldBe 1L
+        soldFoodInGermany["totalAmount"] shouldBe 1L
     }
 
     @Test
     fun `calculateSoldFoodPerCountry() ignores unknown customers`() {
-        val purchase = Purchase(1, germanCustomer, Instant.EPOCH, BigDecimal.ZERO)
-        val purchaseByUnknownCustomer = Purchase(2, 666, Instant.EPOCH, BigDecimal.ZERO)
+        val purchase = Purchase(1, germanCustomer, Instant.EPOCH, arrayOf(PurchaseItem(chocolate, BigDecimal.ZERO, 1)), BigDecimal.ZERO)
+        val purchaseByUnknownCustomer = Purchase(2, 666, Instant.EPOCH, arrayOf(PurchaseItem(chocolate, BigDecimal.ZERO, 1)), BigDecimal.ZERO)
 
         val soldFoodPerCountry = calculateSoldFoodPerCountry(
             ConstantData(chocolate),
             ConstantData(germanCustomer),
             ConstantData(purchase, purchaseByUnknownCustomer),
-            ConstantData(
-                PurchaseItem(purchase, chocolate, BigDecimal.ZERO, 1),
-                PurchaseItem(purchaseByUnknownCustomer, chocolate, BigDecimal.ZERO, 1),
-            ),
         ).execute()
 
         val soldFood = soldFoodPerCountry.filterForOne { it[Customer::country.name] shouldBe germanCustomer.country.code }
-        soldFood["_totalAmount"] shouldBe 1L
+        soldFood["totalAmount"] shouldBe 1L
     }
 }

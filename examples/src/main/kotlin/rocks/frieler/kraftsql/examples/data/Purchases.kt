@@ -8,25 +8,32 @@ data class Purchase(
     val id: Long,
     val customerId: Long,
     val orderTime: Instant,
+    val items: Array<PurchaseItem>,
     val totalPrice: BigDecimal,
 ) {
-    constructor(id: Long, customer: Customer, orderTime: Instant, totalPrice: BigDecimal) :
-            this(id, customer.id, orderTime, totalPrice)
+    constructor(id: Long, customer: Customer, orderTime: Instant, items: Array<PurchaseItem>, totalPrice: BigDecimal) :
+            this(id, customer.id, orderTime, items, totalPrice)
+
+    override fun equals(other: Any?) = other is Purchase
+            && id == other.id
+            && customerId == other.customerId
+            && orderTime == other.orderTime
+            && items.contentEquals(other.items)
+            && totalPrice == other.totalPrice
+
+    override fun hashCode(): Int = id.hashCode()
 }
 
 val purchases = Table(name = "purchases", type = Purchase::class)
 
 data class PurchaseItem(
-    val purchaseId: Long,
     val product: ProductOutline,
     val pricePerUnit: BigDecimal,
     val amount: Int,
 ) {
-    constructor(purchase: Purchase, product: Product, pricePerUnit: BigDecimal, amount: Int) :
-            this(purchase.id, ProductOutline(product), pricePerUnit, amount)
+    constructor(product: Product, pricePerUnit: BigDecimal, amount: Int) :
+            this(ProductOutline(product), pricePerUnit, amount)
 }
-
-val purchaseItems = Table(name = "purchase_items", type = PurchaseItem::class)
 
 data class ProductOutline(
     val id: Long,
