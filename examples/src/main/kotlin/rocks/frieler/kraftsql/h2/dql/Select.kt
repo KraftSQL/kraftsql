@@ -7,6 +7,7 @@ import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.dql.execute
+import rocks.frieler.kraftsql.expressions.Column
 
 class Select<T : Any> : Select<H2Engine, T> {
     constructor(
@@ -16,6 +17,11 @@ class Select<T : Any> : Select<H2Engine, T> {
         filter: Expression<H2Engine, Boolean?>? = null,
         grouping: List<Expression<H2Engine, *>> = emptyList(),
     ) : super(source, joins, columns, filter, grouping)
+
+    override fun get(column: String): Column<H2Engine, Any?> {
+        val column = super.get(column)
+        return rocks.frieler.kraftsql.h2.expressions.Column(column.qualifiers, column.name)
+    }
 }
 
 inline fun <reified T : Any> Select<H2Engine, T>.execute() =
