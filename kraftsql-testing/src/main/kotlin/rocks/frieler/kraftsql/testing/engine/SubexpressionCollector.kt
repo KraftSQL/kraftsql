@@ -4,6 +4,8 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.ArrayConcatenation
+import rocks.frieler.kraftsql.expressions.ArrayElementReference
+import rocks.frieler.kraftsql.expressions.ArrayLength
 import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Coalesce
 import rocks.frieler.kraftsql.expressions.Column
@@ -49,6 +51,8 @@ open class GenericSubexpressionCollector<E : Engine<E>> : SubexpressionCollector
             is And<E> -> listOf(expression.left, expression.right)
             is Array<E, *> -> (expression.elements ?: emptyArray()).toList()
             is ArrayConcatenation<E, *> -> expression.arguments.toList()
+            is ArrayLength<E> -> listOf(expression.array)
+            is ArrayElementReference<E, *> -> listOf(expression.array, expression.index)
             is Cast<E, *> -> listOf(expression.expression)
             is Coalesce<E, *> -> expression.expressions
             is Column<E, *> -> emptyList()
