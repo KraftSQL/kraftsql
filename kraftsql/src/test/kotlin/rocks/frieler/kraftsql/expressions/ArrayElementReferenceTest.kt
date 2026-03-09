@@ -75,9 +75,18 @@ class ArrayElementReferenceTest {
 
     @Test
     fun `ArrayElementReference can be created by brackets`() {
-        val arrayExpression = mock<Expression<TestableDummyEngine, Array<Any?>>>()
+        val arrayExpression = mock<Expression<TestableDummyEngine, Array<Any?>?>>()
         val indexExpression = mock<Expression<TestableDummyEngine, Int>>()
 
         arrayExpression[indexExpression] shouldBe ArrayElementReference(arrayExpression, indexExpression)
+    }
+
+    @Test
+    fun `Non-nullable ArrayElementReference can be created by brackets`() {
+        val arrayExpression = mock<Expression<TestableDummyEngine, Array<Any>>>()
+        val indexExpression = mock<Expression<TestableDummyEngine, Int>>()
+
+        val expression : Expression<TestableDummyEngine, Any> = arrayExpression[indexExpression]
+        expression shouldBe ArrayElementReference(arrayExpression, indexExpression)
     }
 }

@@ -29,6 +29,29 @@ class ArrayElementReference<E : Engine<E>, T>(
     override fun hashCode() = Objects.hash(array, index)
 
     companion object {
-        operator fun <E : Engine<E>, T> Expression<E, Array<T>?>.get(index: Expression<E, Int>) = ArrayElementReference(this, index).knownNotNull()
+        /**
+         * Short syntax for [rocks.frieler.kraftsql.expressions.ArrayElementReference].
+         *
+         * @param E the SQL [Engine]
+         * @param T the type of the array's elements
+         * @param array the array [Expression] to reference
+         * @param index the index of the element to reference
+         * @return an [ArrayElementReference] expression
+         */
+        operator fun <E : Engine<E>, T> Expression<E, Array<T>?>.get(index: Expression<E, Int>) =
+            ArrayElementReference(this, index)
+
+        /**
+         * Short syntax to obtain a non-nullable [rocks.frieler.kraftsql.expressions.ArrayElementReference], knowing
+         * that the array, its elements, and the index are non-nullable.
+         *
+         * @param E the SQL [Engine]
+         * @param T the type of the array's elements
+         * @param array the array [Expression] to reference
+         * @param index the index of the element to reference
+         * @return a non-nullable [ArrayElementReference] expression
+         */
+        operator fun <E : Engine<E>, T : Any> Expression<E, Array<T>>.get(index: Expression<E, Int>) : Expression<E, T> =
+            ArrayElementReference(this, index).knownNotNull()
     }
 }
