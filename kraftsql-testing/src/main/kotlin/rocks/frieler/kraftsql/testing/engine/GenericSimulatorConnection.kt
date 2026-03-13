@@ -333,6 +333,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         registerExpressionSimulator(ArrayLengthSimulator())
         registerExpressionSimulator(RowSimulator())
         registerExpressionSimulator(CountSimulator())
+        registerExpressionSimulator(MaxSimulator<E, Comparable<Comparable<*>>>())
         registerExpressionSimulator(SumAsLongSimulator())
         registerExpressionSimulator(SumAsDoubleSimulator())
         registerExpressionSimulator(SumAsBigDecimalSimulator())
