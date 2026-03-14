@@ -34,6 +34,7 @@ import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
+import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.ConstantData
@@ -571,6 +572,18 @@ class GenericSimulatorConnectionTest {
         )
 
         result.single()["equals"] shouldBe true
+    }
+
+    @Test
+    fun `GenericSimulatorConnection can simulate the LessOrEqual-operator`() {
+        val result = connection.execute(
+            Select(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
+                columns = listOf(Projection(LessOrEqual(Constant(1), Constant(2)), "lessOrEqual")),
+            ), DataRow::class
+        )
+
+        result.single()["lessOrEqual"] shouldBe true
     }
 
     @Test
