@@ -18,21 +18,11 @@ import rocks.frieler.kraftsql.examples.data.Country
 import rocks.frieler.kraftsql.examples.data.ProductOutline
 import rocks.frieler.kraftsql.examples.data.Purchase
 import rocks.frieler.kraftsql.examples.data.withSampleData
-import rocks.frieler.kraftsql.expressions.ArrayElementReference.Companion.get
-import rocks.frieler.kraftsql.expressions.ArrayLength
-import rocks.frieler.kraftsql.expressions.Cast
-import rocks.frieler.kraftsql.expressions.LessOrEqual
-import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.knownNotNull
-import rocks.frieler.kraftsql.expressions.lessOrEqual
 import rocks.frieler.kraftsql.h2.dql.Select
 import rocks.frieler.kraftsql.h2.dsl.`as`
-import rocks.frieler.kraftsql.h2.engine.Types
 import rocks.frieler.kraftsql.h2.expressions.Constant
-import rocks.frieler.kraftsql.h2.expressions.SystemRange
-import rocks.frieler.kraftsql.h2.objects.collect
-import kotlin.collections.ifEmpty
-import kotlin.collections.single
+import rocks.frieler.kraftsql.h2.util.unnest
 
 fun main() {
     withSampleData {
@@ -44,13 +34,6 @@ fun main() {
 }
 
 fun calculateSoldFoodPerCountry(products: Data<Product>, customers: Data<Customer>, purchases: Data<Purchase>): Select<DataRow> {
-    // TODO: allow single-valued Data as Expression instead of .collect() and Constant(...)
-    val maxItems = Select<DataRow> {
-        from(purchases)
-        groupBy(Constant(1)) // TODO: allow aggregation over all rows without group-by. Important: NULL over no rows!!!
-        column(Max(ArrayLength(purchases[Purchase::items])) `as` "max")
-    }.collect().ifEmpty { listOf(DataRow("max" to 0)) }.single()["max"] as Int
-
     @Suppress("PropertyName")
     data class PurchaseItemOfCustomer(
         val _item: PurchaseItem,
@@ -58,12 +41,8 @@ fun calculateSoldFoodPerCountry(products: Data<Product>, customers: Data<Custome
     )
 
     val purchaseItemsOfCustomers = Select<PurchaseItemOfCustomer> {
-        from(purchases)
-        val indizes = innerJoin(
-            Select<DataRow> { from(SystemRange(Constant(1L), Constant(maxItems.toLong()))) }) {
-            this["X"] lessOrEqual ArrayLength(purchases[Purchase::items])
-        }
-        column(purchases[Purchase::items][Cast(indizes["X"].knownNotNull(), Types.INTEGER)] `as` PurchaseItemOfCustomer::_item)
+        val unnestedPurchases = from(purchases.unnest(Purchase::items.name, PurchaseItemOfCustomer::_item.name))
+        column(unnestedPurchases[PurchaseItemOfCustomer::_item.name].knownNotNull() `as` PurchaseItemOfCustomer::_item)
         column(purchases[Purchase::customerId] `as` PurchaseItemOfCustomer::_customerId)
     }
 
