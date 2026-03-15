@@ -14,7 +14,7 @@ import rocks.frieler.kraftsql.h2.dsl.transaction
 import rocks.frieler.kraftsql.h2.engine.Types.INTEGER
 import rocks.frieler.kraftsql.h2.expressions.Constant
 import rocks.frieler.kraftsql.h2.objects.Table
-import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
+import rocks.frieler.kraftsql.h2.testing.simulator.WithH2Simulator
 import rocks.frieler.kraftsql.objects.Column
 import rocks.frieler.kraftsql.objects.DataRow
 

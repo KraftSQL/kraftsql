@@ -1,8 +1,8 @@
-package rocks.frieler.kraftsql.h2.testing.engine
+package rocks.frieler.kraftsql.h2.testing.simulator.expressions
 
 import rocks.frieler.kraftsql.h2.expressions.Column
 import rocks.frieler.kraftsql.h2.engine.H2Engine
-import rocks.frieler.kraftsql.testing.engine.ColumnSimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.ColumnSimulator
 import kotlin.reflect.KClass
 
 class ColumnSimulator<T> : ColumnSimulator<H2Engine, T>() {

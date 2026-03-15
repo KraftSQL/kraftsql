@@ -1,9 +1,9 @@
-package rocks.frieler.kraftsql.h2.testing.engine
+package rocks.frieler.kraftsql.h2.testing.simulator.expressions
 
 import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.h2.expressions.Row
 import rocks.frieler.kraftsql.objects.DataRow
-import rocks.frieler.kraftsql.testing.engine.RowSimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.RowSimulator
 import kotlin.reflect.KClass
 
 class RowSimulator : RowSimulator<H2Engine>() {

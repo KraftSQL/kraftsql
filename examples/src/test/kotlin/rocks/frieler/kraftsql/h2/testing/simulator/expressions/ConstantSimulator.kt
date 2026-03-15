@@ -1,8 +1,8 @@
-package rocks.frieler.kraftsql.h2.testing.engine
+package rocks.frieler.kraftsql.h2.testing.simulator.expressions
 
 import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.h2.expressions.Constant
-import rocks.frieler.kraftsql.testing.engine.ConstantSimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.ConstantSimulator
 import kotlin.reflect.KClass
 
 class ConstantSimulator<T> : ConstantSimulator<H2Engine, T>() {

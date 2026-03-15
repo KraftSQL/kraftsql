@@ -8,7 +8,7 @@ import rocks.frieler.kraftsql.examples.data.Product
 import rocks.frieler.kraftsql.h2.objects.ConstantData
 import rocks.frieler.kraftsql.h2.objects.collect
 import rocks.frieler.kraftsql.objects.DataRow
-import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
+import rocks.frieler.kraftsql.h2.testing.simulator.WithH2Simulator
 
 @WithH2Simulator
 class ProductKeywordsTest {
