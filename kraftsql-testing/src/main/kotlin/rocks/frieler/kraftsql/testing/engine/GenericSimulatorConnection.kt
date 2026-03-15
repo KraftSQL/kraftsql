@@ -7,24 +7,11 @@ import rocks.frieler.kraftsql.dml.CommitTransaction
 import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dml.RollbackTransaction
-import rocks.frieler.kraftsql.dql.CrossJoin
-import rocks.frieler.kraftsql.dql.DataExpressionData
 import rocks.frieler.kraftsql.engine.Engine
-import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.objects.Table
-import rocks.frieler.kraftsql.dql.InnerJoin
-import rocks.frieler.kraftsql.dql.Join
-import rocks.frieler.kraftsql.dql.LeftJoin
-import rocks.frieler.kraftsql.dql.Projection
-import rocks.frieler.kraftsql.dql.QuerySource
-import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.dql.Select
-import rocks.frieler.kraftsql.expressions.Column
-import rocks.frieler.kraftsql.objects.Data
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.reflect.KClass
 
 /**
@@ -33,16 +20,14 @@ import kotlin.reflect.KClass
  * The [GenericSimulatorConnection] is configurable and extendable to simulate specific SQL engines and dialects.
  *
  * @param E the [Engine] to simulate
+ * @param engine the [EngineSimulator] to "connect" to, defaults to a [GenericEngineSimulator]
  * @param orm the [SimulatorORMapping] to use, defaults to the generic [SimulatorORMapping]
- * @param subexpressionCollector the [SubexpressionCollector] to use, defaults to a [GenericSubexpressionCollector]
- * @param rootState the [EngineState] to use as root state, defaults to a new [EngineState]
  */
 open class GenericSimulatorConnection<E : Engine<E>>(
+    protected val engine: EngineSimulator<E> = GenericEngineSimulator(),
     private val orm: SimulatorORMapping<E> = SimulatorORMapping(),
-    private val subexpressionCollector: SubexpressionCollector<E> = GenericSubexpressionCollector(),
-    protected val rootState: EngineState<E> = EngineState(),
 ) : SimulatorConnection<E> {
-    protected var topState:  EngineState<E> = rootState
+    protected var topState:  EngineState<E> = engine.persistentState
 
     protected open class TransactionStateOverlay<E : Engine<E>>(
         val parent: EngineState<E>,
@@ -66,178 +51,22 @@ open class GenericSimulatorConnection<E : Engine<E>>(
     }
 
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> {
-        val resultRows = selectRows(select, null)
+        val resultRows = context(topState) { engine.queryEvaluator.selectRows(select, null) }
         return orm.deserializeQueryResult(resultRows, type)
-    }
-
-    private fun selectRows(select: Select<E, *>, correlatedData: DataRow? = null) : List<DataRow> {
-        var data = resolveQuerySource(select.source)
-
-        if (correlatedData != null) {
-            data = ConstantData(orm, data.items.map { row -> correlatedData + row })
-        }
-
-        for (join in select.joins) {
-            data = handleJoin(data, join)
-        }
-
-        select.filter?.let { filter ->
-            val filterCondition = simulateExpression(filter)
-            data = data.items
-                .filter { row -> filterCondition.invoke(row) ?: false }
-                .let { rows -> if (rows.isNotEmpty()) ConstantData(orm, rows) else ConstantData.empty(orm, data.columnNames) }
-        }
-
-        val resultRows = if (select.grouping.isNotEmpty()) {
-            val groupingExtractors = select.grouping.map { expression -> simulateExpression(expression) }
-            val rowGroups = data.items.groupBy { row -> groupingExtractors.map { it.invoke(row) } }.values
-
-            val projections = (select.columns ?: select.grouping.map { Projection(it) })
-                .associate { (it.alias ?: it.value.defaultColumnName()) to simulateAggregation(it.value, select.grouping) }
-            rowGroups.map { rowGroup ->
-                DataRow(projections.map { (name, expression) -> name to expression.invoke(rowGroup) })
-            }
-        } else if (select.columns != null) {
-            val projections = select.columns!!
-                .associate { (it.alias ?: it.value.defaultColumnName()) to simulateExpression(it.value) }
-            data.items.map { row ->
-                DataRow(projections.map { (name, expression) -> name to expression.invoke(row) })
-            }
-        } else {
-            data.items.toList()
-        }
-
-        return resultRows
-    }
-
-    protected open fun resolveQuerySource(source: QuerySource<E, *>, correlatedData: DataRow? = null) : ConstantData<E, DataRow> {
-        val rows = fetchData(source.data, correlatedData)
-
-        return if (rows.isEmpty()) {
-            ConstantData.empty(orm, source.columnNames)
-        } else if (source.alias == null) {
-            ConstantData(orm, rows)
-        } else {
-            ConstantData(orm, rows.map { row ->
-                DataRow(row.entries.map { (field, value) -> "${source.alias}${if (field.isNotEmpty()) ".$field" else ""}" to value })
-            })
-        }
-    }
-
-    protected open fun fetchData(data: Data<E, *>, correlatedData: DataRow?): List<DataRow> = when (data) {
-        is Table<E, *> -> topState.getTable(data.qualifiedName).second
-        is Select<E, *> -> @Suppress("UNCHECKED_CAST") selectRows(data as Select<E, DataRow>, correlatedData)
-        is ConstantData<E, *> -> {
-            data.items.map { item ->
-                val expression = orm.serialize(item)
-                val value = simulateExpression(expression).invoke(DataRow())
-                value as? DataRow ?: DataRow("" to value)
-            }
-        }
-        is DataExpressionData<E, *> -> {
-            resolveQuerySource(QuerySource(simulateExpression(data.expression).invoke(correlatedData ?: DataRow()))).items.toList()
-        }
-        else -> throw NotImplementedError("Fetching ${data::class.qualifiedName} is not implemented.")
-    }
-
-    private fun handleJoin(leftSide: ConstantData<E, DataRow>, join: Join<E>): ConstantData<E, DataRow> {
-        val rows = when (join) {
-            is InnerJoin<E> -> {
-                val joinCondition = simulateExpression(join.condition)
-                if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
-                    leftSide.items.flatMap { row ->
-                        val dataToJoin = resolveQuerySource(join.data, row)
-                        dataToJoin.items
-                            .map { rowToJoin -> row + rowToJoin }
-                            .filter { row -> joinCondition.invoke(row) ?: false }
-                    }
-                } else {
-                    val dataToJoin = resolveQuerySource(join.data)
-                    leftSide.items.flatMap { row ->
-                        dataToJoin.items
-                            .map { rowToJoin -> row + rowToJoin }
-                            .filter { row -> joinCondition.invoke(row) ?: false }
-                    }
-                }
-            }
-            is LeftJoin<E> -> {
-                val joinCondition = simulateExpression(join.condition)
-                if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
-                    leftSide.items.flatMap { row ->
-                        resolveQuerySource(join.data, row).items
-                            .map { rowToJoin -> row + rowToJoin }
-                            .filter { row -> joinCondition.invoke(row) ?: false }
-                            .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
-                    }
-                } else {
-                    val dataToJoin = resolveQuerySource(join.data)
-                    leftSide.items.flatMap { row ->
-                        dataToJoin.items
-                            .map { rowToJoin -> row + rowToJoin }
-                            .filter { row -> joinCondition.invoke(row) ?: false }
-                            .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
-                    }
-                }
-            }
-            is RightJoin<E> -> {
-                val dataToJoin = resolveQuerySource(join.data)
-                val joinCondition = simulateExpression(join.condition)
-                dataToJoin.items.flatMap { rowToJoin ->
-                    leftSide.items
-                        .map { row -> row + rowToJoin }
-                        .filter { row -> joinCondition.invoke(row) ?: false }
-                        .ifEmpty { listOf(DataRow(leftSide.columnNames.map { it to null }) + rowToJoin) }
-                }
-            }
-            is CrossJoin<E> -> {
-                if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
-                    leftSide.items.flatMap { row -> resolveQuerySource(join.data, row).items.map { row + it } }
-                } else {
-                    val dataToJoin = resolveQuerySource(join.data)
-                    leftSide.items.flatMap { row -> dataToJoin.items.map { row + it } }
-                }
-            }
-            else -> throw NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")
-        }
-
-        return if (rows.isNotEmpty()) ConstantData(orm, rows) else ConstantData.empty(orm, leftSide.columnNames + join.data.columnNames)
-    }
-
-    /**
-     * Controls whether correlated [Join]s are supported. Defaults to `false`.
-     *
-     * Correlated joins are joins where the right side of the join depends on the current row of the left side.
-     */
-    var correlatedJoinsEnabled = false
-
-    protected open fun isCorrelatedJoin(join: Join<E>, left: Data<E, *>) : Boolean = join.data.data.let { data ->
-        when (data) {
-            is Select<E, *> -> {
-                (data.columns.orEmpty().map { it.value } + listOfNotNull(data.filter) + data.grouping)
-                    .flatMap { subexpressionCollector.collectAllSubexpressions(it) }
-                    .any { it is Column<E, *> && it.qualifiedName in left.columnNames }
-            }
-            is DataExpressionData<E, *> -> {
-                subexpressionCollector
-                    .collectAllSubexpressions(data.expression)
-                    .any { it is Column<E, *> && it.qualifiedName in left.columnNames }
-            }
-            else -> false
-        }
     }
 
     override fun execute(createTable: CreateTable<E>) {
         commitAllOpenTransactions()
-        check(!rootState.containsTable(createTable.table.qualifiedName)) { "Table '${createTable.table.qualifiedName}' already exists." }
-        rootState.addTable(createTable.table)
+        check(!engine.persistentState.containsTable(createTable.table.qualifiedName)) { "Table '${createTable.table.qualifiedName}' already exists." }
+        engine.persistentState.addTable(createTable.table)
     }
 
     override fun execute(dropTable: DropTable<E>) {
         commitAllOpenTransactions()
         if (!dropTable.ifExists) {
-            check(rootState.containsTable(dropTable.table.qualifiedName)) { "Table '${dropTable.table.qualifiedName}' does not exist." }
+            check(engine.persistentState.containsTable(dropTable.table.qualifiedName)) { "Table '${dropTable.table.qualifiedName}' does not exist." }
         }
-        rootState.removeTable(dropTable.table)
+        engine.persistentState.removeTable(dropTable.table)
     }
 
     override fun execute(insertInto: InsertInto<E, *>): Int {
@@ -246,7 +75,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             .getTable(insertInto.table.qualifiedName)
         val rows = insertInto.values.let { values ->
             when (values) {
-                is ConstantData -> values.items.map { item -> simulateExpression(orm.serialize(item)).invoke(DataRow()) as DataRow }
+                is ConstantData -> values.items.map { item -> engine.expressionEvaluator.simulateExpression(orm.serialize(item)).invoke(DataRow()) as DataRow }
                 else -> throw NotImplementedError("Inserting ${values::class.qualifiedName} is not implemented.")
             }
         }
@@ -267,7 +96,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             .also { (it as? TransactionStateOverlay<E>)?.ensureTableCopy(delete.table.qualifiedName) }
             .getTable(delete.table.qualifiedName)
         val tableSizeBefore = table.second.size
-        val condition = delete.condition?.let { simulateExpression(it) }
+        val condition = delete.condition?.let { engine.expressionEvaluator.simulateExpression(it) }
         if (condition == null) {
             table.second.clear()
         } else {
@@ -304,83 +133,4 @@ open class GenericSimulatorConnection<E : Engine<E>>(
         }
     }
 
-    private val expressionSimulators: MutableMap<KClass<*>, ExpressionSimulator<E, *, *>> = mutableMapOf()
-
-    fun <T, X: Expression<E, T>> registerExpressionSimulator(expressionSimulator: ExpressionSimulator<E, T, X>) {
-        expressionSimulators[expressionSimulator.expression] = expressionSimulator
-    }
-
-    fun unregisterExpressionSimulator(expression: KClass<out Expression<*, *>>) {
-        expressionSimulators.remove(expression)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <T, X: Expression<E, T>> getExpressionSimulator(expression: X) =
-        expressionSimulators.getOrElse(expression::class) {
-            throw NotImplementedError("Simulation of a ${expression::class.qualifiedName} is not implemented.")
-        } as ExpressionSimulator<E, T, X>
-
-    init {
-        registerExpressionSimulator(ConstantSimulator<E, Any?>())
-        registerExpressionSimulator(ColumnSimulator<E, Any?>())
-        registerExpressionSimulator(CastSimulator<E, Any?>())
-        registerExpressionSimulator(IsNotNullSimulator())
-        registerExpressionSimulator(EqualsSimulator())
-        registerExpressionSimulator(LessOrEqualSimulator())
-        registerExpressionSimulator(AndSimulator())
-        registerExpressionSimulator(CoalesceSimulator<E, Any?>())
-        registerExpressionSimulator(ArraySimulator<E, Any>())
-        registerExpressionSimulator(ArrayElementReferenceSimulator<E, Any?>())
-        registerExpressionSimulator(ArrayLengthSimulator())
-        registerExpressionSimulator(RowSimulator())
-        registerExpressionSimulator(CountSimulator())
-        registerExpressionSimulator(MaxSimulator<E, Comparable<Comparable<*>>>())
-        registerExpressionSimulator(SumAsLongSimulator())
-        registerExpressionSimulator(SumAsDoubleSimulator())
-        registerExpressionSimulator(SumAsBigDecimalSimulator())
-    }
-
-    protected open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T {
-        context(
-            object : ExpressionSimulator.SubexpressionCallbacks<E> {
-                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T = { row ->
-                    context(this) { getExpressionSimulator(expression).simulateExpression(expression)(row) }
-                }
-
-                context(groupExpressions: List<Expression<E, *>>)
-                override fun <T> simulateAggregation(expression: Expression<E, T>) =
-                    throw IllegalStateException("sub-expression cannot be an aggregation")
-            }
-        ) {
-            return getExpressionSimulator(expression).simulateExpression(expression)
-        }
-    }
-
-    protected open fun <T> simulateAggregation(expression: Expression<E, T>, groupExpressions: List<Expression<E, *>>): (List<DataRow>) -> T {
-        context(
-            groupExpressions,
-            object : ExpressionSimulator.SubexpressionCallbacks<E> {
-                override fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T = { row ->
-                    context(this) { getExpressionSimulator(expression).simulateExpression(expression)(row) }
-                }
-
-                context(groupExpressions: List<Expression<E, *>>)
-                override fun <T> simulateAggregation(expression: Expression<E, T>): (List<DataRow>) -> T = { rows ->
-                    context(groupExpressions, this) {
-                        if (expression in groupExpressions) {
-                            getExpressionSimulator(expression).simulateExpression(expression)(rows.first())
-                        } else {
-                            getExpressionSimulator(expression).simulateAggregation(expression)(rows)
-                        }
-                    }
-                }
-            }
-        ) {
-            return if (expression in groupExpressions) {
-                { rows -> getExpressionSimulator(expression).simulateExpression(expression)(rows.first()) }
-            } else {
-                getExpressionSimulator(expression).simulateAggregation(expression)
-            }
-        }
-    }
 }

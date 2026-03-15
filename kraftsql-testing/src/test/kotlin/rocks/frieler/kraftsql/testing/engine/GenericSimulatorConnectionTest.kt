@@ -234,8 +234,10 @@ class GenericSimulatorConnectionTest {
 
     @Test
     fun `GenericSimulatorConnection can simulate correlated INNER JOIN with SELECT statement`() {
-        connection.correlatedJoinsEnabled = true
-        val result = connection.execute(
+        val connectionWithCorrelatedJoinsEnabled = GenericSimulatorConnection(
+            engine = GenericEngineSimulator<DummyEngine>().apply { queryEvaluator.correlatedJoinsEnabled = true }
+        )
+        val result = connectionWithCorrelatedJoinsEnabled.execute(
             Select(
                 source = QuerySource(ConstantData(DummyEngine.orm,
                     DataRow("entity" to "x", "value" to 1),
@@ -306,8 +308,10 @@ class GenericSimulatorConnectionTest {
 
     @Test
     fun `GenericSimulatorConnection can simulate correlated LEFT JOIN with SELECT statement`() {
-        connection.correlatedJoinsEnabled = true
-        val result = connection.execute(
+        val connectionWithCorrelatedJoinsEnabled = GenericSimulatorConnection(
+            engine = GenericEngineSimulator<DummyEngine>().apply { queryEvaluator.correlatedJoinsEnabled = true }
+        )
+        val result = connectionWithCorrelatedJoinsEnabled.execute(
             Select(
                 source = QuerySource(ConstantData(DummyEngine.orm,
                     DataRow("entity" to "x", "value" to 1),
@@ -406,8 +410,10 @@ class GenericSimulatorConnectionTest {
 
     @Test
     fun `GenericSimulatorConnection can simulate correlated CROSS JOIN with SELECT statement`() {
-        connection.correlatedJoinsEnabled = true
-        val result = connection.execute(
+        val connectionWithCorrelatedJoinsEnabled = GenericSimulatorConnection(
+            engine = GenericEngineSimulator<DummyEngine>().apply { queryEvaluator.correlatedJoinsEnabled = true }
+        )
+        val result = connectionWithCorrelatedJoinsEnabled.execute(
             Select(
                 source = QuerySource(ConstantData(DummyEngine.orm,
                     DataRow("entity" to "x", "value" to 1),
@@ -443,17 +449,26 @@ class GenericSimulatorConnectionTest {
         val unnest = mock<Expression<DummyEngine, Data<DummyEngine, Int>>> {
             whenever(it.defaultColumnName()).thenReturn("")
         }
-        val connection = GenericSimulatorConnection<DummyEngine>(
-            subexpressionCollector = mock { whenever(it.collectAllSubexpressions(unnest)).thenReturn(listOf(Column<DummyEngine, Int>("values"))) }
+        val expressionEvaluator = GenericExpressionEvaluator<DummyEngine>().apply {
+            registerExpressionSimulator(mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
+                whenever(it.expression).thenReturn(unnest::class)
+                whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(unnest)) })
+                    .thenReturn { row -> ConstantData(DummyEngine.orm, (row["values"] as kotlin.Array<*>).map { element -> DataRow("" to element) }) }
+            })
+        }
+        val connectionPreparedForUnnestInCorrelatedJoin = GenericSimulatorConnection(
+            engine = GenericEngineSimulator(
+                expressionEvaluator = expressionEvaluator,
+                queryEvaluator = GenericQueryEvaluator(
+                    subexpressionCollector = mock<SubexpressionCollector<DummyEngine>> { whenever(it.collectAllSubexpressions(unnest)).thenReturn(listOf(Column<DummyEngine, Int>("values"))) },
+                    expressionEvaluator = expressionEvaluator,
+                ).apply {
+                    correlatedJoinsEnabled = true
+                },
+            )
         )
-        connection.registerExpressionSimulator(mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
-            whenever(it.expression).thenReturn(unnest::class)
-            whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(unnest)) })
-                .thenReturn { row -> ConstantData(DummyEngine.orm, (row["values"] as kotlin.Array<*>).map { element -> DataRow("" to element) }) }
-        })
 
-        connection.correlatedJoinsEnabled = true
-        val result = connection.execute(
+        val result = connectionPreparedForUnnestInCorrelatedJoin.execute(
             Select(
                 source = QuerySource(ConstantData(DummyEngine.orm,
                     DataRow("entity" to "x", "values" to arrayOf(1, 2)),
@@ -708,9 +723,13 @@ class GenericSimulatorConnectionTest {
             whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(dataExpression)) })
                 .thenReturn { data }
         }
+        val connectionWithDataExpressionSimulator = GenericSimulatorConnection(
+            engine = GenericEngineSimulator<DummyEngine>().apply {
+                expressionEvaluator.registerExpressionSimulator(dataExpressionSimulator)
+            }
+        )
 
-        connection.registerExpressionSimulator(dataExpressionSimulator)
-        val result = connection.execute(Select(QuerySource(DataExpressionData(dataExpression))), DataRow::class)
+        val result = connectionWithDataExpressionSimulator.execute(Select(QuerySource(DataExpressionData(dataExpression))), DataRow::class)
 
         result shouldContainExactlyInAnyOrder listOf(DataRow("string" to "foo"), DataRow("string" to "bar"), DataRow("string" to "baz"))
     }
@@ -726,9 +745,13 @@ class GenericSimulatorConnectionTest {
             whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(dataExpression)) })
                 .thenReturn { data }
         }
+        val connectionWithDataExpressionSimulator = GenericSimulatorConnection(
+            engine = GenericEngineSimulator<DummyEngine>().apply {
+                expressionEvaluator.registerExpressionSimulator(dataExpressionSimulator)
+            }
+        )
 
-        connection.registerExpressionSimulator(dataExpressionSimulator)
-        val result = connection.execute(Select(QuerySource(DataExpressionData(dataExpression), "string")), DataRow::class)
+        val result = connectionWithDataExpressionSimulator.execute(Select(QuerySource(DataExpressionData(dataExpression), "string")), DataRow::class)
 
         result shouldContainExactlyInAnyOrder listOf(DataRow("string" to "foo"), DataRow("string" to "bar"), DataRow("string" to "baz"))
     }
