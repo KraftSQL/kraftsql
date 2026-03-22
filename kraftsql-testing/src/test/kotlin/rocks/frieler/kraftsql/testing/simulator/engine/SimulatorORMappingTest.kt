@@ -1,7 +1,6 @@
 package rocks.frieler.kraftsql.testing.simulator.engine
 
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
-import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import rocks.frieler.kraftsql.objects.DataRow
 
