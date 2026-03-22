@@ -114,7 +114,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             if (it is TransactionStateOverlay<E>) {
                 it.commitIntoParent()
             } else {
-                throw IllegalStateException("No open transaction to commit.")
+                error("No open transaction to commit.")
             }
         }
     }
@@ -128,7 +128,7 @@ open class GenericSimulatorConnection<E : Engine<E>>(
             if (it is TransactionStateOverlay<E>) {
                 it.parent
             } else {
-                throw IllegalStateException("No open transaction to roll back.")
+                error("No open transaction to roll back.")
             }
         }
     }

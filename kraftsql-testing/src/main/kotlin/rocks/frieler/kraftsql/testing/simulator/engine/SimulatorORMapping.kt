@@ -44,6 +44,6 @@ open class SimulatorORMapping<E : Engine<E>> : ORMapping<E, List<DataRow>> {
                 val constructor = type.primaryConstructor ?: throw IllegalStateException("No primary constructor for ${type.simpleName}.")
                 constructor.callBy(constructor.parameters.associateWith { param -> deserializeValue(value[param.name!!], param.type.jvmErasure) })
             }
-            else -> throw IllegalStateException("Cannot deserialize $value to $type.")
+            else -> error("Cannot deserialize $value to $type.")
         }
 }
