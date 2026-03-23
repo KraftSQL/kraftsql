@@ -1,130 +1,100 @@
 package rocks.frieler.kraftsql.testing.simulator.engine
 
-import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.matchers.collections.shouldBeEmpty
-import io.kotest.matchers.collections.shouldContainAllInAnyOrder
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.ddl.CreateTable
 import rocks.frieler.kraftsql.ddl.DropTable
+import rocks.frieler.kraftsql.dml.BeginTransaction
+import rocks.frieler.kraftsql.dml.CommitTransaction
 import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
-import rocks.frieler.kraftsql.dql.Projection
-import rocks.frieler.kraftsql.dql.QuerySource
+import rocks.frieler.kraftsql.dml.RollbackTransaction
 import rocks.frieler.kraftsql.dql.Select
-import rocks.frieler.kraftsql.expressions.`=`
-import rocks.frieler.kraftsql.expressions.Constant
-import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
-import rocks.frieler.kraftsql.objects.Table
 
 class GenericSimulatorConnectionTest {
-    private val engine = GenericEngineSimulator<DummyEngine>()
-    private val connection = GenericSimulatorConnection(
-        engine = engine,
-    )
+    private val engine = mock<GenericEngineSimulator<DummyEngine>>()
+    private val connection = GenericSimulatorConnection(engine = engine)
 
     @Test
-    fun `GenericSimulatorConnection can simulate Select`() {
-        val result = connection.execute(
-            Select(
-                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
-                columns = listOf(Projection(Constant(42L))),
-            ), DataRow::class
-        )
+    fun `execute() forwards Select to engine and returns its result`() {
+        val select = mock<Select<DummyEngine, DataRow>>()
+        val data = listOf<DataRow>(mock())
+        whenever(context(connection) { engine.execute(select, DataRow::class) })
+            .thenReturn(data)
 
-        result.single().entries.single().second shouldBe 42L
+        val result = connection.execute(select, DataRow::class)
+
+        result shouldBe data
     }
 
     @Test
-    fun `GenericSimulatorConnection can simulate CreateTable`() {
-        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
-            rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT),
-        ))
+    fun `execute() forwards CreateTable to engine`() {
+        val createTable = mock<CreateTable<DummyEngine>>()
 
-        connection.execute(CreateTable(table))
+        connection.execute(createTable)
 
-        engine.persistentState.findTable(table.qualifiedName) shouldNotBe null
+        context(connection) { verify(engine).execute(createTable) }
     }
 
     @Test
-    fun `GenericSimulatorConnection can simulate DropTable`() {
-        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
-            rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT),
-        )).also { engine.persistentState.addTable(it) }
+    fun `execute() forwards DropTable to engine`() {
+        val dropTable = mock<DropTable<DummyEngine>>()
 
-        connection.execute(DropTable(table))
+        connection.execute(dropTable)
 
-        engine.persistentState.findTable(table.qualifiedName) shouldBe null
+        context(connection) { verify(engine).execute(dropTable) }
     }
 
     @Test
-    fun `GenericSimulatorConnection can simulate InsertInto`() {
-        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
-            rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT),
-        )).also { engine.persistentState.addTable(it) }
-        val testData = ConstantData(DummyEngine.orm, DataRow("c" to "foo"))
+    fun `execute() forwards InsertInto to engine and returns its result`() {
+        val insertInto = mock<InsertInto<DummyEngine, DataRow>>()
+        whenever(context(connection) { engine.execute(insertInto) })
+            .thenReturn(5)
 
-        val rows = connection.execute(InsertInto(table, testData))
+        val result = connection.execute(insertInto)
 
-        rows shouldBe 1
-        engine.persistentState.getTable(table.qualifiedName).second.shouldContainAllInAnyOrder(testData.items.toList())
+        result shouldBe 5
     }
 
     @Test
-    fun `GenericSimulatorConnection rejects inserting data that does not match the Table's schema`() {
-        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
-            rocks.frieler.kraftsql.objects.Column("c1", DummyEngine.Types.TEXT),
-            rocks.frieler.kraftsql.objects.Column("c2", DummyEngine.Types.TEXT),
-        )).also { engine.persistentState.addTable(it) }
-        val testData = ConstantData(DummyEngine.orm, DataRow("c1" to null, "col" to null))
+    fun `execute() forwards Delete to engine and returns its result`() {
+        val delete = mock<Delete<DummyEngine>>()
+        whenever(context(connection) { engine.execute(delete) })
+            .thenReturn(3)
 
-        shouldThrow<IllegalArgumentException> {
-            connection.execute(InsertInto(table, testData))
-        }
+        val result = connection.execute(delete)
+
+        result shouldBe 3
     }
 
     @Test
-    fun `GenericSimulatorConnection rejects inserting NULL into non-nullable column`() {
-        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
-            rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT, nullable = false),
-        )).also { engine.persistentState.addTable(it) }
-        val testData = ConstantData(DummyEngine.orm, DataRow("c" to null))
+    fun `execute() forwards BeginTransaction to engine`() {
+        val beginTransaction = mock<BeginTransaction<DummyEngine>>()
 
-        shouldThrow<IllegalArgumentException> {
-            connection.execute(InsertInto(table, testData))
-        }
+        connection.execute(beginTransaction)
+
+        context(connection) { verify(engine).execute(beginTransaction) }
     }
 
     @Test
-    fun `GenericSimulatorConnection can simulate Delete`() {
-        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
-            rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT, nullable = false),
-        )).also {
-            engine.persistentState.addTable(it)
-            engine.persistentState.writeTable(it, listOf(DataRow("c" to "foo"), DataRow("c" to "bar")))
-        }
+    fun `execute() forwards CommitTransaction to engine`() {
+        val commitTransaction = mock<CommitTransaction<DummyEngine>>()
 
-        val rowsDeleted = connection.execute(Delete(table, table["c"] `=` Constant("foo")))
+        connection.execute(commitTransaction)
 
-        rowsDeleted shouldBe 1
-        engine.persistentState.getTable(table.qualifiedName).second.shouldHaveSize(1)
+        context(connection) { verify(engine).execute(commitTransaction) }
     }
 
     @Test
-    fun `GenericSimulatorConnection deletes all rows with an unconditioned Delete`() {
-        val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
-            rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT, nullable = false),
-        )).also {
-            engine.persistentState.addTable(it)
-            engine.persistentState.writeTable(it, listOf(DataRow("c" to "foo"), DataRow("c" to "bar")))
-        }
+    fun `execute() forwards RollbackTransaction to engine`() {
+        val rollbackTransaction = mock<RollbackTransaction<DummyEngine>>()
 
-        val rowsDeleted = connection.execute(Delete(table))
+        connection.execute(rollbackTransaction)
 
-        rowsDeleted shouldBe 2
-        engine.persistentState.getTable(table.qualifiedName).second.shouldBeEmpty()
+        context(connection) { verify(engine).execute(rollbackTransaction) }
     }
 }

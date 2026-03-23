@@ -6,8 +6,8 @@ import rocks.frieler.kraftsql.testing.simulator.engine.GenericSimulatorConnectio
 import rocks.frieler.kraftsql.testing.simulator.engine.GenericEngineSimulator
 
 class H2SimulatorConnection : GenericSimulatorConnection<H2Engine>(
-    orm = H2SimulatorORMapping,
     engine = GenericEngineSimulator(
+        orm = H2SimulatorORMapping,
         expressionEvaluator = H2ExpressionEvaluator,
         queryEvaluator = H2QueryEvaluator,
     ),
