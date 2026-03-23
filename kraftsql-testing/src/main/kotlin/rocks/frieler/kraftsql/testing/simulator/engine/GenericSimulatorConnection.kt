@@ -29,27 +29,6 @@ open class GenericSimulatorConnection<E : Engine<E>>(
 ) : SimulatorConnection<E> {
     protected var topState:  EngineState<E> = engine.persistentState
 
-    protected open class TransactionStateOverlay<E : Engine<E>>(
-        val parent: EngineState<E>,
-    ) : EngineState<E>() {
-        override fun containsTable(name: String): Boolean {
-            return super.containsTable(name) || parent.containsTable(name)
-        }
-
-        override fun findTable(name: String): Pair<Table<E, *>, MutableList<DataRow>>? {
-            return super.findTable(name) ?: parent.findTable(name)
-        }
-
-        fun ensureTableCopy(name: String) {
-            tables.computeIfAbsent(name) { getTable(name).run { first to second.toMutableList() } }
-        }
-
-        fun commitIntoParent(): EngineState<E> {
-            tables.values.forEach { (table, data) -> parent.writeTable(table, data) }
-            return parent
-        }
-    }
-
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> {
         val resultRows = context(topState) { engine.queryEvaluator.selectRows(select, null) }
         return orm.deserializeQueryResult(resultRows, type)
