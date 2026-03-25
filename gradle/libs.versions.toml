@@ -6,7 +6,7 @@ sonarqube = "7.2.3.7755"
 h2 = "2.4.240"
 junit = "6.0.3"
 kotest = "6.1.7"
-mockito = "6.2.3"
+mockito = "6.3.0"
 kover = "0.9.7"
 
 [libraries]
