@@ -205,5 +205,5 @@ open class GenericQueryEvaluator<E : Engine<E>>(
         }
     }
 
-    internal val expressionEvaluatorForChecking = this.expressionEvaluator
+    val expressionEvaluatorForChecking = this.expressionEvaluator
 }
