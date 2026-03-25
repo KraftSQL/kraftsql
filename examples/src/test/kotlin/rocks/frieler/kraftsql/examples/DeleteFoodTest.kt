@@ -11,7 +11,7 @@ import rocks.frieler.kraftsql.examples.data.products
 import rocks.frieler.kraftsql.h2.ddl.create
 import rocks.frieler.kraftsql.h2.dml.insertInto
 import rocks.frieler.kraftsql.h2.dql.execute
-import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
+import rocks.frieler.kraftsql.h2.testing.simulator.WithH2Simulator
 
 @WithH2Simulator
 class DeleteFoodTest {

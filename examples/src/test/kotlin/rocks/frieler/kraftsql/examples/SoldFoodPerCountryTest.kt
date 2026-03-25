@@ -11,7 +11,7 @@ import rocks.frieler.kraftsql.examples.data.Customer
 import rocks.frieler.kraftsql.examples.data.Purchase
 import rocks.frieler.kraftsql.h2.objects.ConstantData
 import rocks.frieler.kraftsql.h2.dql.execute
-import rocks.frieler.kraftsql.h2.testing.WithH2Simulator
+import rocks.frieler.kraftsql.h2.testing.simulator.WithH2Simulator
 import rocks.frieler.kraftsql.testing.kotest.inspectors.filterForOne
 import java.math.BigDecimal
 import java.time.Instant
