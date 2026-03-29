@@ -185,6 +185,16 @@ class GenericExpressionEvaluatorTest {
     }
 
     @Test
+    fun `GenericExpressionEvaluator can simulate the NOT-operator`() {
+        val notExpression = Not<DummyEngine>(Constant(true))
+
+        val simulation = expressionEvaluator.simulateExpression(notExpression)
+        val result = simulation.invoke(DataRow())
+
+        result shouldBe false
+    }
+
+    @Test
     fun `GenericExpressionEvaluator can simulate the AND-operator`() {
         val andExpression = And<DummyEngine>(Constant(true), Constant(false))
 
@@ -202,16 +212,6 @@ class GenericExpressionEvaluatorTest {
         val result = simulation.invoke(DataRow())
 
         result shouldBe true
-    }
-
-    @Test
-    fun `GenericExpressionEvaluator can simulate the NOT-operator`() {
-        val notExpression = Not<DummyEngine>(Constant(true))
-
-        val simulation = expressionEvaluator.simulateExpression(notExpression)
-        val result = simulation.invoke(DataRow())
-
-        result shouldBe false
     }
 
     @Test
