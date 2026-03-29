@@ -21,6 +21,8 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.Max
+import rocks.frieler.kraftsql.expressions.Not
+import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
@@ -29,12 +31,93 @@ class SubexpressionCollectorTest {
     private val subexpressionCollector = GenericSubexpressionCollector<DummyEngine>()
 
     @Test
+    fun `GenericSubexpressionCollector returns empty list for Constant`() {
+        val constant = Constant<DummyEngine, Int>(42)
+
+        val subexpressions = subexpressionCollector.getSubexpressions(constant)
+
+        subexpressions.shouldBeEmpty()
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector returns empty list for Column`() {
+        val column = Column<DummyEngine, Int>("test_column")
+
+        val subexpressions = subexpressionCollector.getSubexpressions(column)
+
+        subexpressions.shouldBeEmpty()
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect expression of Cast`() {
+        val cast = Cast.Companion<DummyEngine, String>(mock<Expression<DummyEngine, Any?>>(), mock())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(cast)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(cast.expression)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect expression of IsNotNull`() {
+        val isNotNull = IsNotNull(mock<Expression<DummyEngine, Any?>>())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(isNotNull)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(isNotNull.expression)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect left and right of Equals`() {
+        val equals = Equals(mock<Expression<DummyEngine, Any?>>(), mock<Expression<DummyEngine, Any?>>())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(equals)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(equals.left, equals.right)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect expression of LessOrEqual`() {
+        val lessOrEqual = LessOrEqual(mock<Expression<DummyEngine, *>>(), mock<Expression<DummyEngine, *>>())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(lessOrEqual)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(lessOrEqual.left, lessOrEqual.right)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect expression of Not`() {
+        val not = Not(mock<Expression<DummyEngine, Boolean>>())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(not)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(not.expression)
+    }
+
+    @Test
     fun `GenericSubexpressionCollector can collect left and right side of And`() {
         val and = And(mock<Expression<DummyEngine, Boolean>>(), mock<Expression<DummyEngine, Boolean>>())
 
         val subexpressions = subexpressionCollector.getSubexpressions(and)
 
         subexpressions shouldContainExactlyInAnyOrder listOf(and.left, and.right)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect left and right side of Or`() {
+        val or = Or(mock<Expression<DummyEngine, Boolean>>(), mock<Expression<DummyEngine, Boolean>>())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(or)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(or.left, or.right)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect expressions of Coalesce`() {
+        val coalesce = Coalesce(mock<Expression<DummyEngine, Any?>>(), mock<Expression<DummyEngine, Any?>>())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(coalesce)
+
+        subexpressions shouldContainExactlyInAnyOrder coalesce.expressions
     }
 
     @Test
@@ -58,6 +141,27 @@ class SubexpressionCollectorTest {
     }
 
     @Test
+    fun `GenericSubexpressionCollector can collect array and index expressions of ArrayElementReference`() {
+        val arrayExpression = mock<Expression<DummyEngine, Array<Any>>>()
+        val indexExpression = mock<Expression<DummyEngine, Int>>()
+        val arrayElementReference = ArrayElementReference(arrayExpression, indexExpression)
+
+        val subexpressions = subexpressionCollector.getSubexpressions(arrayElementReference)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(arrayElementReference.array, arrayElementReference.index)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect array expression of ArrayLength`() {
+        val arrayExpression = mock<Expression<DummyEngine, Array<*>>>()
+        val arrayLength = ArrayLength(arrayExpression)
+
+        val subexpressions = subexpressionCollector.getSubexpressions(arrayLength)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(arrayLength.array)
+    }
+
+    @Test
     fun `GenericSubexpressionCollector can collect arguments of ArrayConcatenation`() {
         val element1 = mock<Expression<DummyEngine, Array<Any?>>>()
         val element2 = mock<Expression<DummyEngine, Array<Any?>>>()
@@ -72,58 +176,22 @@ class SubexpressionCollectorTest {
     }
 
     @Test
-    fun `GenericSubexpressionCollector can collect array expression of ArrayLength`() {
-        val arrayExpression = mock<Expression<DummyEngine, Array<*>>>()
-        val arrayLength = ArrayLength(arrayExpression)
+    fun `GenericSubexpressionCollector can collect values of Row`() {
+        val row = Row<DummyEngine, Any>(mapOf(
+            "key1" to mock<Expression<DummyEngine, Any?>>(),
+            "key2" to mock<Expression<DummyEngine, Any?>>(),
+        ))
 
-        val subexpressions = subexpressionCollector.getSubexpressions(arrayLength)
+        val subexpressions = subexpressionCollector.getSubexpressions(row)
 
-        subexpressions shouldContainExactlyInAnyOrder listOf(arrayLength.array)
+        subexpressions shouldContainExactlyInAnyOrder row.values!!.values.toList()
     }
 
     @Test
-    fun `GenericSubexpressionCollector can collect array and index expressions of ArrayElementReference`() {
-        val arrayExpression = mock<Expression<DummyEngine, Array<Any>>>()
-        val indexExpression = mock<Expression<DummyEngine, Int>>()
-        val arrayElementReference = ArrayElementReference(arrayExpression, indexExpression)
+    fun `GenericSubexpressionCollector can collect values of NULL Row`() {
+        val row = Row<DummyEngine, Any>(null)
 
-        val subexpressions = subexpressionCollector.getSubexpressions(arrayElementReference)
-
-        subexpressions shouldContainExactlyInAnyOrder listOf(arrayElementReference.array, arrayElementReference.index)
-    }
-
-    @Test
-    fun `GenericSubexpressionCollector can collect expression of Cast`() {
-        val cast = Cast.Companion<DummyEngine, String>(mock<Expression<DummyEngine, Any?>>(), mock())
-
-        val subexpressions = subexpressionCollector.getSubexpressions(cast)
-
-        subexpressions shouldContainExactlyInAnyOrder listOf(cast.expression)
-    }
-
-    @Test
-    fun `GenericSubexpressionCollector can collect expressions of Coalesce`() {
-        val coalesce = Coalesce(mock<Expression<DummyEngine, Any?>>(), mock<Expression<DummyEngine, Any?>>())
-
-        val subexpressions = subexpressionCollector.getSubexpressions(coalesce)
-
-        subexpressions shouldContainExactlyInAnyOrder coalesce.expressions
-    }
-
-    @Test
-    fun `GenericSubexpressionCollector returns empty list for Column`() {
-        val column = Column<DummyEngine, Int>("test_column")
-
-        val subexpressions = subexpressionCollector.getSubexpressions(column)
-
-        subexpressions.shouldBeEmpty()
-    }
-
-    @Test
-    fun `GenericSubexpressionCollector returns empty list for Constant`() {
-        val constant = Constant<DummyEngine, Int>(42)
-
-        val subexpressions = subexpressionCollector.getSubexpressions(constant)
+        val subexpressions = subexpressionCollector.getSubexpressions(row)
 
         subexpressions.shouldBeEmpty()
     }
@@ -147,60 +215,12 @@ class SubexpressionCollectorTest {
     }
 
     @Test
-    fun `GenericSubexpressionCollector can collect left and right of Equals`() {
-        val equals = Equals(mock<Expression<DummyEngine, Any?>>(), mock<Expression<DummyEngine, Any?>>())
-
-        val subexpressions = subexpressionCollector.getSubexpressions(equals)
-
-        subexpressions shouldContainExactlyInAnyOrder listOf(equals.left, equals.right)
-    }
-
-    @Test
-    fun `GenericSubexpressionCollector can collect expression of IsNotNull`() {
-        val isNotNull = IsNotNull(mock<Expression<DummyEngine, Any?>>())
-
-        val subexpressions = subexpressionCollector.getSubexpressions(isNotNull)
-
-        subexpressions shouldContainExactlyInAnyOrder listOf(isNotNull.expression)
-    }
-
-    @Test
-    fun `GenericSubexpressionCollector can collect expression of LessOrEqual`() {
-        val lessOrEqual = LessOrEqual(mock<Expression<DummyEngine, *>>(), mock<Expression<DummyEngine, *>>())
-
-        val subexpressions = subexpressionCollector.getSubexpressions(lessOrEqual)
-
-        subexpressions shouldContainExactlyInAnyOrder listOf(lessOrEqual.left, lessOrEqual.right)
-    }
-
-    @Test
     fun `GenericSubexpressionCollector can collect expression of Max`() {
         val max = Max(mock<Expression<DummyEngine, Comparable<Comparable<*>>?>>())
 
         val subexpressions = subexpressionCollector.getSubexpressions(max)
 
         subexpressions shouldContainExactlyInAnyOrder listOf(max.expression)
-    }
-
-    @Test
-    fun `GenericSubexpressionCollector can collect values of Row`() {
-        val row = Row<DummyEngine, Any>(mapOf(
-            "key1" to mock<Expression<DummyEngine, Any?>>(),
-            "key2" to mock<Expression<DummyEngine, Any?>>(),
-        ))
-
-        val subexpressions = subexpressionCollector.getSubexpressions(row)
-
-        subexpressions shouldContainExactlyInAnyOrder row.values!!.values.toList()
-    }
-
-    @Test
-    fun `GenericSubexpressionCollector can collect values of NULL Row`() {
-        val row = Row<DummyEngine, Any>(null)
-
-        val subexpressions = subexpressionCollector.getSubexpressions(row)
-
-        subexpressions.shouldBeEmpty()
     }
 
     @Test

@@ -16,6 +16,8 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.Max
+import rocks.frieler.kraftsql.expressions.Not
+import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.expressions.Sum
 
@@ -50,21 +52,23 @@ interface SubexpressionCollector<E : Engine<E>> {
 open class GenericSubexpressionCollector<E : Engine<E>> : SubexpressionCollector<E> {
     override fun getSubexpressions(expression: Expression<E, *>) =
         when (expression) {
-            is And<E> -> listOf(expression.left, expression.right)
-            is Array<E, *> -> (expression.elements ?: emptyArray()).toList()
-            is ArrayConcatenation<E, *> -> expression.arguments.toList()
-            is ArrayLength<E> -> listOf(expression.array)
-            is ArrayElementReference<E, *> -> listOf(expression.array, expression.index)
-            is Cast<E, *> -> listOf(expression.expression)
-            is Coalesce<E, *> -> expression.expressions
-            is Column<E, *> -> emptyList()
             is Constant<E, *> -> emptyList()
-            is Count<E> -> listOfNotNull(expression.expression)
-            is Equals<E> -> listOf(expression.left, expression.right)
+            is Column<E, *> -> emptyList()
+            is Cast<E, *> -> listOf(expression.expression)
             is IsNotNull<E> -> listOf(expression.expression)
+            is Equals<E> -> listOf(expression.left, expression.right)
             is LessOrEqual<E> -> listOf(expression.left, expression.right)
-            is Max<E, *> -> listOf(expression.expression)
+            is Not<E> -> listOf(expression.expression)
+            is And<E> -> listOf(expression.left, expression.right)
+            is Or<E> -> listOf(expression.left, expression.right)
+            is Coalesce<E, *> -> expression.expressions
+            is Array<E, *> -> (expression.elements ?: emptyArray()).toList()
+            is ArrayElementReference<E, *> -> listOf(expression.array, expression.index)
+            is ArrayLength<E> -> listOf(expression.array)
+            is ArrayConcatenation<E, *> -> expression.arguments.toList()
             is Row<E, *> -> (expression.values ?: emptyMap()).values.toList()
+            is Count<E> -> listOfNotNull(expression.expression)
+            is Max<E, *> -> listOf(expression.expression)
             is Sum<E, *> -> listOf(expression.expression)
             else -> throw NotImplementedError("Subexpressions not implemented for ${expression::class.qualifiedName}")
         }
