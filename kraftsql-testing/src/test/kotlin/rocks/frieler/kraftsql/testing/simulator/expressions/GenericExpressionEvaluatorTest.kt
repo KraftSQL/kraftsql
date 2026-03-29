@@ -11,6 +11,7 @@ import rocks.frieler.kraftsql.engine.Type
 import rocks.frieler.kraftsql.expressions.Aggregation
 import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.Array
+import rocks.frieler.kraftsql.expressions.Not
 import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.ArrayElementReference
 import rocks.frieler.kraftsql.expressions.ArrayLength
@@ -201,6 +202,16 @@ class GenericExpressionEvaluatorTest {
         val result = simulation.invoke(DataRow())
 
         result shouldBe true
+    }
+
+    @Test
+    fun `GenericExpressionEvaluator can simulate the NOT-operator`() {
+        val notExpression = Not<DummyEngine>(Constant(true))
+
+        val simulation = expressionEvaluator.simulateExpression(notExpression)
+        val result = simulation.invoke(DataRow())
+
+        result shouldBe false
     }
 
     @Test

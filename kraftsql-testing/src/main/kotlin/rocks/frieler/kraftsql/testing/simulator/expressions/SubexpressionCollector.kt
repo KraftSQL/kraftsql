@@ -16,6 +16,7 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.Max
+import rocks.frieler.kraftsql.expressions.Not
 import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.expressions.Sum
@@ -65,6 +66,7 @@ open class GenericSubexpressionCollector<E : Engine<E>> : SubexpressionCollector
             is IsNotNull<E> -> listOf(expression.expression)
             is LessOrEqual<E> -> listOf(expression.left, expression.right)
             is Max<E, *> -> listOf(expression.expression)
+            is Not<E> -> listOf(expression.expression)
             is Or<E> -> listOf(expression.left, expression.right)
             is Row<E, *> -> (expression.values ?: emptyMap()).values.toList()
             is Sum<E, *> -> listOf(expression.expression)
