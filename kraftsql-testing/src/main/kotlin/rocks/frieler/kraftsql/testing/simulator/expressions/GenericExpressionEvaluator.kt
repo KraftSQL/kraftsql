@@ -43,6 +43,7 @@ open class GenericExpressionEvaluator<E : Engine<E>> {
         registerExpressionSimulator(EqualsSimulator())
         registerExpressionSimulator(LessOrEqualSimulator())
         registerExpressionSimulator(AndSimulator())
+        registerExpressionSimulator(OrSimulator())
         registerExpressionSimulator(CoalesceSimulator<E, Any?>())
         registerExpressionSimulator(ArraySimulator<E, Any>())
         registerExpressionSimulator(ArrayElementReferenceSimulator<E, Any?>())
