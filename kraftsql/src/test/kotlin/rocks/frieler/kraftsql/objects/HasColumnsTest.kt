@@ -13,9 +13,10 @@ import rocks.frieler.kraftsql.expressions.Column
 import kotlin.reflect.KProperty1
 
 class HasColumnsTest {
-    private val testableHasColumnsInstance = mock<HasColumns<TestableDummyEngine, HasColumnsTest>> {
+    private data class Something(val prop: String)
+    private val testableHasColumnsInstance = mock<HasColumns<TestableDummyEngine, Something>> {
         whenever(it[anyString()]).thenCallRealMethod()
-        whenever(it[any<KProperty1<HasColumnsTest, *>>()]).thenCallRealMethod()
+        whenever(it[any<KProperty1<Something, *>>()]).thenCallRealMethod()
     }
 
     @Test
@@ -39,10 +40,9 @@ class HasColumnsTest {
 
     @Test
     fun `get operator returns Column expression for property`() {
-        val property = mock<KProperty1<HasColumnsTest, String>> { whenever(it.name).thenReturn("prop")}
-        whenever(testableHasColumnsInstance.columnNames).thenReturn(listOf("prop"))
+        whenever(testableHasColumnsInstance.columnNames).thenReturn(listOf(Something::prop.name))
 
-        val column = testableHasColumnsInstance[property]
+        val column = testableHasColumnsInstance[Something::prop]
 
         column.shouldBeInstanceOf<Column<TestableDummyEngine, String>>()
         column.name shouldBe "prop"

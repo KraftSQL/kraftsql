@@ -3,6 +3,7 @@ project.description = "KrafSQL Core Library"
 plugins {
     id(libs.plugins.kotlin.jvm.get().pluginId)
     `java-library`
+    id("test-jvm-agents")
     alias(libs.plugins.dokka.javadoc)
     alias(libs.plugins.kover)
     id("kraftsql-publishing")
@@ -14,6 +15,7 @@ dependencies {
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.mockito)
+    testAgent(libs.mockito.core) { isTransitive = false }
     testImplementation(libs.h2.database)
     testRuntimeOnly(libs.junit.engine)
     testRuntimeOnly(libs.junit.platform.launcher)

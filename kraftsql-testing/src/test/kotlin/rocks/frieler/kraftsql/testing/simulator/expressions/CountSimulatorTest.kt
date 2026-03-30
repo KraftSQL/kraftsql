@@ -3,7 +3,6 @@ package rocks.frieler.kraftsql.testing.simulator.expressions
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.expressions.Count
@@ -36,17 +35,16 @@ class CountSimulatorTest {
 
     @Test
     fun `CountSimulator can simulate Count as aggregation over non-NULL values`() {
-        val expression = mock<Expression<DummyEngine, Any?>> {
-            val expressionSimulation = mock<Function1<DataRow, Any?>> {
-                whenever(it.invoke(any())).thenReturn(Any(), null)
-            }
-            whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn(expressionSimulation)
+        val rowWithValue = mock<DataRow>()
+        val rowWithNull = mock<DataRow>()
+        val expression = mock<Expression<DummyEngine, Any?>> { it ->
+            whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn({ row: DataRow -> row.takeIf { it != rowWithNull } })
         }
 
         val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             CountSimulator<DummyEngine>().simulateAggregation(Count(expression))
         }
-        val result = simulation(listOf(mock(), mock()))
+        val result = simulation(listOf(rowWithValue, rowWithNull))
 
         result shouldBe 1L
     }

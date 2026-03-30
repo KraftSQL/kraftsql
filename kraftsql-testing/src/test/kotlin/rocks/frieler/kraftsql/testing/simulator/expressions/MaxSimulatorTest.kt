@@ -26,11 +26,9 @@ class MaxSimulatorTest {
     @Test
     fun `MaxSimulator can simulate Max aggregation`() {
         val expression = mock<Expression<DummyEngine, Int>>()
-        val expressionSimulation = mock {
-            whenever(subexpressionCallbacks.simulateExpression(expression)).thenReturn(it)
-        }
-        val row1 = mock<DataRow>().also { whenever(expressionSimulation.invoke(it)).thenReturn(1) }
-        val row2 = mock<DataRow>().also { whenever(expressionSimulation.invoke(it)).thenReturn(2) }
+        val row1 = mock<DataRow>()
+        val row2 = mock<DataRow>()
+        whenever(subexpressionCallbacks.simulateExpression(expression)).thenReturn { row -> if (row == row1) 1 else if (row == row2) 2 else error("unexpected row") }
         @Suppress("UNCHECKED_CAST") val max = Max(expression) as Max<DummyEngine, Comparable<Comparable<*>>>
 
         val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
@@ -44,17 +42,15 @@ class MaxSimulatorTest {
     @Test
     fun `MaxSimulator ignores NULL values`() {
         val expression = mock<Expression<DummyEngine, Int?>>()
-        val expressionSimulation = mock {
-            whenever(subexpressionCallbacks.simulateExpression(expression)).thenReturn(it)
-        }
-        val row1 = mock<DataRow>().also { whenever(expressionSimulation.invoke(it)).thenReturn(1) }
-        val row2 = mock<DataRow>().also { whenever(expressionSimulation.invoke(it)).thenReturn(null) }
+        val rowWithValue = mock<DataRow>()
+        val rowWithNull = mock<DataRow>()
+        whenever(subexpressionCallbacks.simulateExpression(expression)).thenReturn { row -> if (row == rowWithValue) 1 else null }
         @Suppress("UNCHECKED_CAST") val max = Max(expression) as Max<DummyEngine, Comparable<Comparable<*>>>
 
         val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             maxSimulator.simulateAggregation(max)
         }
-        val result = simulation(listOf(row1, row2))
+        val result = simulation(listOf(rowWithValue, rowWithNull))
 
         result shouldBe 1
     }
@@ -62,11 +58,9 @@ class MaxSimulatorTest {
     @Test
     fun `MaxSimulator returns NULL as maximum of only NULL values`() {
         val expression = mock<Expression<DummyEngine, Int?>>()
-        val expressionSimulation = mock {
-            whenever(subexpressionCallbacks.simulateExpression(expression)).thenReturn(it)
-        }
-        val row1 = mock<DataRow>().also { whenever(expressionSimulation.invoke(it)).thenReturn(null) }
-        val row2 = mock<DataRow>().also { whenever(expressionSimulation.invoke(it)).thenReturn(null) }
+        whenever(subexpressionCallbacks.simulateExpression(expression)).thenReturn { _ -> null }
+        val row1 = mock<DataRow>()
+        val row2 = mock<DataRow>()
         @Suppress("UNCHECKED_CAST") val max = Max(expression) as Max<DummyEngine, Comparable<Comparable<*>>>
 
         val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
@@ -80,7 +74,7 @@ class MaxSimulatorTest {
     @Test
     fun `MaxSimulator returns NULL as maximum of empty data`() {
         val expression = mock<Expression<DummyEngine, Int?>>()
-        whenever(subexpressionCallbacks.simulateExpression(expression)).thenReturn(mock())
+        whenever(subexpressionCallbacks.simulateExpression(expression)).thenReturn { _ -> null }
         @Suppress("UNCHECKED_CAST") val max = Max(expression) as Max<DummyEngine, Comparable<Comparable<*>>>
 
         val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {

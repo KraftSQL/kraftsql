@@ -6,6 +6,7 @@ sonarqube = "7.2.3.7755"
 h2 = "2.4.240"
 junit = "6.0.3"
 kotest = "6.1.7"
+mockito-core = "5.23.0"
 mockito = "6.3.0"
 kover = "0.9.7"
 
@@ -19,6 +20,7 @@ junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", ver
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit" }
 junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
 kotest-assertions-core = { group = "io.kotest", name = "kotest-assertions-core-jvm", version.ref = "kotest" }
+mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito-core" }
 mockito = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockito" }
 
 [plugins]

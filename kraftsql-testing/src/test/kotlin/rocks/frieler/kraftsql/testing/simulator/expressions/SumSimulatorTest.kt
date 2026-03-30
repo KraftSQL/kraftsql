@@ -27,13 +27,19 @@ class SumSimulatorTest {
 
     @Test
     fun `SumAsLongSimulator sums Long-compatible values`() {
-        val expressionToSum = mock<Expression<DummyEngine, Long>>().also {
-            whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn(mock())
-        }
-        val rowWithByte = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum as Expression<DummyEngine, *>)(it)).thenReturn(1.toByte()) }
-        val rowWithShort = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum as Expression<DummyEngine, *>)(it)).thenReturn(2.toShort()) }
-        val rowWithInt = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum as Expression<DummyEngine, *>)(it)).thenReturn(3) }
-        val rowWithLong = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum as Expression<DummyEngine, *>)(it)).thenReturn(4L) }
+        val expressionToSum = mock<Expression<DummyEngine, Long>>()
+        val rowWithByte = mock<DataRow>()
+        val rowWithShort = mock<DataRow>()
+        val rowWithInt = mock<DataRow>()
+        val rowWithLong = mock<DataRow>()
+        whenever(subexpressionCallbacks.simulateExpression(expressionToSum as Expression<DummyEngine, Number>))
+            .thenReturn {row -> when(row) {
+                rowWithByte -> 1.toByte()
+                rowWithShort -> 2.toShort()
+                rowWithInt -> 3
+                rowWithLong -> 4L
+                else -> error("unexpected row")
+            } }
 
         val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             SumAsLongSimulator<DummyEngine>().simulateAggregation(Sum(expressionToSum))
@@ -45,16 +51,16 @@ class SumSimulatorTest {
 
     @Test
     fun `SumAsLongSimulator ignores NULL values`() {
-        val expressionToSum = mock<Expression<DummyEngine, Long?>>().also {
-            whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn(mock())
-        }
-        val row = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum)(it)).thenReturn(1L) }
-        val rowWithNull = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum)(it)).thenReturn(null) }
+        val expressionToSum = mock<Expression<DummyEngine, Long?>>()
+        val rowWithValue = mock<DataRow>()
+        val rowWithNull = mock<DataRow>()
+        whenever(subexpressionCallbacks.simulateExpression(expressionToSum))
+            .thenReturn { row -> if (row == rowWithValue) 1L else null }
 
         val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             SumAsLongSimulator<DummyEngine>().simulateAggregation(Sum(expressionToSum))
         }
-        val result = simulation(listOf(row, rowWithNull))
+        val result = simulation(listOf(rowWithValue, rowWithNull))
 
         result shouldBe 1L
     }
@@ -70,15 +76,23 @@ class SumSimulatorTest {
 
     @Test
     fun `SumAsDoubleSimulator sums Double-compatible values`() {
-        val expressionToSum = mock<Expression<DummyEngine, Double>>().also {
-            whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn(mock())
-        }
-        val rowWithByte = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum as Expression<DummyEngine, *>)(it)).thenReturn(1.toByte()) }
-        val rowWithShort = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum as Expression<DummyEngine, *>)(it)).thenReturn(2.toShort()) }
-        val rowWithInt = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum as Expression<DummyEngine, *>)(it)).thenReturn(3) }
-        val rowWithLong = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum as Expression<DummyEngine, *>)(it)).thenReturn(4L) }
-        val rowWithFloat = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum as Expression<DummyEngine, *>)(it)).thenReturn(2.18F) }
-        val rowWithDouble = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum as Expression<DummyEngine, *>)(it)).thenReturn(3.14) }
+        val expressionToSum = mock<Expression<DummyEngine, Double>>()
+        val rowWithByte = mock<DataRow>()
+        val rowWithShort = mock<DataRow>()
+        val rowWithInt = mock<DataRow>()
+        val rowWithLong = mock<DataRow>()
+        val rowWithFloat = mock<DataRow>()
+        val rowWithDouble = mock<DataRow>()
+        whenever(subexpressionCallbacks.simulateExpression(expressionToSum as Expression<DummyEngine, Number>))
+            .thenReturn { row -> when (row) {
+                rowWithByte -> 1.toByte()
+                rowWithShort -> 2.toShort()
+                rowWithInt -> 3
+                rowWithLong -> 4L
+                rowWithFloat -> 2.18F
+                rowWithDouble -> 3.14
+                else -> error("")
+            } }
 
         val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             SumAsDoubleSimulator<DummyEngine>().simulateAggregation(Sum(expressionToSum))
@@ -90,16 +104,16 @@ class SumSimulatorTest {
 
     @Test
     fun `SumAsDoubleSimulator ignores NULL values`() {
-        val expressionToSum = mock<Expression<DummyEngine, Double?>>().also {
-            whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn(mock())
-        }
-        val row = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum)(it)).thenReturn(1.0) }
-        val rowWithNull = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum)(it)).thenReturn(null) }
+        val expressionToSum = mock<Expression<DummyEngine, Double?>>()
+        val rowWithValue = mock<DataRow>()
+        val rowWithNull = mock<DataRow>()
+        whenever(subexpressionCallbacks.simulateExpression(expressionToSum))
+            .thenReturn { row -> if (row == rowWithValue) 1.0 else null }
 
         val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             SumAsDoubleSimulator<DummyEngine>().simulateAggregation(Sum(expressionToSum))
         }
-        val result = simulation(listOf(row, rowWithNull))
+        val result = simulation(listOf(rowWithValue, rowWithNull))
 
         result shouldBe 1.0
     }
@@ -115,11 +129,11 @@ class SumSimulatorTest {
 
     @Test
     fun `SumAsBigDecimalSimulator sums BigDecimal values`() {
-        val expressionToSum = mock<Expression<DummyEngine, BigDecimal>>().also {
-            whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn(mock())
-        }
-        val row1 = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum)(it)).thenReturn(BigDecimal.ONE) }
-        val row2 = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum)(it)).thenReturn(BigDecimal.TWO) }
+        val expressionToSum = mock<Expression<DummyEngine, BigDecimal>>()
+        val row1 = mock<DataRow>()
+        val row2 = mock<DataRow>()
+        whenever(subexpressionCallbacks.simulateExpression(expressionToSum))
+            .thenReturn { row -> if (row == row1) BigDecimal.ONE else if (row == row2) BigDecimal.TWO else error("unexpected row") }
 
         val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             SumAsBigDecimalSimulator<DummyEngine>().simulateAggregation(Sum(expressionToSum))
@@ -131,16 +145,16 @@ class SumSimulatorTest {
 
     @Test
     fun `SumAsBigDecimalSimulator ignores NULL values`() {
-        val expressionToSum = mock<Expression<DummyEngine, BigDecimal?>>().also {
-            whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn(mock())
-        }
-        val row = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum)(it)).thenReturn(BigDecimal.ONE) }
-        val rowWithNull = mock<DataRow>().also { whenever(subexpressionCallbacks.simulateExpression(expressionToSum)(it)).thenReturn(null) }
+        val expressionToSum = mock<Expression<DummyEngine, BigDecimal?>>()
+        val rowWithValue = mock<DataRow>()
+        val rowWithNull = mock<DataRow>()
+        whenever(subexpressionCallbacks.simulateExpression(expressionToSum))
+            .thenReturn { row -> if (row == rowWithValue) BigDecimal.ONE else null }
 
         val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             SumAsBigDecimalSimulator<DummyEngine>().simulateAggregation(Sum(expressionToSum))
         }
-        val result = simulation(listOf(row, rowWithNull))
+        val result = simulation(listOf(rowWithValue, rowWithNull))
 
         result shouldBe BigDecimal.ONE
     }

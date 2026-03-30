@@ -210,24 +210,21 @@ class SelectDSLTest {
     @Test
     fun `as() with KProperty returns Projection of Expression named by property`() {
         val expression = mock<Expression<TestableDummyEngine, Any>>()
-        val property = mock<KProperty<Any>> {
-            whenever(it.name).thenReturn("column")
-            whenever(it.returnType).thenReturn(typeOf<Any>())
-        }
+        data class Something(val column: Any)
 
-        val projection = expression `as` property
+        val projection = expression `as` Something::column
 
         projection.value shouldBe expression
-        projection.alias shouldBe property.name
+        projection.alias shouldBe Something::column.name
     }
 
     @Test
     fun `as() with KProperty rejects nullable Expression to be assigned to non-nullable property`() {
         val nullableExpression = mock<Expression<TestableDummyEngine, Any?>>()
-        val nonNullableProperty = mock<KProperty<Any>> { whenever(it.returnType).thenReturn(typeOf<Any>()) }
+        data class Something(val column: Any)
 
         shouldThrow<IllegalArgumentException> {
-            nullableExpression `as` nonNullableProperty
+            nullableExpression `as` Something::column
         }
     }
 }

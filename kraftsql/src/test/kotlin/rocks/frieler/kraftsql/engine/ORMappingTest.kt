@@ -7,8 +7,6 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.should
 import io.kotest.matchers.types.beInstanceOf
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.Column
 import rocks.frieler.kraftsql.objects.DataRow
@@ -16,8 +14,10 @@ import rocks.frieler.kraftsql.objects.DataRow
 class ORMappingTest {
     @Test
     fun `getSchemaFor rejects non data-class`() {
+        class NonDataClass
+
         shouldThrow<IllegalStateException> {
-            TestableDummyEngine.orm.getSchemaFor(mock { whenever(it.isData).thenReturn(false) })
+            TestableDummyEngine.orm.getSchemaFor(NonDataClass::class)
         }
     }
 

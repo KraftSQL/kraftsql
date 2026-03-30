@@ -12,6 +12,10 @@ updates:
       kotest:
         patterns:
           - io.kotest:kotest-*
+      mockito:
+        patterns:
+          - org.mockito:*
+          - org.mockito.kotlin:*
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
