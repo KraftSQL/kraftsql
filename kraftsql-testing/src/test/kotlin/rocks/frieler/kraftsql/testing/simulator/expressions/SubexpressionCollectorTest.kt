@@ -21,6 +21,7 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.Max
+import rocks.frieler.kraftsql.expressions.Min
 import rocks.frieler.kraftsql.expressions.Not
 import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
@@ -212,6 +213,15 @@ class SubexpressionCollectorTest {
         val subexpressions = subexpressionCollector.getSubexpressions(count)
 
         subexpressions.shouldBeEmpty()
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect expression of Min`() {
+        val max = Min(mock<Expression<DummyEngine, Comparable<Comparable<*>>?>>())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(max)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(max.expression)
     }
 
     @Test

@@ -16,6 +16,7 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.Max
+import rocks.frieler.kraftsql.expressions.Min
 import rocks.frieler.kraftsql.expressions.Not
 import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
@@ -68,6 +69,7 @@ open class GenericSubexpressionCollector<E : Engine<E>> : SubexpressionCollector
             is ArrayConcatenation<E, *> -> expression.arguments.toList()
             is Row<E, *> -> (expression.values ?: emptyMap()).values.toList()
             is Count<E> -> listOfNotNull(expression.expression)
+            is Min<E, *> -> listOf(expression.expression)
             is Max<E, *> -> listOf(expression.expression)
             is Sum<E, *> -> listOf(expression.expression)
             else -> throw NotImplementedError("Subexpressions not implemented for ${expression::class.qualifiedName}")
