@@ -25,6 +25,7 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.Max
+import rocks.frieler.kraftsql.expressions.Min
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
@@ -272,6 +273,16 @@ class GenericExpressionEvaluatorTest {
         val result = simulation.invoke(listOf(DataRow()))
 
         result shouldBe 1
+    }
+
+    @Test
+    fun `GenericExpressionEvaluator can simulate a Min aggregation`() {
+        val maxExpression = Min(Column<DummyEngine, Long>("value"))
+
+        val simulation = expressionEvaluator.simulateAggregation(maxExpression, listOf(Constant(1)))
+        val result = simulation.invoke(listOf(DataRow("value" to 42L)))
+
+        result shouldBe 42L
     }
 
     @Test

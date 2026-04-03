@@ -51,6 +51,7 @@ open class GenericExpressionEvaluator<E : Engine<E>> {
         registerExpressionSimulator(ArrayLengthSimulator())
         registerExpressionSimulator(RowSimulator())
         registerExpressionSimulator(CountSimulator())
+        registerExpressionSimulator(MinSimulator<E, Comparable<Comparable<*>>>())
         registerExpressionSimulator(MaxSimulator<E, Comparable<Comparable<*>>>())
         registerExpressionSimulator(SumAsLongSimulator())
         registerExpressionSimulator(SumAsDoubleSimulator())
