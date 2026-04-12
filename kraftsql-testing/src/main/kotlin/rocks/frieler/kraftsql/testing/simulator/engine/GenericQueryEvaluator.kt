@@ -10,7 +10,10 @@ import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.engine.Engine
+import rocks.frieler.kraftsql.expressions.Aggregation
 import rocks.frieler.kraftsql.expressions.Column
+import rocks.frieler.kraftsql.expressions.Constant
+import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
@@ -74,10 +77,16 @@ open class GenericQueryEvaluator<E : Engine<E>>(
                 DataRow(projections.map { (name, expression) -> name to expression.invoke(rowGroup) })
             }
         } else if (select.columns != null) {
-            val projections = select.columns!!
-                .associate { (it.alias ?: it.value.defaultColumnName()) to expressionEvaluator.simulateExpression(it.value) }
-            data.items.map { row ->
-                DataRow(projections.map { (name, expression) -> name to expression.invoke(row) })
+            if (select.columns!!.all { it.value.isAggregating(true) } && select.columns!!.any { it.value.isAggregating(false) }) {
+                val projections = select.columns!!
+                    .associate { (it.alias ?: it.value.defaultColumnName()) to expressionEvaluator.simulateAggregation(it.value, emptyList()) }
+                listOf(DataRow(projections.map { (name, expression) -> name to expression.invoke(data.items.toList()) }))
+            } else {
+                val projections = select.columns!!
+                    .associate { (it.alias ?: it.value.defaultColumnName()) to expressionEvaluator.simulateExpression(it.value) }
+                data.items.map { row ->
+                    DataRow(projections.map { (name, expression) -> name to expression.invoke(row) })
+                }
             }
         } else {
             data.items.toList()
@@ -203,6 +212,12 @@ open class GenericQueryEvaluator<E : Engine<E>>(
             }
             else -> false
         }
+    }
+
+    private fun Expression<E, *>.isAggregating(includeConstants: Boolean = false) : Boolean = when (this) {
+        is Constant -> includeConstants
+        is Aggregation -> true
+        else -> subexpressionCollector.getSubexpressions(this).run { any { it.isAggregating(false) } && all { it.isAggregating(true) } }
     }
 
     val expressionEvaluatorForChecking = this.expressionEvaluator

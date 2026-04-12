@@ -21,6 +21,7 @@ import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Expression
+import rocks.frieler.kraftsql.expressions.Min
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
@@ -659,6 +660,18 @@ class GenericQueryEvaluatorTest {
             DataRow("entity" to "y", "value" to 3),
             DataRow("entity" to "y", "value" to 4),
         )
+    }
+
+    @Test
+    fun `GenericQueryEvaluator can simulate SELECT of a single row by aggregating over all data without grouping`() {
+        val result = context(state) { queryEvaluator.selectRows(
+            Select<DummyEngine, DataRow>(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow("value" to 1), DataRow("value" to 2))),
+                columns = listOf(Projection(Min(Column<DummyEngine, Int>("value"))))
+            )
+        )}
+
+        result shouldHaveSize 1
     }
 
     @Test
