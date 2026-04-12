@@ -46,7 +46,7 @@ open class GenericQueryEvaluator<E : Engine<E>>(
      * @return the selected [DataRow]s
      */
     context(activeState: EngineState<E>)
-    fun selectRows(select: Select<E, *>, correlatedData: DataRow? = null) : List<DataRow> {
+    open fun selectRows(select: Select<E, *>, correlatedData: DataRow? = null) : List<DataRow> {
         var data = resolveQuerySource(select.source)
 
         if (correlatedData != null) {
