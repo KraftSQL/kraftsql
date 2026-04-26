@@ -130,41 +130,41 @@ open class GenericQueryEvaluator<E : Engine<E>>(
     context(activeState: EngineState<E>)
     private fun handleJoin(leftSide: ConstantData<E, DataRow>, join: Join<E>): ConstantData<E, DataRow> {
         val rows = when (join) {
+            is InnerJoin<E> if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) -> {
+                val joinCondition = expressionEvaluator.simulateExpression(join.condition)
+                leftSide.items.flatMap { row ->
+                    val dataToJoin = resolveQuerySource(join.data, row)
+                    dataToJoin.items
+                        .map { rowToJoin -> row + rowToJoin }
+                        .filter { row -> joinCondition.invoke(row) ?: false }
+                }
+            }
             is InnerJoin<E> -> {
                 val joinCondition = expressionEvaluator.simulateExpression(join.condition)
-                if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
-                    leftSide.items.flatMap { row ->
-                        val dataToJoin = resolveQuerySource(join.data, row)
-                        dataToJoin.items
-                            .map { rowToJoin -> row + rowToJoin }
-                            .filter { row -> joinCondition.invoke(row) ?: false }
-                    }
-                } else {
-                    val dataToJoin = resolveQuerySource(join.data)
-                    leftSide.items.flatMap { row ->
-                        dataToJoin.items
-                            .map { rowToJoin -> row + rowToJoin }
-                            .filter { row -> joinCondition.invoke(row) ?: false }
-                    }
+                val dataToJoin = resolveQuerySource(join.data)
+                leftSide.items.flatMap { row ->
+                    dataToJoin.items
+                        .map { rowToJoin -> row + rowToJoin }
+                        .filter { row -> joinCondition.invoke(row) ?: false }
+                }
+            }
+            is LeftJoin<E> if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) -> {
+                val joinCondition = expressionEvaluator.simulateExpression(join.condition)
+                leftSide.items.flatMap { row ->
+                    resolveQuerySource(join.data, row).items
+                        .map { rowToJoin -> row + rowToJoin }
+                        .filter { row -> joinCondition.invoke(row) ?: false }
+                        .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
                 }
             }
             is LeftJoin<E> -> {
                 val joinCondition = expressionEvaluator.simulateExpression(join.condition)
-                if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
-                    leftSide.items.flatMap { row ->
-                        resolveQuerySource(join.data, row).items
-                            .map { rowToJoin -> row + rowToJoin }
-                            .filter { row -> joinCondition.invoke(row) ?: false }
-                            .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
-                    }
-                } else {
-                    val dataToJoin = resolveQuerySource(join.data)
-                    leftSide.items.flatMap { row ->
-                        dataToJoin.items
-                            .map { rowToJoin -> row + rowToJoin }
-                            .filter { row -> joinCondition.invoke(row) ?: false }
-                            .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
-                    }
+                val dataToJoin = resolveQuerySource(join.data)
+                leftSide.items.flatMap { row ->
+                    dataToJoin.items
+                        .map { rowToJoin -> row + rowToJoin }
+                        .filter { row -> joinCondition.invoke(row) ?: false }
+                        .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
                 }
             }
             is RightJoin<E> -> {
@@ -177,13 +177,12 @@ open class GenericQueryEvaluator<E : Engine<E>>(
                         .ifEmpty { listOf(DataRow(leftSide.columnNames.map { it to null }) + rowToJoin) }
                 }
             }
+            is CrossJoin<E> if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) -> {
+                leftSide.items.flatMap { row -> resolveQuerySource(join.data, row).items.map { row + it } }
+            }
             is CrossJoin<E> -> {
-                if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) {
-                    leftSide.items.flatMap { row -> resolveQuerySource(join.data, row).items.map { row + it } }
-                } else {
-                    val dataToJoin = resolveQuerySource(join.data)
-                    leftSide.items.flatMap { row -> dataToJoin.items.map { row + it } }
-                }
+                val dataToJoin = resolveQuerySource(join.data)
+                leftSide.items.flatMap { row -> dataToJoin.items.map { row + it } }
             }
             else -> throw NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")
         }
