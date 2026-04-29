@@ -37,39 +37,28 @@ class GenericQueryEvaluatorTest {
 
     @Test
     fun `GenericQueryEvaluator can simulate SELECT from primitive ConstantData`() {
-        val result = context(state) {
-            queryEvaluator.selectRows(
-                Select<DummyEngine, DataRow>(source = QuerySource(ConstantData(DummyEngine.orm, 1, 2, 3)))
-            )
-        }
+        val result = Select<DummyEngine, DataRow>(source = QuerySource(ConstantData(DummyEngine.orm, 1, 2, 3)))
+            .let { context(state) { queryEvaluator.selectRows(it) } }
 
         result shouldContainExactlyInAnyOrder listOf(DataRow("" to 1), DataRow("" to 2), DataRow("" to 3))
     }
 
     @Test
     fun `GenericQueryEvaluator can simulate SELECT from source with alias`() {
-        val result = context(state) {
-            queryEvaluator.selectRows(
-                Select<DummyEngine, DataRow>(
-                    source = QuerySource(ConstantData(DummyEngine.orm, DataRow("answer" to 42L)), "data"),
-                    columns = listOf(Projection(Column<DummyEngine, Long>("data.answer"))),
-                )
-            )
-        }
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(ConstantData(DummyEngine.orm, DataRow("answer" to 42L)), "data"),
+            columns = listOf(Projection(Column<DummyEngine, Long>("data.answer"))),
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result.single()["data.answer"] shouldBe 42L
     }
 
     @Test
     fun `Empty column names of a QuerySource are just named by the alias`() {
-        val result = context(state) {
-            queryEvaluator.selectRows(
-                Select<DummyEngine, DataRow>(
-                    source = QuerySource(ConstantData(DummyEngine.orm, DataRow("" to 42L)), "answer"),
-                    columns = listOf(Projection(Column<DummyEngine, Long>("answer"))),
-                )
-            )
-        }
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(ConstantData(DummyEngine.orm, DataRow("" to 42L)), "answer"),
+            columns = listOf(Projection(Column<DummyEngine, Long>("answer"))),
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result.single()["answer"] shouldBe 42L
     }
@@ -84,11 +73,8 @@ class GenericQueryEvaluatorTest {
         )
         whenever(state.getTable(table.qualifiedName)).thenReturn(table to mutableListOf(DataRow("c" to "foo")))
 
-        val result = context(state) {
-            queryEvaluator.selectRows(
-                Select<DummyEngine, DataRow>(source = QuerySource(table))
-            )
-        }
+        val result = Select<DummyEngine, DataRow>(source = QuerySource(table))
+            .let { context(state) { queryEvaluator.selectRows(it) } }
 
         result shouldContainExactlyInAnyOrder listOf(DataRow("c" to "foo"))
     }
@@ -103,46 +89,26 @@ class GenericQueryEvaluatorTest {
         )
         whenever(state.getTable(table.qualifiedName)).thenReturn(table to emptyList<DataRow>().toMutableList())
 
-        val result = context(state) {
-            queryEvaluator.selectRows(
-                Select<DummyEngine, DataRow>(source = QuerySource(table))
-            )
-        }
+        val result = Select<DummyEngine, DataRow>(source = QuerySource(table))
+            .let { context(state) { queryEvaluator.selectRows(it) } }
 
         result shouldBe emptyList()
     }
 
     @Test
     fun `GenericQueryEvaluator can simulate SELECT from sub-query`() {
-        val result = context(state) {
-            queryEvaluator.selectRows(
-                Select<DummyEngine, DataRow>(
-                    source = QuerySource(
-                        Select(
-                            source = QuerySource(
-                                ConstantData(
-                                    DummyEngine.orm,
-                                    DataRow("c" to "foo")
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-        }
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(Select(source = QuerySource(ConstantData(DummyEngine.orm, DataRow("c" to "foo")))))
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result shouldContainExactlyInAnyOrder listOf(DataRow("c" to "foo"))
     }
 
     @Test
     fun `GenericQueryEvaluator can simulate SELECT from empty sub-query`() {
-        val result = context(state) {
-            queryEvaluator.selectRows(
-                Select<DummyEngine, DataRow>(
-                    source = QuerySource(Select(source = QuerySource(ConstantData.empty(DummyEngine.orm, listOf("c")))))
-                )
-            )
-        }
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(Select(source = QuerySource(ConstantData.empty(DummyEngine.orm, listOf("c")))))
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result shouldBe emptyList()
     }
@@ -164,9 +130,8 @@ class GenericQueryEvaluatorTest {
             }
         )
 
-        val result = context(state) {
-            queryEvaluatorWithDataExpressionSimulator.selectRows(Select<DummyEngine, DataRow>(QuerySource(DataExpressionData(dataExpression))))
-        }
+        val result = Select<DummyEngine, DataRow>(QuerySource(DataExpressionData(dataExpression)))
+            .let { context(state) { queryEvaluatorWithDataExpressionSimulator.selectRows(it) } }
 
         result shouldContainExactlyInAnyOrder listOf(DataRow("string" to "foo"), DataRow("string" to "bar"), DataRow("string" to "baz"))
     }
@@ -188,9 +153,8 @@ class GenericQueryEvaluatorTest {
             }
         )
 
-        val result = context(state) {
-            queryEvaluatorWithDataExpressionSimulator.selectRows(Select<DummyEngine, DataRow>(QuerySource(DataExpressionData(dataExpression), "string")))
-        }
+        val result = Select<DummyEngine, DataRow>(QuerySource(DataExpressionData(dataExpression), "string"))
+            .let { context(state) { queryEvaluatorWithDataExpressionSimulator.selectRows(it) } }
 
         result shouldContainExactlyInAnyOrder listOf(DataRow("string" to "foo"), DataRow("string" to "bar"), DataRow("string" to "baz"))
     }
@@ -474,27 +438,19 @@ class GenericQueryEvaluatorTest {
 
     @Test
     fun `GenericQueryEvaluator can simulate SELECT of certain columns of empty data`() {
-        val result = context(state) {
-            queryEvaluator.selectRows(
-                Select<DummyEngine, DataRow>(
-                    source = QuerySource(ConstantData.empty(DummyEngine.orm, listOf("c1", "c2"))),
-                    columns = listOf(Projection(Column<DummyEngine, String>("c1")))
-                )
-            )
-        }
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(ConstantData.empty(DummyEngine.orm, listOf("c1", "c2"))),
+            columns = listOf(Projection(Column<DummyEngine, String>("c1")))
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result shouldBe emptyList()
     }
 
     @Test
     fun `GenericQueryEvaluator can simulate SELECT of all columns`() {
-        val result = context(state) {
-            queryEvaluator.selectRows(
-                Select<DummyEngine, DataRow>(
-                    source = QuerySource(ConstantData(DummyEngine.orm, DataRow("integer" to 42, "string" to "foo"))),
-                )
-            )
-        }
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(ConstantData(DummyEngine.orm, DataRow("integer" to 42, "string" to "foo"))),
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result.single()["integer"] shouldBe 42
         result.single()["string"] shouldBe "foo"
@@ -502,19 +458,11 @@ class GenericQueryEvaluatorTest {
 
     @Test
     fun `GenericQueryEvaluator selects columns from source and joins when selecting all columns`() {
-        val result = context(state) {
-            queryEvaluator.selectRows(
-                Select<DummyEngine, DataRow>(
-                    source = QuerySource(ConstantData(DummyEngine.orm, DataRow("left" to "foo"))),
-                    joins = listOf(
-                        InnerJoin(
-                            QuerySource(ConstantData(DummyEngine.orm, DataRow("right" to "bar"))),
-                            Constant(true)
-                        ),
-                    )
-                )
-            )
-        }
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(ConstantData(DummyEngine.orm, DataRow("left" to "foo"))),
+            joins = listOf(
+                InnerJoin(QuerySource(ConstantData(DummyEngine.orm, DataRow("right" to "bar"))), Constant(true)))
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result.single().columnNames shouldContainExactly listOf("left", "right")
     }
@@ -528,14 +476,10 @@ class GenericQueryEvaluatorTest {
             DataRow("integer" to 43, "string" to "baz"),
         )
 
-        val result = context(state) {
-            queryEvaluator.selectRows(
-                Select<DummyEngine, DataRow>(
-                    source = QuerySource(dummyData),
-                    grouping = listOf(dummyData["integer"]),
-                )
-            )
-        }
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(dummyData),
+            grouping = listOf(dummyData["integer"]),
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result shouldHaveSize 2
         result.forEach { row ->
@@ -547,24 +491,20 @@ class GenericQueryEvaluatorTest {
 
     @Test
     fun `GenericQueryEvaluator can simulate SELECT of a single row by aggregating over all data without grouping`() {
-        val result = context(state) { queryEvaluator.selectRows(
-            Select<DummyEngine, DataRow>(
-                source = QuerySource(ConstantData(DummyEngine.orm, DataRow("value" to 1), DataRow("value" to 2))),
-                columns = listOf(Projection(Min(Column<DummyEngine, Int>("value"))))
-            )
-        )}
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(ConstantData(DummyEngine.orm, DataRow("value" to 1), DataRow("value" to 2))),
+            columns = listOf(Projection(Min(Column<DummyEngine, Int>("value"))))
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result shouldHaveSize 1
     }
 
     @Test
     fun `GenericQueryEvaluator can simulate SELECT with filter to empty result`() {
-        val result = context(state) { queryEvaluator.selectRows(
-            Select<DummyEngine, DataRow>(
-                source = QuerySource(ConstantData(DummyEngine.orm, DataRow("id" to 42))),
-                filter = Constant(false),
-            )
-        )}
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(ConstantData(DummyEngine.orm, DataRow("id" to 42))),
+            filter = Constant(false),
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result shouldBe emptyList()
     }
