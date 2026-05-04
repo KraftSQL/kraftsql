@@ -31,7 +31,7 @@ fun Data<*>.unnest(arrayColumn: String, elementColumn: String) : Data<DataRow> {
             Select<DataRow> { from(SystemRange(Constant(1L), Constant(maxElements.toLong()))) }) {
             this["X"] lessOrEqual ArrayLength(Column(arrayColumn))
         }
-        for (column in this@unnest.columnNames) {
+        for (column in this@unnest.selectableColumnNames) {
             column(Column<Any?>(column))
         }
         column(Column<Array<String>>(arrayColumn)[Cast(indizes["X"].knownNotNull(), Types.INTEGER)] `as` elementColumn)

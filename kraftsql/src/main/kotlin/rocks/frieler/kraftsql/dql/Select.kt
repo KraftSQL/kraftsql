@@ -3,6 +3,7 @@ package rocks.frieler.kraftsql.dql
 import rocks.frieler.kraftsql.commands.Command
 import rocks.frieler.kraftsql.engine.Connection
 import rocks.frieler.kraftsql.engine.Engine
+import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.Data
 import java.util.Objects
@@ -22,15 +23,15 @@ open class Select<E : Engine<E>, T : Any>(
 ) : Command<E, List<T>>, Data<E, T> {
 
     /**
-     * The names of the columns this [Select] returns.
+     * The names of the known, i.e., named columns this [Select] returns.
      */
     @Suppress("IfThenToElvis")
-    override val columnNames: List<String>
+    override val selectableColumnNames: List<String>
         get() =
             if (columns != null) {
-                columns.map { it.alias ?: it.value.defaultColumnName() }
+                columns.mapNotNull { it.alias ?: (it.value as? Column)?.qualifiedName }
             } else {
-                source.columnNames + joins.flatMap { it.data.columnNames }
+                source.selectableColumnNames + joins.flatMap { it.data.selectableColumnNames }
             }
 
     override fun sql() = """

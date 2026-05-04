@@ -105,6 +105,13 @@ class ConstantDataTest {
     }
 
     @Test
+    fun `selectableColumnNames offers all columns`() {
+        val data = ConstantData.empty<TestableDummyEngine, DataRow>(orm, listOf("c1", "c2"))
+
+        data.selectableColumnNames shouldBe data.columnNames
+    }
+
+    @Test
     fun `SQL selects empty data of item schema`() {
         val emptyData = ConstantData.empty<TestableDummyEngine, DataRow>(orm, listOf("c1", "c2"))
 

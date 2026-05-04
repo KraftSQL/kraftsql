@@ -29,6 +29,7 @@ import rocks.frieler.kraftsql.expressions.Min
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.objects.HasColumns
 import rocks.frieler.kraftsql.objects.Table
 import rocks.frieler.kraftsql.testing.simulator.expressions.ExpressionSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.GenericExpressionEvaluator
@@ -130,8 +131,9 @@ class GenericQueryEvaluatorTest {
     @Test
     fun `GenericQueryEvaluator can fetch Data by evaluating an expression`() {
         val data = ConstantData(DummyEngine.orm, DataRow("string" to "foo"), DataRow("string" to "bar"), DataRow("string" to "baz"))
-        val dataExpression = mock<Expression<DummyEngine, Data<DummyEngine, DataRow>>> {
+        val dataExpression = mock<Expression<DummyEngine, Data<DummyEngine, DataRow>>>(extraInterfaces = arrayOf(HasColumns::class)) {
             whenever(it.defaultColumnName()).thenReturn("string")
+            whenever((it as HasColumns<*, *>).selectableColumnNames).thenReturn(listOf("string"))
         }
         val dataExpressionSimulator = mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
             whenever(it.expression).thenReturn(dataExpression::class)
@@ -153,8 +155,9 @@ class GenericQueryEvaluatorTest {
     @Test
     fun `GenericQueryEvaluator can fetch Data by evaluating an expression that resolves to Data of primitives`() {
         val data = ConstantData(DummyEngine.orm, "foo", "bar", "baz")
-        val dataExpression = mock<Expression<DummyEngine, Data<DummyEngine, DataRow>>> {
+        val dataExpression = mock<Expression<DummyEngine, Data<DummyEngine, DataRow>>>(extraInterfaces = arrayOf(HasColumns::class)) {
             whenever(it.defaultColumnName()).thenReturn("")
+            whenever((it as HasColumns<*, *>).selectableColumnNames).thenReturn(listOf(""))
         }
         val dataExpressionSimulator = mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
             whenever(it.expression).thenReturn(dataExpression::class)
@@ -255,6 +258,22 @@ class GenericQueryEvaluatorTest {
             DataRow("left.key" to 41, "left.entity" to "x", "right.key" to null, "right.attribute" to null),
             DataRow("left.key" to 42, "left.entity" to "y", "right.key" to 42, "right.attribute" to "foo"),
         )
+    }
+
+    @Test
+    fun `GenericQueryEvaluator can infer joined empty Select's columns`() {
+        val leftSide = ConstantData(DummyEngine.orm, DataRow("foo" to "bar"))
+        val rightSide = Select<DummyEngine, DataRow>(
+            source = QuerySource(ConstantData.empty(DummyEngine.orm, emptyList())),
+            columns = listOf(Projection(Constant(42))),
+        )
+
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(leftSide),
+            joins = listOf(LeftJoin(QuerySource(rightSide), Constant(true))),
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
+
+        result.single().columnNames shouldContainExactly listOf("foo", "42")
     }
 
     @Test

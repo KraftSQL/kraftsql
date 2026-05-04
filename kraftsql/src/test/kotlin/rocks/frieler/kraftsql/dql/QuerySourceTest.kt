@@ -47,30 +47,30 @@ class QuerySourceTest {
 
 
     @Test
-    fun `column names are forwarded from underlying data`() {
-        whenever(data.columnNames).thenReturn(listOf("c1", "c2"))
+    fun `selectable column names are forwarded from underlying data`() {
+        whenever(data.selectableColumnNames).thenReturn(listOf("c1", "c2"))
 
-        QuerySource(data).columnNames shouldBe data.columnNames
+        QuerySource(data).selectableColumnNames shouldBe data.selectableColumnNames
     }
 
     @Test
-    fun `column names are prefixed with the alias`() {
-        whenever(data.columnNames).thenReturn(listOf("c1"))
+    fun `selectable column names are prefixed with the alias`() {
+        whenever(data.selectableColumnNames).thenReturn(listOf("c1"))
 
-        QuerySource(data, Alias("a")).columnNames shouldBe listOf("a.c1")
+        QuerySource(data, Alias("a")).selectableColumnNames shouldBe listOf("a.c1")
     }
 
     @Test
     fun `empty column name is replaced by alias`() {
-        whenever(data.columnNames).thenReturn(listOf(""))
+        whenever(data.selectableColumnNames).thenReturn(listOf(""))
 
-        QuerySource(data, Alias("a")).columnNames shouldBe listOf("a")
+        QuerySource(data, Alias("a")).selectableColumnNames shouldBe listOf("a")
     }
 
     @Test
     fun `get operator provides column expression by name from underlying data`() {
         val column = mock<Column<TestableDummyEngine, Any?>> { whenever(it.name).thenReturn("c1") }
-        whenever(data.columnNames).thenReturn(listOf("c1"))
+        whenever(data.selectableColumnNames).thenReturn(listOf("c1"))
         whenever(data["c1"]).thenReturn(column)
 
         QuerySource(data)["c1"] shouldBe column
@@ -81,7 +81,7 @@ class QuerySourceTest {
         val column = mock<Column<TestableDummyEngine, Any?>> {
             whenever(it.name).thenReturn("c1")
         }
-        whenever(data.columnNames).thenReturn(listOf("c1"))
+        whenever(data.selectableColumnNames).thenReturn(listOf("c1"))
         whenever(data["c1"]).thenReturn(column)
         whenever(column.withQualifier("a")).thenReturn(Column(listOf("a"), "c1"))
 
@@ -96,7 +96,7 @@ class QuerySourceTest {
         val column = mock<Column<TestableDummyEngine, Any?>> {
             whenever(it.name).thenReturn("c1")
         }
-        whenever(data.columnNames).thenReturn(listOf("c1"))
+        whenever(data.selectableColumnNames).thenReturn(listOf("c1"))
         whenever(data["c1"]).thenReturn(column)
         whenever(column.withQualifier("a")).thenReturn(Column(listOf("a"), "c1"))
 
@@ -108,10 +108,24 @@ class QuerySourceTest {
 
     @Test
     fun `get operator provides only column like alias when underlying data has only one column with empty name`() {
-        whenever(data.columnNames).thenReturn(listOf(""))
+        whenever(data.selectableColumnNames).thenReturn(listOf(""))
 
         val column = QuerySource(data, Alias("a"))["a"]
 
         column shouldBe Column("a")
+    }
+}
+
+class QuerySourceAliasTest {
+    private val alias = Alias("a")
+
+    @Test
+    fun `qualify() prefixes column name with alias`() {
+        alias.qualify("c") shouldBe "a.c"
+    }
+
+    @Test
+    fun `qualify() names unnamed column by alias`() {
+        alias.qualify("") shouldBe "a"
     }
 }

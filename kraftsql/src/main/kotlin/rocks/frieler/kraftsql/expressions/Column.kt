@@ -31,11 +31,11 @@ open class Column<E: Engine<E>, T>(
      * In case this [Column] has a structured type with sub-columns, this should provide the names of those.
      * Unfortunately, the [Column] expression holds no information about the referenced column and its type. This
      * information is contextual, as it depends on the data this expression is evaluated against. Explore that data's
-     * schema, if you need this kind of information.
+     * schema if you need this kind of information.
      *
      * @throws NotImplementedError ALWAYS!
      */
-    override val columnNames: List<String>
+    override val selectableColumnNames: List<String>
         get() = throw NotImplementedError("Column names of possibly structured columns are not yet supported.")
 
     /**

@@ -15,12 +15,12 @@ import rocks.frieler.kraftsql.objects.HasColumns
  */
 class DataExpressionData<E : Engine<E>, T : Any>(val expression: Expression<E, Data<E, T>>) : Data<E, T> {
 
-    override val columnNames
+    override val selectableColumnNames: List<String>
         get() =
             if (expression is HasColumns<*, *>) {
-                expression.columnNames
+                expression.selectableColumnNames
             } else {
-                listOf(expression.defaultColumnName())
+                emptyList()
             }
 
     override fun sql() = expression.sql()

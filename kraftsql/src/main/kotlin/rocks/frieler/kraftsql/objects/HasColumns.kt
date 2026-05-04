@@ -14,14 +14,16 @@ import kotlin.reflect.KProperty1
 interface HasColumns<E : Engine<E>, T> {
 
     /**
-     * The names of the available [rocks.frieler.kraftsql.objects.Column]s.
+     * The names of the selectable [rocks.frieler.kraftsql.objects.Column]s.
+     *
+     * There can be more columns at runtime without a name that would allow them to be referenced in SQL.
      */
-    val columnNames: List<String>
+    val selectableColumnNames: List<String>
 
     /**
      * Retrieves a [Column] expression for the named column.
      *
-     * The name must be in the available [columnNames].
+     * The name must be in the [selectableColumnNames].
      *
      * If the data object adds any qualifier, such as an alias, to the columns, this qualifier is added to the [Column]
      * expression, but optional in the given column name.
@@ -30,7 +32,7 @@ interface HasColumns<E : Engine<E>, T> {
      * @return a [Column] expression for the named column
      */
     operator fun get(column: String) : Column<E, Any?> {
-        require(column in columnNames) { "No column '$column'; did you mean one of $columnNames?" }
+        require(column in selectableColumnNames) { "No column '$column'; did you mean one of $selectableColumnNames?" }
         return Column(column)
     }
 

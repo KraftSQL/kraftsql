@@ -22,4 +22,9 @@ object H2QueryEvaluator : GenericQueryEvaluator<H2Engine>(
             is SystemRange -> (expressionEvaluator.simulateExpression(data.from)(DataRow())..expressionEvaluator.simulateExpression(data.to)(DataRow())).map { DataRow("X" to it) }
             else -> super.fetchRows(data, correlatedData)
         }
+
+    override fun inferColumns(data: Data<*>) = when (data) {
+        is SystemRange -> listOf("X")
+        else -> super.inferColumns(data)
+    }
 }

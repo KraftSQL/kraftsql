@@ -128,7 +128,19 @@ open class GenericQueryEvaluator<E : Engine<E>>(
     protected open fun fillColumnNames(columns: List<Pair<String?, Expression<E, *>>>): List<Pair<String, Expression<E, *>>> =
         columns.map { (it.first ?: it.second.defaultColumnName()) to it.second }
 
-    protected open fun inferColumns(data: Data<E, *>) = data.columnNames
+    protected open fun inferColumns(data: Data<E, *>) = when (data) {
+        is ConstantData<*, *> -> data.columnNames
+        is Table<E, *> -> data.columnNames
+        is Select<E, *> -> {
+            if (data.columns != null) {
+                fillColumnNames(data.columns!!.map { it.alias to it.value }).map { it.first }
+            } else {
+                inferColumns(data.source) + data.joins.flatMap { inferColumns(it.data) }
+            }
+        }
+        is DataExpressionData<*, *> -> data.selectableColumnNames
+        else -> throw NotImplementedError("Inferring columns for ${this::class.qualifiedName} is not implemented.")
+    }
 
     context(activeState: EngineState<E>)
     protected open fun fetchRows(data: Data<E, *>, correlatedData: DataRow?): List<DataRow> = when (data) {
@@ -247,12 +259,12 @@ open class GenericQueryEvaluator<E : Engine<E>>(
             is Select<E, *> -> {
                 (data.columns.orEmpty().map { it.value } + listOfNotNull(data.filter) + data.grouping)
                     .flatMap { subexpressionCollector.collectAllSubexpressions(it) }
-                    .any { it is Column<E, *> && it.qualifiedName in left.columnNames }
+                    .any { it is Column<E, *> && it.qualifiedName in left.selectableColumnNames }
             }
             is DataExpressionData<E, *> -> {
                 subexpressionCollector
                     .collectAllSubexpressions(data.expression)
-                    .any { it is Column<E, *> && it.qualifiedName in left.columnNames }
+                    .any { it is Column<E, *> && it.qualifiedName in left.selectableColumnNames }
             }
             else -> false
         }
