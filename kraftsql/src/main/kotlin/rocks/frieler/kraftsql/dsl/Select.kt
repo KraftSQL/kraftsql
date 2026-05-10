@@ -11,6 +11,7 @@ import rocks.frieler.kraftsql.dql.Join
 import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
+import rocks.frieler.kraftsql.dql.QuerySource.Companion.Alias
 import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.expressions.knownNotNull
@@ -178,7 +179,7 @@ open class SelectBuilder<E : Engine<E>, T : Any> {
  * @param alias the alias to assign to the [Data]
  * @return a [QuerySource] wrapping the [Data] with the specified alias
  */
-infix fun <E : Engine<E>, T : Any> Data<E, T>.`as`(alias: String) = QuerySource(this, alias)
+infix fun <E : Engine<E>, T : Any> Data<E, T>.`as`(alias: String) = QuerySource(this, Alias(alias))
 
 /**
  * Assigns an alias to the specified [Data]-valued [Expression] instance wrapping it into a [QuerySource].

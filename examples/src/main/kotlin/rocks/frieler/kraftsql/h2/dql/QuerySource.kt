@@ -1,11 +1,12 @@
 package rocks.frieler.kraftsql.h2.dql
 
 import rocks.frieler.kraftsql.dql.QuerySource
+import rocks.frieler.kraftsql.dql.QuerySource.Companion.Alias
 import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.h2.expressions.Column
 import rocks.frieler.kraftsql.h2.objects.Data
 
-class QuerySource<T: Any>(data: Data<T>, alias: String? = null) : QuerySource<H2Engine, T>(data, alias) {
+class QuerySource<T: Any>(data: Data<T>, alias: Alias? = null) : QuerySource<H2Engine, T>(data, alias) {
     override operator fun get(column: String) =
         super.get(column)
             .let { Column<Any?>(it.qualifiers, it.name) }

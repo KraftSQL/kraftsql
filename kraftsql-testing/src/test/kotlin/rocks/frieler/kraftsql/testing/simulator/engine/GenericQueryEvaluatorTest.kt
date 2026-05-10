@@ -15,6 +15,7 @@ import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
+import rocks.frieler.kraftsql.dql.QuerySource.Companion.Alias
 import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.expressions.`=`
@@ -46,7 +47,7 @@ class GenericQueryEvaluatorTest {
     @Test
     fun `GenericQueryEvaluator can simulate SELECT from source with alias`() {
         val result = Select<DummyEngine, DataRow>(
-            source = QuerySource(ConstantData(DummyEngine.orm, DataRow("answer" to 42L)), "data"),
+            source = QuerySource(ConstantData(DummyEngine.orm, DataRow("answer" to 42L)), Alias("data")),
             columns = listOf(Projection(Column<DummyEngine, Long>("data.answer"))),
         ).let { context(state) { queryEvaluator.selectRows(it) } }
 
@@ -56,7 +57,7 @@ class GenericQueryEvaluatorTest {
     @Test
     fun `Empty column names of a QuerySource are just named by the alias`() {
         val result = Select<DummyEngine, DataRow>(
-            source = QuerySource(ConstantData(DummyEngine.orm, DataRow("" to 42L)), "answer"),
+            source = QuerySource(ConstantData(DummyEngine.orm, DataRow("" to 42L)), Alias("answer")),
             columns = listOf(Projection(Column<DummyEngine, Long>("answer"))),
         ).let { context(state) { queryEvaluator.selectRows(it) } }
 
@@ -153,7 +154,7 @@ class GenericQueryEvaluatorTest {
             }
         )
 
-        val result = Select<DummyEngine, DataRow>(QuerySource(DataExpressionData(dataExpression), "string"))
+        val result = Select<DummyEngine, DataRow>(QuerySource(DataExpressionData(dataExpression), Alias("string")))
             .let { context(state) { queryEvaluatorWithDataExpressionSimulator.selectRows(it) } }
 
         result shouldContainExactlyInAnyOrder listOf(DataRow("string" to "foo"), DataRow("string" to "bar"), DataRow("string" to "baz"))
@@ -171,10 +172,10 @@ class GenericQueryEvaluatorTest {
         )
 
         val result = Select<DummyEngine, DataRow>(
-            source = QuerySource(leftSide, "left"),
+            source = QuerySource(leftSide, Alias("left")),
             joins = listOf(
                 InnerJoin(
-                    QuerySource(rightSide, "right"),
+                    QuerySource(rightSide, Alias("right")),
                     Column<DummyEngine, Int>("left.key") `=` Column<DummyEngine, Int>("right.key")),
             )
         ).let { context(state) { queryEvaluator.selectRows(it) } }
@@ -229,10 +230,10 @@ class GenericQueryEvaluatorTest {
         )
 
         val result = Select<DummyEngine, DataRow>(
-            source = QuerySource(leftSide, "left"),
+            source = QuerySource(leftSide, Alias("left")),
             joins = listOf(
                 LeftJoin(
-                    QuerySource(rightSide, "right"),
+                    QuerySource(rightSide, Alias("right")),
                     Column<DummyEngine, Int>("left.key") `=` Column<DummyEngine, Int>("right.key")),
             )
         ).let { context(state) { queryEvaluator.selectRows(it) } }
@@ -289,10 +290,10 @@ class GenericQueryEvaluatorTest {
         )
 
         val result = Select<DummyEngine, DataRow>(
-            source = QuerySource(leftSide, "left"),
+            source = QuerySource(leftSide, Alias("left")),
             joins = listOf(
                 RightJoin(
-                    QuerySource(rightSide, "right"),
+                    QuerySource(rightSide, Alias("right")),
                     Column<DummyEngine, Int>("left.key") `=` Column<DummyEngine, Int>("right.key")),
             )
         ).let { context(state) { queryEvaluator.selectRows(it) } }
@@ -399,7 +400,7 @@ class GenericQueryEvaluatorTest {
         val result = Select<DummyEngine, DataRow>(
             source = QuerySource(leftSide),
             joins = listOf(
-                CrossJoin(QuerySource(rightSide, "value")),
+                CrossJoin(QuerySource(rightSide, Alias("value"))),
             ),
             columns = listOf(
                 Projection(Column<DummyEngine, String>("entity")),
@@ -425,10 +426,10 @@ class GenericQueryEvaluatorTest {
         )
 
         val result = Select<DummyEngine, DataRow>(
-            source = QuerySource(leftSide, "left"),
+            source = QuerySource(leftSide, Alias("left")),
             joins = listOf(
                 InnerJoin(
-                    QuerySource(rightSide, "right"),
+                    QuerySource(rightSide, Alias("right")),
                     Column<DummyEngine, Int>("left.key") `=` Column<DummyEngine, Int>("right.key")),
             )
         ).let { context(state) { queryEvaluator.selectRows(it) } }

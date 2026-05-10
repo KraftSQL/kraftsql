@@ -7,6 +7,7 @@ import rocks.frieler.kraftsql.dql.Join
 import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
+import rocks.frieler.kraftsql.dql.QuerySource.Companion.Alias
 import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.engine.Engine
@@ -105,7 +106,7 @@ open class GenericQueryEvaluator<E : Engine<E>>(
             ConstantData(orm, rows)
         } else {
             ConstantData(orm, rows.map { row ->
-                DataRow(row.entries.map { (field, value) -> "${source.alias}${if (field.isNotEmpty()) ".$field" else ""}" to value })
+                DataRow(row.entries.map { (field, value) -> source.alias!!.qualify(field) to value })
             })
         }
     }
