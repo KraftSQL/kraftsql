@@ -13,9 +13,9 @@ object H2QueryEvaluator : GenericQueryEvaluator<H2Engine>(
     expressionEvaluator = H2ExpressionEvaluator,
 ) {
     context(activeState : EngineState<H2Engine>)
-    override fun fetchData(data: Data<*>, correlatedData: DataRow?) =
+    override fun fetchRows(data: Data<*>, correlatedData: DataRow?) =
         when (data) {
             is SystemRange -> (expressionEvaluator.simulateExpression(data.from)(DataRow())..expressionEvaluator.simulateExpression(data.to)(DataRow())).map { DataRow("X" to it) }
-            else -> super.fetchData(data, correlatedData)
+            else -> super.fetchRows(data, correlatedData)
         }
 }

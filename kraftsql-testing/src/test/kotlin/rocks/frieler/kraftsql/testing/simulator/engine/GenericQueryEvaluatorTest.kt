@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.testing.simulator.engine
 
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
@@ -52,6 +53,15 @@ class GenericQueryEvaluatorTest {
         ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result.single()["data.answer"] shouldBe 42L
+    }
+
+    @Test
+    fun `GenericQueryEvaluator can simulate empty SELECT with alias`() {
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(ConstantData.empty(DummyEngine.orm, listOf("col")), Alias("data")),
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
+
+        result.shouldBeEmpty()
     }
 
     @Test
