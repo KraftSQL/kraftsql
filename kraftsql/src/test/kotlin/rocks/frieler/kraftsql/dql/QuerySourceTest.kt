@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.commands.Command
+import rocks.frieler.kraftsql.dql.QuerySource.Companion.Alias
 import rocks.frieler.kraftsql.engine.TestableDummyEngine
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.objects.ConstantData
@@ -41,7 +42,7 @@ class QuerySourceTest {
     fun `sql() adds alias if set`() {
         whenever(data.sql()).thenReturn("data")
 
-        QuerySource(data, "d").sql() shouldBe "data AS `d`"
+        QuerySource(data, Alias("d")).sql() shouldBe "data AS `d`"
     }
 
 
@@ -56,14 +57,14 @@ class QuerySourceTest {
     fun `column names are prefixed with the alias`() {
         whenever(data.columnNames).thenReturn(listOf("c1"))
 
-        QuerySource(data, "a").columnNames shouldBe listOf("a.c1")
+        QuerySource(data, Alias("a")).columnNames shouldBe listOf("a.c1")
     }
 
     @Test
     fun `empty column name is replaced by alias`() {
         whenever(data.columnNames).thenReturn(listOf(""))
 
-        QuerySource(data, "a").columnNames shouldBe listOf("a")
+        QuerySource(data, Alias("a")).columnNames shouldBe listOf("a")
     }
 
     @Test
@@ -84,7 +85,7 @@ class QuerySourceTest {
         whenever(data["c1"]).thenReturn(column)
         whenever(column.withQualifier("a")).thenReturn(Column(listOf("a"), "c1"))
 
-        val prefixedColumn = QuerySource(data, "a")["c1"]
+        val prefixedColumn = QuerySource(data, Alias("a"))["c1"]
 
         prefixedColumn.qualifiers shouldBe listOf("a")
         prefixedColumn.name shouldBe column.name
@@ -99,7 +100,7 @@ class QuerySourceTest {
         whenever(data["c1"]).thenReturn(column)
         whenever(column.withQualifier("a")).thenReturn(Column(listOf("a"), "c1"))
 
-        val prefixedColumn = QuerySource(data, "a")["a.c1"]
+        val prefixedColumn = QuerySource(data, Alias("a"))["a.c1"]
 
         prefixedColumn.qualifiers shouldBe listOf("a")
         prefixedColumn.name shouldBe column.name
@@ -109,7 +110,7 @@ class QuerySourceTest {
     fun `get operator provides only column like alias when underlying data has only one column with empty name`() {
         whenever(data.columnNames).thenReturn(listOf(""))
 
-        val column = QuerySource(data, "a")["a"]
+        val column = QuerySource(data, Alias("a"))["a"]
 
         column shouldBe Column("a")
     }

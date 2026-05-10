@@ -19,7 +19,6 @@ class TableTest {
 
     @Test
     fun `columnNames provides the names of the columns`() {
-
         table.columnNames shouldBe listOf("c1", "c2")
     }
 

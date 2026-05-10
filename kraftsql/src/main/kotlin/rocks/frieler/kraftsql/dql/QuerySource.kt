@@ -17,7 +17,7 @@ import rocks.frieler.kraftsql.objects.HasColumns
  */
 open class QuerySource<E: Engine<E>, T : Any>(
     val data: Data<E, T>,
-    val alias: String? = null,
+    val alias: Alias? = null,
 ) : HasColumns<E, T> {
 
     /**
@@ -27,14 +27,14 @@ open class QuerySource<E: Engine<E>, T : Any>(
      */
     fun sql() = data.sql()
         .let { sql -> if (data is Command<*, *> || data is ConstantData) "($sql)" else sql }
-        .let { sql -> if (alias != null) "$sql AS `$alias`" else sql }
+        .let { sql -> if (alias != null) "$sql AS `${alias.value}`" else sql }
 
     /**
      * The names of the available [rocks.frieler.kraftsql.objects.Column]s, which are the columns of the underlying
      * [Data], prefixed with this [QuerySource]'s alias if set.
      */
     override val columnNames: List<String>
-        get() = data.columnNames.map { if (alias == null) it else "$alias${if (it.isNotEmpty()) ".$it" else ""}" }
+        get() = data.columnNames.map { alias?.qualify(it) ?: it }
 
     /**
      * Retrieves a [Column] expression for the named column.
@@ -50,11 +50,18 @@ open class QuerySource<E: Engine<E>, T : Any>(
      * @return a [Column] expression for the named column
      */
     override operator fun get(column: String) : Column<E, Any?> =
-        if (column == alias && data.columnNames == listOf("")) {
-            Column(alias)
-        } else if (alias != null && column.startsWith("$alias.") && column.removePrefix("$alias.") in data.columnNames) {
-            get(column.removePrefix("$alias."))
+        if (column == alias?.value && data.columnNames == listOf("")) {
+            Column(alias.value)
+        } else if (alias != null && column.startsWith("${alias.value}.") && column.removePrefix("${alias.value}.") in data.columnNames) {
+            get(column.removePrefix("${alias.value}."))
         } else {
-            data[column].let { if (alias != null) it.withQualifier(alias) else it }
+            data[column].let { if (alias != null) it.withQualifier(alias.value) else it }
         }
+
+    companion object {
+        @JvmInline
+        value class Alias(val value: String) {
+            fun qualify(column: String) = "$value${if (column.isNotEmpty()) ".$column" else ""}"
+        }
+    }
 }

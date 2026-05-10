@@ -5,20 +5,18 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.dql.CrossJoin
 import rocks.frieler.kraftsql.dql.DataExpressionData
 import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.LeftJoin
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
+import rocks.frieler.kraftsql.dql.QuerySource.Companion.Alias
 import rocks.frieler.kraftsql.dql.RightJoin
 import rocks.frieler.kraftsql.engine.TestableDummyEngine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
-import kotlin.reflect.KProperty
-import kotlin.reflect.typeOf
 
 class SelectDSLTest {
     @Test
@@ -194,7 +192,7 @@ class SelectDSLTest {
         val querySource = data `as` "alias"
 
         querySource.data shouldBe data
-        querySource.alias shouldBe "alias"
+        querySource.alias shouldBe Alias("alias")
     }
 
     @Test
@@ -204,7 +202,7 @@ class SelectDSLTest {
         val querySource : QuerySource<TestableDummyEngine, DataRow> = expression `as` "alias"
 
         querySource.data shouldBe DataExpressionData(expression)
-        querySource.alias shouldBe "alias"
+        querySource.alias shouldBe Alias("alias")
     }
 
     @Test
