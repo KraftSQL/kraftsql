@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.testing.simulator.engine
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -22,6 +23,7 @@ import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.expressions.`=`
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Constant
+import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Min
 import rocks.frieler.kraftsql.objects.ConstantData
@@ -31,6 +33,7 @@ import rocks.frieler.kraftsql.objects.Table
 import rocks.frieler.kraftsql.testing.simulator.expressions.ExpressionSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.GenericExpressionEvaluator
 import rocks.frieler.kraftsql.testing.simulator.expressions.SubexpressionCollector
+import java.sql.SQLNonTransientException
 
 class GenericQueryEvaluatorTest {
     private val queryEvaluator = GenericQueryEvaluator<DummyEngine>()
@@ -479,7 +482,7 @@ class GenericQueryEvaluatorTest {
     }
 
     @Test
-    fun `GenericQueryEvaluator can simulate SELECT of all columns when grouping`() {
+    fun `GenericQueryEvaluator can simulate SELECT when grouping`() {
         val dummyData = ConstantData(
             DummyEngine.orm,
             DataRow("integer" to 42, "string" to "foo"),
@@ -490,15 +493,31 @@ class GenericQueryEvaluatorTest {
         val result = Select<DummyEngine, DataRow>(
             source = QuerySource(dummyData),
             grouping = listOf(dummyData["integer"]),
+            columns = listOf(Projection(Column<DummyEngine, Int>("integer")), Projection(Count(), "count")),
         ).let { context(state) { queryEvaluator.selectRows(it) } }
 
-        result shouldHaveSize 2
-        result.forEach { row ->
-            row.columnNames shouldBe listOf("integer")
-        }
+        result shouldContainExactlyInAnyOrder listOf(
+            DataRow("integer" to 42, "count" to 1L),
+            DataRow("integer" to 43, "count" to 2L),
+        )
     }
 
+    @Test
+    fun `GenericQueryEvaluator can simulate error for SELECT of all columns, including non-grouping and unaggregated, when grouping`() {
+        val dummyData = ConstantData(
+            DummyEngine.orm,
+            DataRow("integer" to 42, "string" to "foo"),
+            DataRow("integer" to 43, "string" to "bar"),
+            DataRow("integer" to 43, "string" to "baz"),
+        )
 
+        shouldThrow<SQLNonTransientException> {
+            Select<DummyEngine, DataRow>(
+                source = QuerySource(dummyData),
+                grouping = listOf(dummyData["integer"]),
+            ).let { context(state) { queryEvaluator.selectRows(it) } }
+        }
+    }
 
     @Test
     fun `GenericQueryEvaluator can simulate SELECT of a single row by aggregating over all data without grouping`() {

@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.h2.testing.simulator.engine
 
 import rocks.frieler.kraftsql.h2.engine.H2Engine
+import rocks.frieler.kraftsql.h2.expressions.Column
 import rocks.frieler.kraftsql.h2.expressions.SystemRange
 import rocks.frieler.kraftsql.h2.objects.Data
 import rocks.frieler.kraftsql.h2.testing.simulator.expressions.H2ExpressionEvaluator
@@ -12,6 +13,9 @@ object H2QueryEvaluator : GenericQueryEvaluator<H2Engine>(
     orm = H2SimulatorORMapping,
     expressionEvaluator = H2ExpressionEvaluator,
 ) {
+
+    override fun makeColumnReference(columnName: String) = Column<Any?>(columnName)
+
     context(activeState : EngineState<H2Engine>)
     override fun fetchRows(data: Data<*>, correlatedData: DataRow?) =
         when (data) {
