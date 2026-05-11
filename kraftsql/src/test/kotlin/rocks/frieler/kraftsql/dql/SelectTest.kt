@@ -43,14 +43,4 @@ class SelectTest {
 
         select.columnNames shouldBe source.columnNames + joinedData.columnNames
     }
-
-    @Test
-    fun `columnNames provides grouping expressions when group by is present and columns are selected by wildcard`() {
-        val groupingExpression1 = mock<Expression<TestableDummyEngine, *>> { whenever(it.defaultColumnName()).thenReturn("g1") }
-        val groupingExpression2 = mock<Expression<TestableDummyEngine, *>> { whenever(it.defaultColumnName()).thenReturn("g2") }
-
-        val select = Select<TestableDummyEngine, DataRow>(source, grouping = listOf(groupingExpression1, groupingExpression2))
-
-        select.columnNames shouldBe listOf(groupingExpression1.defaultColumnName(), groupingExpression2.defaultColumnName())
-    }
 }

@@ -78,33 +78,42 @@ open class GenericQueryEvaluator<E : Engine<E>>(
                 .let { rows -> if (rows.isNotEmpty()) ConstantData(orm, rows) else ConstantData.empty(orm, data.columnNames) }
         }
 
+        val projections = (select.columns ?: select.columnNames.map { Projection(makeColumnReference(it)) })
+            .map { (it.alias ?: it.value.defaultColumnName()) to it.value }
+
         val resultRows = if (select.grouping.isNotEmpty()) {
             val groupingExtractors = select.grouping.map { expression -> expressionEvaluator.simulateExpression(expression) }
             val rowGroups = data.items.groupBy { row -> groupingExtractors.map { it.invoke(row) } }.values
 
-            val projections = (select.columns ?: select.grouping.map { Projection(it) })
-                .associate { (it.alias ?: it.value.defaultColumnName()) to expressionEvaluator.simulateAggregation(it.value, select.grouping) }
+            val simulatedProjections = projections
+                .associate { it.first to expressionEvaluator.simulateAggregation(it.second, select.grouping) }
             rowGroups.map { rowGroup ->
-                DataRow(projections.map { (name, expression) -> name to expression.invoke(rowGroup) })
+                DataRow(simulatedProjections.map { (name, expression) -> name to expression.invoke(rowGroup) })
             }
-        } else if (select.columns != null) {
-            if (select.columns!!.all { it.value.isAggregating(true) } && select.columns!!.any { it.value.isAggregating(false) }) {
-                val projections = select.columns!!
-                    .associate { (it.alias ?: it.value.defaultColumnName()) to expressionEvaluator.simulateAggregation(it.value, emptyList()) }
-                listOf(DataRow(projections.map { (name, expression) -> name to expression.invoke(data.items.toList()) }))
-            } else {
-                val projections = select.columns!!
-                    .associate { (it.alias ?: it.value.defaultColumnName()) to expressionEvaluator.simulateExpression(it.value) }
-                data.items.map { row ->
-                    DataRow(projections.map { (name, expression) -> name to expression.invoke(row) })
-                }
-            }
+        } else if (projections.all { it.second.isAggregating(true) } && projections.any { it.second.isAggregating(false) }) {
+                val simulatedProjections = projections
+                    .associate { it.first to expressionEvaluator.simulateAggregation(it.second, emptyList()) }
+                listOf(DataRow(simulatedProjections.map { (name, expression) -> name to expression.invoke(data.items.toList()) }))
         } else {
-            data.items.toList()
+            val simulatedProjections = projections
+                .associate { it.first to expressionEvaluator.simulateExpression(it.second) }
+            data.items.map { row ->
+                DataRow(simulatedProjections.map { (name, expression) -> name to expression.invoke(row) })
+            }
         }
 
         return resultRows
     }
+
+    /**
+     * Allows creating a [Column] reference to expand `SELECT * ...` queries.
+     *
+     * Subclasses can override this method to provide a different [Column] implementation.
+     *
+     * @param columnName the name of the column to reference
+     * @return a [Column] reference to the given column name
+     */
+    protected open fun makeColumnReference(columnName: String) = Column<E, Any?>(columnName)
 
     context(activeState: EngineState<E>)
     protected open fun fetchRows(data: Data<E, *>, correlatedData: DataRow?): List<DataRow> = when (data) {

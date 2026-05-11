@@ -29,8 +29,6 @@ open class Select<E : Engine<E>, T : Any>(
         get() =
             if (columns != null) {
                 columns.map { it.alias ?: it.value.defaultColumnName() }
-            } else if (grouping.isNotEmpty()) {
-                grouping.map { it.defaultColumnName() }
             } else {
                 source.columnNames + joins.flatMap { it.data.columnNames }
             }
