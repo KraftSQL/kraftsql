@@ -38,7 +38,7 @@ open class GenericEngineSimulator<E : Engine<E>>(
     context(connection: Connection<E>)
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> {
         val resultRows = context(getTopState(connection)) {
-            queryEvaluator.selectRows(select, null)
+            queryEvaluator.selectRows(select)
         }
         return orm.deserializeQueryResult(resultRows, type)
     }

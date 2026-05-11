@@ -45,12 +45,22 @@ open class GenericQueryEvaluator<E : Engine<E>>(
      * Evaluates the given [Select] statement.
      *
      * @param select the [Select] statement to evaluate
+     * @param activeState the current top-level [EngineState] to select from
+     * @return the selected [DataRow]s
+     */
+    context(activeState: EngineState<E>)
+    open fun selectRows(select: Select<E, *>): List<DataRow> = evaluateSelectInternal(select)
+
+    /**
+     * Evaluates the given [Select] statement "internally" during query evaluation, i.e., including sub-queries.
+     *
+     * @param select the [Select] statement to evaluate
      * @param correlatedData an optional [DataRow], that this [Select] is correlated to
      * @param activeState the current top-level [EngineState] to select from
      * @return the selected [DataRow]s
      */
     context(activeState: EngineState<E>)
-    open fun selectRows(select: Select<E, *>, correlatedData: DataRow? = null) : List<DataRow> {
+    protected open fun evaluateSelectInternal(select: Select<E, *>, correlatedData: DataRow? = null) : List<DataRow> {
         var data = resolve(select.source, correlatedData)
 
         if (correlatedData != null) {
@@ -99,7 +109,7 @@ open class GenericQueryEvaluator<E : Engine<E>>(
     context(activeState: EngineState<E>)
     protected open fun fetchRows(data: Data<E, *>, correlatedData: DataRow?): List<DataRow> = when (data) {
         is Table<E, *> -> activeState.getTable(data.qualifiedName).second
-        is Select<E, *> -> @Suppress("UNCHECKED_CAST") selectRows(data as Select<E, DataRow>, correlatedData)
+        is Select<E, *> -> @Suppress("UNCHECKED_CAST") evaluateSelectInternal(data as Select<E, DataRow>, correlatedData)
         is ConstantData<E, *> -> {
             data.items.map { item ->
                 val expression = orm.serialize(item)
