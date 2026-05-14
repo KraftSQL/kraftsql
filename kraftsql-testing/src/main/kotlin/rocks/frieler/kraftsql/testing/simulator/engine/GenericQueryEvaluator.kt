@@ -21,6 +21,7 @@ import rocks.frieler.kraftsql.objects.Table
 import rocks.frieler.kraftsql.testing.simulator.expressions.GenericExpressionEvaluator
 import rocks.frieler.kraftsql.testing.simulator.expressions.GenericSubexpressionCollector
 import rocks.frieler.kraftsql.testing.simulator.expressions.SubexpressionCollector
+import java.sql.SQLNonTransientException
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.ifEmpty
@@ -81,6 +82,12 @@ open class GenericQueryEvaluator<E : Engine<E>>(
             select.columns?.map { it.alias to it.value }
                 ?: inferColumns(select).map { null to makeColumnReference(it) }
         )
+            .also {
+                val duplicateNames = it.groupingBy { (name, _) -> name }.eachCount().filter { (_, count) -> count > 1 }.keys
+                if (duplicateNames.isNotEmpty()) {
+                    throw SQLNonTransientException("Duplicate column names: $duplicateNames")
+                }
+            }
 
         val resultRows = if (select.grouping.isNotEmpty()) {
             val groupingExtractors = select.grouping.map { expression -> expressionEvaluator.simulateExpression(expression) }

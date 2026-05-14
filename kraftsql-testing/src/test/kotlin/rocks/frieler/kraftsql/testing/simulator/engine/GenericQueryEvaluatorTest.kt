@@ -496,6 +496,16 @@ class GenericQueryEvaluatorTest {
     }
 
     @Test
+    fun `GenericQueryEvaluator rejects duplicate result column names`() {
+        shouldThrow<SQLNonTransientException> {
+            Select<DummyEngine, DataRow>(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
+                columns = listOf(Projection(Constant("foo"), "c"), Projection(Constant("bar"), "c")),
+            ).let { context(state) { queryEvaluator.selectRows(it) } }
+        }
+    }
+
+    @Test
     fun `GenericQueryEvaluator selects columns from source and joins when selecting all columns`() {
         val result = Select<DummyEngine, DataRow>(
             source = QuerySource(ConstantData(DummyEngine.orm, DataRow("left" to "foo"))),
