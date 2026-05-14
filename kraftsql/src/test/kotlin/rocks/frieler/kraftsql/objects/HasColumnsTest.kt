@@ -20,8 +20,8 @@ class HasColumnsTest {
     }
 
     @Test
-    fun `get operator returns Column expression for name of existing column`() {
-        whenever(testableHasColumnsInstance.columnNames).thenReturn(listOf("col"))
+    fun `get operator returns Column expression for name of selectable column`() {
+        whenever(testableHasColumnsInstance.selectableColumnNames).thenReturn(listOf("col"))
 
         val column = testableHasColumnsInstance["col"]
 
@@ -30,8 +30,8 @@ class HasColumnsTest {
     }
 
     @Test
-    fun `get operator rejects to provide Column expression for name of non-existent column`() {
-        whenever(testableHasColumnsInstance.columnNames).thenReturn(listOf("foo"))
+    fun `get operator rejects to provide Column expression for name of non-selectable column`() {
+        whenever(testableHasColumnsInstance.selectableColumnNames).thenReturn(listOf("foo"))
 
         shouldThrow<IllegalArgumentException> {
             testableHasColumnsInstance["bar"]
@@ -40,7 +40,7 @@ class HasColumnsTest {
 
     @Test
     fun `get operator returns Column expression for property`() {
-        whenever(testableHasColumnsInstance.columnNames).thenReturn(listOf(Something::prop.name))
+        whenever(testableHasColumnsInstance.selectableColumnNames).thenReturn(listOf(Something::prop.name))
 
         val column = testableHasColumnsInstance[Something::prop]
 

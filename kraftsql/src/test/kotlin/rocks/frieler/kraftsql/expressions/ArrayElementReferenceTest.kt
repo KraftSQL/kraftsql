@@ -25,20 +25,6 @@ class ArrayElementReferenceTest {
     }
 
     @Test
-    fun `defaultColumnName() puts default column names into SQL syntax`() {
-        val arrayExpression = mock<Expression<TestableDummyEngine, Array<Any>>> {
-            whenever(it.defaultColumnName()).thenReturn("array")
-        }
-        val indexExpression = mock<Expression<TestableDummyEngine, Int>> {
-            whenever(it.defaultColumnName()).thenReturn("index")
-        }
-
-        val elementReference = ArrayElementReference(arrayExpression, indexExpression)
-
-        elementReference.defaultColumnName() shouldBe "array[index]"
-    }
-
-    @Test
     fun `ArrayElementReferences with equal arguments are equal`() {
         val arrayExpression = mock<Expression<TestableDummyEngine, Array<Any?>>>()
         val indexExpression = mock<Expression<TestableDummyEngine, Int>>()

@@ -21,16 +21,6 @@ class CoalesceTest {
     }
 
     @Test
-    fun `default column name renders COALESCE() with argument's default column names`() {
-        val expression1 = mock<Expression<TestableDummyEngine, Any?>> { whenever(it.defaultColumnName()).thenReturn("x") }
-        val expression2 = mock<Expression<TestableDummyEngine, Any?>> { whenever(it.defaultColumnName()).thenReturn("y") }
-
-        val sql = Coalesce(expression1, expression2).defaultColumnName()
-
-        sql shouldMatch "COALESCE\\(${expression1.defaultColumnName()},\\s*${expression2.defaultColumnName()}\\)"
-    }
-
-    @Test
     fun `Coalesce is non nullable when last expression is non nullable`() {
         val nullableExpressions = mock<Expression<TestableDummyEngine, Any?>>()
         val nonNullableExpression = mock<Expression<TestableDummyEngine, Any>>()

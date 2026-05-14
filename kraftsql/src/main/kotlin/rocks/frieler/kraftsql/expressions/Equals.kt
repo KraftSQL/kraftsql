@@ -16,8 +16,6 @@ class Equals<E : Engine<E>>(
 ) : Expression<E, Boolean> {
     override fun sql() = "(${left.sql()})=(${right.sql()})"
 
-    override fun defaultColumnName() = "${left.defaultColumnName()} = ${right.defaultColumnName()}"
-
     override fun equals(other: Any?) = other is Equals<E> && left == other.left && right == other.right
 
     override fun hashCode() = Objects.hash(left, right)

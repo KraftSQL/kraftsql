@@ -26,8 +26,14 @@ open class Table<E: Engine<E>, T : Any>(
     /**
      * The names of this [Table]'s [Column]s.
      */
-    override val columnNames: List<String>
+    val columnNames: List<String>
         get() = columns.map { it.name }
+
+    /**
+     * All [columnNames] of this [Table].
+     */
+    override val selectableColumnNames: List<String>
+        get() = columnNames
 
     /**
      * Retrieves a [rocks.frieler.kraftsql.expressions.Column] expression for the named column.

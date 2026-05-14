@@ -16,8 +16,6 @@ class And<E : Engine<E>>(
 ) : Expression<E, Boolean?> {
     override fun sql() = "(${left.sql()}) AND (${right.sql()})"
 
-    override fun defaultColumnName() = "${left.defaultColumnName()}_AND_${right.defaultColumnName()}"
-
     override fun equals(other: Any?) = other is And<*>
             && left == other.left
             && right == other.right

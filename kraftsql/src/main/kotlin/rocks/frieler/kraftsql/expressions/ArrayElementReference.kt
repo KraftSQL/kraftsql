@@ -20,8 +20,6 @@ class ArrayElementReference<E : Engine<E>, T>(
 ) : Expression<E, T?> {
     override fun sql() = "${array.sql()}[${index.sql()}]"
 
-    override fun defaultColumnName() = "${array.defaultColumnName()}[${index.defaultColumnName()}]"
-
     override fun equals(other: Any?) = other is ArrayElementReference<E, T>
             && array == other.array
             && index == other.index

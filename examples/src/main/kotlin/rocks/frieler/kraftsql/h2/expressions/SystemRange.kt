@@ -10,7 +10,7 @@ class SystemRange(
     val to: Expression<H2Engine, Long>,
 ) : Data<DataRow> {
 
-    override val columnNames = listOf("X")
+    override val selectableColumnNames = listOf("X")
 
     override fun sql() = "SYSTEM_RANGE(${from.sql()},${to.sql()})"
 }

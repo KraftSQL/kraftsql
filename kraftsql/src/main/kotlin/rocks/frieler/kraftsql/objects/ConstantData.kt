@@ -17,7 +17,7 @@ open class ConstantData<E : Engine<E>, T : Any> protected constructor(
      * The items - or rows - in this data.
      */
     val items: Iterable<T>,
-    override val columnNames: List<String>,
+    val columnNames: List<String>,
 ) : Data<E, T> {
 
     /**
@@ -75,6 +75,12 @@ open class ConstantData<E : Engine<E>, T : Any> protected constructor(
         inline fun <E : Engine<E>, reified T : Any> empty(orm: ORMapping<E, *>) =
             empty<E, T>(orm, orm.getSchemaFor(T::class).map { it.name })
     }
+
+    /**
+     * All [columnNames] of this [ConstantData].
+     */
+    override val selectableColumnNames: List<String>
+        get() = columnNames
 
     override fun sql(): String {
         return if (items.none()) {

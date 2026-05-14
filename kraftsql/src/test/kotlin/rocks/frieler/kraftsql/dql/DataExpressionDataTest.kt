@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.dql
 
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
@@ -16,19 +17,17 @@ class DataExpressionDataTest {
     private val dataExpressionData = DataExpressionData(expression)
 
     @Test
-    fun `columnNames returns the expressions default column name`() {
-        whenever(expression.defaultColumnName()).thenReturn("DATA()")
-
-        dataExpressionData.columnNames shouldBe listOf(expression.defaultColumnName())
+    fun `selectableColumnNames returns empty list when expression has no columns`() {
+        dataExpressionData.selectableColumnNames.shouldBeEmpty()
     }
 
     @Test
-    fun `columnNames returns columns from expression if it has columns`() {
+    fun `selectableColumnNames returns selectable columns from expression if it has columns`() {
         val expressionWithColumns = mock<Expression<TestableDummyEngine, Data<TestableDummyEngine, DataRow>>>(
             extraInterfaces = arrayOf(HasColumns::class)
-        ) { whenever((it as HasColumns<*, *>).columnNames).thenReturn(listOf("c1", "c2")) }
+        ) { whenever((it as HasColumns<*, *>).selectableColumnNames).thenReturn(listOf("c1", "c2")) }
 
-        DataExpressionData(expressionWithColumns).columnNames shouldBe listOf("c1", "c2")
+        DataExpressionData(expressionWithColumns).selectableColumnNames shouldBe listOf("c1", "c2")
     }
 
     @Test
@@ -40,8 +39,6 @@ class DataExpressionDataTest {
 
     @Test
     fun `DataExpressionData provides maybe non-existent Column by name`() { // because column names are not reliable atm
-        whenever(expression.defaultColumnName()).thenReturn("")
-
         dataExpressionData["something"] shouldBe Column("something")
     }
 }

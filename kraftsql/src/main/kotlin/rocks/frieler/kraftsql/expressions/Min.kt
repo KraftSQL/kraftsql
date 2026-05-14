@@ -13,8 +13,6 @@ class Min<E : Engine<E>, T : Comparable<T>?>(
 ) : Aggregation<E, T?> {
     override fun sql() = "MIN(${expression.sql()})"
 
-    override fun defaultColumnName() = "MIN(${expression.defaultColumnName()})"
-
     override fun equals(other: Any?) = other is Min<E, T>
             && expression == other.expression
 

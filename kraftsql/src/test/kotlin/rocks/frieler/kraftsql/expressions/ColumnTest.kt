@@ -12,7 +12,7 @@ class ColumnTest {
     @Test
     fun `Column cannot provide possible sub-column names`() {
         shouldThrow<NotImplementedError> {
-            column.columnNames
+            column.selectableColumnNames
         }
     }
 

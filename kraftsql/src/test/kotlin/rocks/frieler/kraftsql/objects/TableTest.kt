@@ -23,6 +23,11 @@ class TableTest {
     }
 
     @Test
+    fun `selectableColumnNames offers all columns`() {
+        table.selectableColumnNames shouldBe table.columnNames
+    }
+
+    @Test
     fun `get operator provides existing column by name`() {
         val column = table["c1"]
 

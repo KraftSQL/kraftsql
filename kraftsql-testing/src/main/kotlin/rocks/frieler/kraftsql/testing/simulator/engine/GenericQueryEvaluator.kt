@@ -5,7 +5,6 @@ import rocks.frieler.kraftsql.dql.DataExpressionData
 import rocks.frieler.kraftsql.dql.InnerJoin
 import rocks.frieler.kraftsql.dql.Join
 import rocks.frieler.kraftsql.dql.LeftJoin
-import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.QuerySource.Companion.Alias
 import rocks.frieler.kraftsql.dql.RightJoin
@@ -22,6 +21,7 @@ import rocks.frieler.kraftsql.objects.Table
 import rocks.frieler.kraftsql.testing.simulator.expressions.GenericExpressionEvaluator
 import rocks.frieler.kraftsql.testing.simulator.expressions.GenericSubexpressionCollector
 import rocks.frieler.kraftsql.testing.simulator.expressions.SubexpressionCollector
+import java.sql.SQLNonTransientException
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.ifEmpty
@@ -78,24 +78,32 @@ open class GenericQueryEvaluator<E : Engine<E>>(
                 .let { rows -> if (rows.isNotEmpty()) ConstantData(orm, rows) else ConstantData.empty(orm, data.columnNames) }
         }
 
-        val projections = (select.columns ?: select.columnNames.map { Projection(makeColumnReference(it)) })
-            .map { (it.alias ?: it.value.defaultColumnName()) to it.value }
+        val columns = fillColumnNames(
+            select.columns?.map { it.alias to it.value }
+                ?: inferColumns(select).map { null to makeColumnReference(it) }
+        )
+            .also {
+                val duplicateNames = it.groupingBy { (name, _) -> name }.eachCount().filter { (_, count) -> count > 1 }.keys
+                if (duplicateNames.isNotEmpty()) {
+                    throw SQLNonTransientException("Duplicate column names: $duplicateNames")
+                }
+            }
 
         val resultRows = if (select.grouping.isNotEmpty()) {
             val groupingExtractors = select.grouping.map { expression -> expressionEvaluator.simulateExpression(expression) }
             val rowGroups = data.items.groupBy { row -> groupingExtractors.map { it.invoke(row) } }.values
 
-            val simulatedProjections = projections
+            val columnSimulations = columns
                 .associate { it.first to expressionEvaluator.simulateAggregation(it.second, select.grouping) }
             rowGroups.map { rowGroup ->
-                DataRow(simulatedProjections.map { (name, expression) -> name to expression.invoke(rowGroup) })
+                DataRow(columnSimulations.map { (name, expression) -> name to expression.invoke(rowGroup) })
             }
-        } else if (projections.all { it.second.isAggregating(true) } && projections.any { it.second.isAggregating(false) }) {
-                val simulatedProjections = projections
+        } else if (columns.all { it.second.isAggregating(true) } && columns.any { it.second.isAggregating(false) }) {
+                val simulatedProjections = columns
                     .associate { it.first to expressionEvaluator.simulateAggregation(it.second, emptyList()) }
                 listOf(DataRow(simulatedProjections.map { (name, expression) -> name to expression.invoke(data.items.toList()) }))
         } else {
-            val simulatedProjections = projections
+            val simulatedProjections = columns
                 .associate { it.first to expressionEvaluator.simulateExpression(it.second) }
             data.items.map { row ->
                 DataRow(simulatedProjections.map { (name, expression) -> name to expression.invoke(row) })
@@ -114,6 +122,39 @@ open class GenericQueryEvaluator<E : Engine<E>>(
      * @return a [Column] reference to the given column name
      */
     protected open fun makeColumnReference(columnName: String) = Column<E, Any?>(columnName)
+
+    /**
+     * Fills the missing column names for the given list of result columns of a query.
+     *
+     * This generic implementation only fills in the name of a selected [Column]. For all other expressions, it throws a
+     * [NotImplementedError].
+     * Subclasses can override this method to implement the column name generation strategy of the [Engine] they
+     * simulate.
+     *
+     * @param columns the result columns of the query, maybe lacking a name
+     * @return the resulting columns, all named
+     */
+    protected open fun fillColumnNames(columns: List<Pair<String?, Expression<E, *>>>): List<Pair<String, Expression<E, *>>> =
+        columns.map {
+            val name = it.first
+                ?: (it.second as? Column<E, *>)?.name
+                ?: throw NotImplementedError("Generating a column name for ${it.second} is not implemented.")
+            name to it.second
+        }
+
+    protected open fun inferColumns(data: Data<E, *>) = when (data) {
+        is ConstantData<*, *> -> data.columnNames
+        is Table<E, *> -> data.columnNames
+        is Select<E, *> -> {
+            if (data.columns != null) {
+                fillColumnNames(data.columns!!.map { it.alias to it.value }).map { it.first }
+            } else {
+                inferColumns(data.source) + data.joins.flatMap { inferColumns(it.data) }
+            }
+        }
+        is DataExpressionData<*, *> -> data.selectableColumnNames
+        else -> throw NotImplementedError("Inferring columns for ${this::class.qualifiedName} is not implemented.")
+    }
 
     context(activeState: EngineState<E>)
     protected open fun fetchRows(data: Data<E, *>, correlatedData: DataRow?): List<DataRow> = when (data) {
@@ -135,8 +176,12 @@ open class GenericQueryEvaluator<E : Engine<E>>(
     context(activeState: EngineState<E>)
     private fun resolve(data: Data<E, *>, correlatedData: DataRow? = null) : ConstantData<E, DataRow> {
         val rows = fetchRows(data, correlatedData)
-        return if (rows.isNotEmpty()) ConstantData(orm, rows) else ConstantData.empty(orm, data.columnNames)
+        return if (rows.isNotEmpty()) ConstantData(orm, rows) else ConstantData.empty(orm, inferColumns(data))
     }
+
+    private fun inferColumns(source: QuerySource<E, *>): List<String> =
+        inferColumns(source.data)
+            .map { source.alias?.qualify(it) ?: it }
 
     context(activeState: EngineState<E>)
     private fun resolve(querySource: QuerySource<E, *>, correlatedData: DataRow? = null) : ConstantData<E, DataRow> =
@@ -176,10 +221,11 @@ open class GenericQueryEvaluator<E : Engine<E>>(
             is LeftJoin<E> if (correlatedJoinsEnabled && isCorrelatedJoin(join, leftSide)) -> {
                 val joinCondition = expressionEvaluator.simulateExpression(join.condition)
                 leftSide.items.flatMap { row ->
-                    resolve(join.data, row).items
+                    val dataToJoin = resolve(join.data, row)
+                    dataToJoin.items
                         .map { rowToJoin -> row + rowToJoin }
                         .filter { row -> joinCondition.invoke(row) ?: false }
-                        .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
+                        .ifEmpty { listOf(row + DataRow(dataToJoin.columnNames.map { it to null })) }
                 }
             }
             is LeftJoin<E> -> {
@@ -189,7 +235,7 @@ open class GenericQueryEvaluator<E : Engine<E>>(
                     dataToJoin.items
                         .map { rowToJoin -> row + rowToJoin }
                         .filter { row -> joinCondition.invoke(row) ?: false }
-                        .ifEmpty { listOf(row + DataRow(join.data.columnNames.map { it to null })) }
+                        .ifEmpty { listOf(row + DataRow(dataToJoin.columnNames.map { it to null })) }
                 }
             }
             is RightJoin<E> -> {
@@ -212,7 +258,7 @@ open class GenericQueryEvaluator<E : Engine<E>>(
             else -> throw NotImplementedError("Simulation of ${join::class.qualifiedName} is not implemented.")
         }
 
-        return if (rows.isNotEmpty()) ConstantData(orm, rows) else ConstantData.empty(orm, leftSide.columnNames + join.data.columnNames)
+        return if (rows.isNotEmpty()) ConstantData(orm, rows) else ConstantData.empty(orm, leftSide.columnNames + inferColumns(join.data))
     }
 
     /**
@@ -227,12 +273,12 @@ open class GenericQueryEvaluator<E : Engine<E>>(
             is Select<E, *> -> {
                 (data.columns.orEmpty().map { it.value } + listOfNotNull(data.filter) + data.grouping)
                     .flatMap { subexpressionCollector.collectAllSubexpressions(it) }
-                    .any { it is Column<E, *> && it.qualifiedName in left.columnNames }
+                    .any { it is Column<E, *> && it.qualifiedName in left.selectableColumnNames }
             }
             is DataExpressionData<E, *> -> {
                 subexpressionCollector
                     .collectAllSubexpressions(data.expression)
-                    .any { it is Column<E, *> && it.qualifiedName in left.columnNames }
+                    .any { it is Column<E, *> && it.qualifiedName in left.selectableColumnNames }
             }
             else -> false
         }

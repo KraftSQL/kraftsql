@@ -29,8 +29,6 @@ class Coalesce<E : Engine<E>, T>(
 
     override fun sql() = "COALESCE(${this@Coalesce.expressions.joinToString(",") { it.sql() }})"
 
-    override fun defaultColumnName() = "COALESCE(${this@Coalesce.expressions.joinToString(",") { it.defaultColumnName() }})"
-
     override fun equals(other: Any?) = other is Coalesce<E, T>
             && this@Coalesce.expressions == other.expressions
 

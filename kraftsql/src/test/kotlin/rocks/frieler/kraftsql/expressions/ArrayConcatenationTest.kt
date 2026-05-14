@@ -11,7 +11,6 @@ import kotlin.Array
 class ArrayConcatenationTest {
     private class TestableArrayConcatenation<T>(arguments: Array<Expression<TestableDummyEngine, Array<T>?>>) : ArrayConcatenation<TestableDummyEngine, T>(arguments) {
         override fun sql(): String = TODO("Not yet implemented")
-        override fun defaultColumnName(): String = TODO("Not yet implemented")
     }
 
     @Test

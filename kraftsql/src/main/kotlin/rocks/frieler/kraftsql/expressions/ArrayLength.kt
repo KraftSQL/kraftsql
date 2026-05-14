@@ -14,8 +14,6 @@ class ArrayLength<E : Engine<E>>(
 ) : Expression<E, Int?> {
     override fun sql() = "ARRAY_LENGTH(${array.sql()})"
 
-    override fun defaultColumnName() = "ARRAY_LENGTH(${array.defaultColumnName()})"
-
     override fun equals(other: Any?) = other is ArrayLength<E>
             && array == other.array
 

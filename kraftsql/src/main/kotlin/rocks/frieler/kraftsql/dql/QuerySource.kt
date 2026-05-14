@@ -30,11 +30,11 @@ open class QuerySource<E: Engine<E>, T : Any>(
         .let { sql -> if (alias != null) "$sql AS `${alias.value}`" else sql }
 
     /**
-     * The names of the available [rocks.frieler.kraftsql.objects.Column]s, which are the columns of the underlying
-     * [Data], prefixed with this [QuerySource]'s alias if set.
+     * The names of the selectable [rocks.frieler.kraftsql.objects.Column]s, which are the selectable columns of the
+     * underlying [Data], prefixed with this [QuerySource]'s alias if set.
      */
-    override val columnNames: List<String>
-        get() = data.columnNames.map { alias?.qualify(it) ?: it }
+    override val selectableColumnNames: List<String>
+        get() = data.selectableColumnNames.map { alias?.qualify(it) ?: it }
 
     /**
      * Retrieves a [Column] expression for the named column.
@@ -50,9 +50,9 @@ open class QuerySource<E: Engine<E>, T : Any>(
      * @return a [Column] expression for the named column
      */
     override operator fun get(column: String) : Column<E, Any?> =
-        if (column == alias?.value && data.columnNames == listOf("")) {
+        if (column == alias?.value && data.selectableColumnNames == listOf("")) {
             Column(alias.value)
-        } else if (alias != null && column.startsWith("${alias.value}.") && column.removePrefix("${alias.value}.") in data.columnNames) {
+        } else if (alias != null && column.startsWith("${alias.value}.") && column.removePrefix("${alias.value}.") in data.selectableColumnNames) {
             get(column.removePrefix("${alias.value}."))
         } else {
             data[column].let { if (alias != null) it.withQualifier(alias.value) else it }

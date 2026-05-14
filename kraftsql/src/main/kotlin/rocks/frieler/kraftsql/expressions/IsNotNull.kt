@@ -14,8 +14,6 @@ class IsNotNull<E : Engine<E>>(
 ) : Expression<E, Boolean> {
     override fun sql() = "${expression.sql()} IS NOT NULL"
 
-    override fun defaultColumnName() = "${expression.defaultColumnName()}_IS_NOT_NULL"
-
     override fun equals(other: Any?) = other is IsNotNull<*> && expression == other.expression
 
     override fun hashCode() = Objects.hash(expression)

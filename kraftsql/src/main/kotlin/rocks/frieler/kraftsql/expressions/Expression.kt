@@ -16,13 +16,6 @@ interface Expression<E: Engine<E>, out T> {
      */
     fun sql(): String
 
-    /**
-     * Returns the name of the resulting column, when this [Expression] is `SELECT`ed without an alias.
-     *
-     * @return the default column name  when `SELECT`ing this [Expression] without an alias
-     */
-    fun defaultColumnName(): String
-
     override fun equals(other: Any?) : Boolean
 
     override fun hashCode(): Int

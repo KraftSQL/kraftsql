@@ -20,16 +20,6 @@ class LessOrEqualTest {
     }
 
     @Test
-    fun `default column name is constructed from left and right`() {
-        val left = mock<Expression<TestableDummyEngine, *>> { whenever(it.defaultColumnName()).thenReturn("left") }
-        val right = mock<Expression<TestableDummyEngine, *>> { whenever(it.defaultColumnName()).thenReturn("right") }
-
-        val lessOrEqual = LessOrEqual(left, right)
-
-        lessOrEqual.defaultColumnName() shouldBe "left<=right"
-    }
-
-    @Test
     fun `LessOrEqual with equal arguments is equal`() {
         val left = mock<Expression<TestableDummyEngine, *>>()
         val right = mock<Expression<TestableDummyEngine, *>>()

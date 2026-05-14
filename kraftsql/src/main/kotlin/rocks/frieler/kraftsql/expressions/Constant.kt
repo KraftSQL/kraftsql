@@ -25,8 +25,6 @@ open class Constant<E : Engine<E>, T>(
         }
     }
 
-    override fun defaultColumnName() = sql()
-
     override fun equals(other: Any?) = other is Constant<E, T> && value == other.value
 
     override fun hashCode() = value.hashCode()
