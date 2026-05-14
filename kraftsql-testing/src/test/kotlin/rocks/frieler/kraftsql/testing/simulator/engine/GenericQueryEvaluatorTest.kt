@@ -132,7 +132,6 @@ class GenericQueryEvaluatorTest {
     fun `GenericQueryEvaluator can fetch Data by evaluating an expression`() {
         val data = ConstantData(DummyEngine.orm, DataRow("string" to "foo"), DataRow("string" to "bar"), DataRow("string" to "baz"))
         val dataExpression = mock<Expression<DummyEngine, Data<DummyEngine, DataRow>>>(extraInterfaces = arrayOf(HasColumns::class)) {
-            whenever(it.defaultColumnName()).thenReturn("string")
             whenever((it as HasColumns<*, *>).selectableColumnNames).thenReturn(listOf("string"))
         }
         val dataExpressionSimulator = mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
@@ -156,7 +155,6 @@ class GenericQueryEvaluatorTest {
     fun `GenericQueryEvaluator can fetch Data by evaluating an expression that resolves to Data of primitives`() {
         val data = ConstantData(DummyEngine.orm, "foo", "bar", "baz")
         val dataExpression = mock<Expression<DummyEngine, Data<DummyEngine, DataRow>>>(extraInterfaces = arrayOf(HasColumns::class)) {
-            whenever(it.defaultColumnName()).thenReturn("")
             whenever((it as HasColumns<*, *>).selectableColumnNames).thenReturn(listOf(""))
         }
         val dataExpressionSimulator = mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
@@ -265,7 +263,7 @@ class GenericQueryEvaluatorTest {
         val leftSide = ConstantData(DummyEngine.orm, DataRow("foo" to "bar"))
         val rightSide = Select<DummyEngine, DataRow>(
             source = QuerySource(ConstantData.empty(DummyEngine.orm, emptyList())),
-            columns = listOf(Projection(Constant(42))),
+            columns = listOf(Projection(Constant(42), "forty_two")),
         )
 
         val result = Select<DummyEngine, DataRow>(
@@ -273,7 +271,7 @@ class GenericQueryEvaluatorTest {
             joins = listOf(LeftJoin(QuerySource(rightSide), Constant(true))),
         ).let { context(state) { queryEvaluator.selectRows(it) } }
 
-        result.single().columnNames shouldContainExactly listOf("foo", "42")
+        result.single().columnNames shouldContainExactly listOf("foo", "forty_two")
     }
 
     @Test
@@ -405,9 +403,7 @@ class GenericQueryEvaluatorTest {
 
     @Test
     fun `GenericQueryEvaluator can simulate correlated CROSS JOIN with Data expression`() {
-        val unnest = mock<Expression<DummyEngine, Data<DummyEngine, Int>>> {
-            whenever(it.defaultColumnName()).thenReturn("")
-        }
+        val unnest = mock<Expression<DummyEngine, Data<DummyEngine, Int>>>()
         val queryEvaluatorPreparedForUnnestInCorrelatedJoin = GenericQueryEvaluator(
             subexpressionCollector = mock<SubexpressionCollector<DummyEngine>> {
                 whenever(it.collectAllSubexpressions(unnest)).thenReturn(listOf(Column<DummyEngine, Int>("values")))
@@ -490,6 +486,16 @@ class GenericQueryEvaluatorTest {
     }
 
     @Test
+    fun `GenericQueryEvaluator cannot generate a column name for an arbitrary expression`() {
+        shouldThrow<NotImplementedError> {
+            Select<DummyEngine, DataRow>(
+                source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
+                columns = listOf(Projection(mock<Expression<DummyEngine, Int>>())),
+            ).let { context(state) { queryEvaluator.selectRows(it) } }
+        }
+    }
+
+    @Test
     fun `GenericQueryEvaluator selects columns from source and joins when selecting all columns`() {
         val result = Select<DummyEngine, DataRow>(
             source = QuerySource(ConstantData(DummyEngine.orm, DataRow("left" to "foo"))),
@@ -542,7 +548,7 @@ class GenericQueryEvaluatorTest {
     fun `GenericQueryEvaluator can simulate SELECT of a single row by aggregating over all data without grouping`() {
         val result = Select<DummyEngine, DataRow>(
             source = QuerySource(ConstantData(DummyEngine.orm, DataRow("value" to 1), DataRow("value" to 2))),
-            columns = listOf(Projection(Min(Column<DummyEngine, Int>("value"))))
+            columns = listOf(Projection(Min(Column<DummyEngine, Int>("value")), "min_value"))
         ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result shouldHaveSize 1

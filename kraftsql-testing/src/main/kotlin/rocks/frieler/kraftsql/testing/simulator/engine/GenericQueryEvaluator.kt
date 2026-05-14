@@ -119,6 +119,8 @@ open class GenericQueryEvaluator<E : Engine<E>>(
     /**
      * Fills the missing column names for the given list of result columns of a query.
      *
+     * This generic implementation only fills in the name of a selected [Column]. For all other expressions, it throws a
+     * [NotImplementedError].
      * Subclasses can override this method to implement the column name generation strategy of the [Engine] they
      * simulate.
      *
@@ -126,7 +128,12 @@ open class GenericQueryEvaluator<E : Engine<E>>(
      * @return the resulting columns, all named
      */
     protected open fun fillColumnNames(columns: List<Pair<String?, Expression<E, *>>>): List<Pair<String, Expression<E, *>>> =
-        columns.map { (it.first ?: it.second.defaultColumnName()) to it.second }
+        columns.map {
+            val name = it.first
+                ?: (it.second as? Column<E, *>)?.name
+                ?: throw NotImplementedError("Generating a column name for ${it.second} is not implemented.")
+            name to it.second
+        }
 
     protected open fun inferColumns(data: Data<E, *>) = when (data) {
         is ConstantData<*, *> -> data.columnNames

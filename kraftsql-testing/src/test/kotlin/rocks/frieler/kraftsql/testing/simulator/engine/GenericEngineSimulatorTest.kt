@@ -47,11 +47,11 @@ class GenericEngineSimulatorTest {
         val result = context(connection) { simulator.execute(
             Select(
                 source = QuerySource(ConstantData(DummyEngine.orm, DataRow())),
-                columns = listOf(Projection(Constant(42L))),
+                columns = listOf(Projection(Constant(42L), "forty_two")),
             ), DataRow::class
         ) }
 
-        result.single().entries.single().second shouldBe 42L
+        result.single().entries.single() shouldBe Pair("forty_two", 42L)
     }
 
     @Test

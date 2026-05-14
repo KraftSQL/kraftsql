@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.h2.testing.simulator.engine
 
+import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.h2.expressions.Column
 import rocks.frieler.kraftsql.h2.expressions.SystemRange
@@ -22,6 +23,9 @@ object H2QueryEvaluator : GenericQueryEvaluator<H2Engine>(
             is SystemRange -> (expressionEvaluator.simulateExpression(data.from)(DataRow())..expressionEvaluator.simulateExpression(data.to)(DataRow())).map { DataRow("X" to it) }
             else -> super.fetchRows(data, correlatedData)
         }
+
+    override fun fillColumnNames(columns: List<Pair<String?, Expression<H2Engine, *>>>): List<Pair<String, Expression<H2Engine, *>>> =
+        columns.map { (it.first ?: it.second.defaultColumnName()) to it.second }
 
     override fun inferColumns(data: Data<*>) = when (data) {
         is SystemRange -> listOf("X")
