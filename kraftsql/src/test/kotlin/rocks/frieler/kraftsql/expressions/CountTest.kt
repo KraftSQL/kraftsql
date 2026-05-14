@@ -28,22 +28,6 @@ class CountTest {
     }
 
     @Test
-    fun `default column name renders COUNT() with asterisk when counting all rows`() {
-        val sql = Count().defaultColumnName()
-
-        sql shouldBe "COUNT(*)"
-    }
-
-    @Test
-    fun `default column name renders COUNT() with argument's default column name`() {
-        val expression = mock<Expression<TestableDummyEngine, Any?>> { whenever(it.defaultColumnName()).thenReturn("x") }
-
-        val sql = Count(expression).defaultColumnName()
-
-        sql shouldBe "COUNT(${expression.defaultColumnName()})"
-    }
-
-    @Test
     fun `Count with equal argument is equal`() {
         val expression = mock<Expression<TestableDummyEngine, Any?>>()
 

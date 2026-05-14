@@ -11,11 +11,4 @@ class Row<T>(values: Map<String, Expression<H2Engine, *>>?) : Row<H2Engine, T>(v
         }
         return "(${values!!.values.joinToString(", ") { value -> value.sql() }})"
     }
-
-    override fun defaultColumnName(): String {
-        if (values == null) {
-            return "NULL"
-        }
-        return values!!.values.joinToString(",") { value -> value.defaultColumnName() }
-    }
 }

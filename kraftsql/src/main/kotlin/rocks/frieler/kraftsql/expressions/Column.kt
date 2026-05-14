@@ -23,8 +23,6 @@ open class Column<E: Engine<E>, T>(
 
     override fun sql(): String = "${qualifiers.joinToString("") { "`$it`." }}`$name`"
 
-    override fun defaultColumnName() = qualifiedName
-
     /**
      * WARNING: Not implemented!
      *

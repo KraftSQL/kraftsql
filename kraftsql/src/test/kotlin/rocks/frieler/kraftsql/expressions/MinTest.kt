@@ -21,17 +21,6 @@ class MinTest {
     }
 
     @Test
-    fun `default column name renders MIN() with argument's default column name`() {
-        val expression = mockk<Expression<TestableDummyEngine, Int?>> {
-            every { defaultColumnName() } returns "x"
-        }
-
-        val sql = Min(expression).defaultColumnName()
-
-        sql shouldBe "MIN(${expression.defaultColumnName()})"
-    }
-
-    @Test
     fun `Min with equal argument is equal`() {
         val expression = mockk<Expression<TestableDummyEngine, Int?>>()
 

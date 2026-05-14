@@ -19,15 +19,6 @@ class NotTest {
     }
 
     @Test
-    fun `default column name is constructed from expression`() {
-        val expression = mock<Expression<TestableDummyEngine, Boolean>> { whenever(it.defaultColumnName()).thenReturn("expr") }
-
-        val not = Not(expression)
-
-        not.defaultColumnName() shouldBe "NOT_expr"
-    }
-
-    @Test
     fun `Not with equal argument is equal`() {
         val expression = mock<Expression<TestableDummyEngine, Boolean?>>()
 

@@ -20,16 +20,6 @@ class AndTest {
     }
 
     @Test
-    fun `default column name is constructed from left and right`() {
-        val left = mock<Expression<TestableDummyEngine, Boolean>> { whenever(it.defaultColumnName()).thenReturn("left") }
-        val right = mock<Expression<TestableDummyEngine, Boolean>> { whenever(it.defaultColumnName()).thenReturn("right") }
-
-        val and = And(left, right)
-
-        and.defaultColumnName() shouldBe "left_AND_right"
-    }
-
-    @Test
     fun `And with equal arguments is equal`() {
         val left = mock<Expression<TestableDummyEngine, Boolean?>>()
         val right = mock<Expression<TestableDummyEngine, Boolean?>>()

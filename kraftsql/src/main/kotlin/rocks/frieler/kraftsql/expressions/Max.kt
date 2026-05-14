@@ -13,8 +13,6 @@ class Max<E : Engine<E>, T : Comparable<T>?>(
 ) : Aggregation<E, T?> {
     override fun sql() = "MAX(${expression.sql()})"
 
-    override fun defaultColumnName() = "MAX(${expression.defaultColumnName()})"
-
     override fun equals(other: Any?) = other is Max<E, T>
             && expression == other.expression
 

@@ -19,13 +19,6 @@ class Array<E : Engine<E>, T>(
         return "ARRAY [${elements.joinToString(",") { it.sql() }}]"
     }
 
-    override fun defaultColumnName(): String {
-        if (elements == null) {
-            return "NULL"
-        }
-        return "[${elements.joinToString(",") { it.defaultColumnName() }}]"
-    }
-
     override fun equals(other: Any?) = other is Array<E, *> && elements.contentEquals(other.elements)
 
     override fun hashCode() = elements.hashCode()

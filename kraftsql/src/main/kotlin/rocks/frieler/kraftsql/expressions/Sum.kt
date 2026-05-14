@@ -20,8 +20,6 @@ abstract class Sum<E : Engine<E>, T : Number> protected constructor(
 
     override fun sql() = "SUM(${expression.sql()})"
 
-    override fun defaultColumnName() = "SUM(${expression.defaultColumnName()})"
-
     override fun equals(other: Any?) = other is Sum<E, T> && expression == other.expression
 
     override fun hashCode() = expression.hashCode()

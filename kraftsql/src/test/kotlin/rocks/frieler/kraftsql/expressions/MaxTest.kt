@@ -21,17 +21,6 @@ class MaxTest {
     }
 
     @Test
-    fun `default column name renders MAX() with argument's default column name`() {
-        val expression = mock<Expression<TestableDummyEngine, Int?>> {
-            whenever(it.defaultColumnName()).thenReturn("x")
-        }
-
-        val sql = Max(expression).defaultColumnName()
-
-        sql shouldBe "MAX(${expression.defaultColumnName()})"
-    }
-
-    @Test
     fun `Max with equal argument is equal`() {
         val expression = mock<Expression<TestableDummyEngine, Int?>>()
 

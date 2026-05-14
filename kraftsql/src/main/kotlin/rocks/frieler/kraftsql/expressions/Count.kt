@@ -14,8 +14,6 @@ class Count<E : Engine<E>>(
 ) : Aggregation<E, Long> {
     override fun sql() = "COUNT(${expression?.sql() ?: "*"})"
 
-    override fun defaultColumnName() = "COUNT(${expression?.defaultColumnName() ?: "*"})"
-
     override fun equals(other: Any?) = other is Count<*>
         && expression == other.expression
 

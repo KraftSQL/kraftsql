@@ -168,7 +168,6 @@ class SubexpressionCollectorTest {
         val element2 = mock<Expression<DummyEngine, Array<Any?>>>()
         val arrayConcatenation = object : ArrayConcatenation<DummyEngine, Any?>(arrayOf(element1, element2)) {
             override fun sql(): String = TODO("Not yet implemented")
-            override fun defaultColumnName(): String = TODO("Not yet implemented")
         }
 
         val subexpressions = subexpressionCollector.getSubexpressions(arrayConcatenation)

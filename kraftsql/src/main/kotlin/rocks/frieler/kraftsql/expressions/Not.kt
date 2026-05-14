@@ -14,8 +14,6 @@ class Not<E : Engine<E>>(
 ) : Expression<E, Boolean?> {
     override fun sql() = "NOT (${expression.sql()})"
 
-    override fun defaultColumnName() = "NOT_${expression.defaultColumnName()}"
-
     override fun equals(other: Any?) = other is Not<*>
             && expression == other.expression
 
