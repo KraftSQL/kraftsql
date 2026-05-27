@@ -25,7 +25,9 @@ import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Expression
+import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Min
+import rocks.frieler.kraftsql.expressions.SubqueryExpression
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
@@ -38,8 +40,10 @@ import rocks.frieler.kraftsql.testing.simulator.expressions.CountSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.EqualsSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.ExpressionSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.GenericExpressionEvaluator
+import rocks.frieler.kraftsql.testing.simulator.expressions.MaxSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.MinSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.RowSimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.SubqueryExpressionSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.SubexpressionCollector
 import java.sql.SQLNonTransientException
 
@@ -581,6 +585,27 @@ class GenericQueryEvaluatorTest {
         ).let { context(state) { queryEvaluator.selectRows(it) } }
 
         result shouldHaveSize 1
+    }
+
+    @Test
+    fun `GenericQueryEvaluator does not treat a scalar subquery containing an aggregate as an aggregation of the outer query`() {
+        expressionEvaluator.registerExpressionSimulator(MaxSimulator<DummyEngine, Comparable<Comparable<*>>>())
+        expressionEvaluator.registerExpressionSimulator(SubqueryExpressionSimulator<DummyEngine, Any?>(queryEvaluator))
+
+        val scalarSubquery = Select<DummyEngine, DataRow>(
+            source = QuerySource(ConstantData(DummyEngine.orm, DataRow("value" to 1), DataRow("value" to 3))),
+            columns = listOf(Projection(Max(Column<DummyEngine, Int>("value")), "max_value")),
+        )
+
+        val result = Select<DummyEngine, DataRow>(
+            source = QuerySource(ConstantData(DummyEngine.orm, DataRow("id" to "a"), DataRow("id" to "b"))),
+            columns = listOf(Projection(SubqueryExpression<DummyEngine, Any?>(scalarSubquery), "max_value")),
+        ).let { context(state) { queryEvaluator.selectRows(it) } }
+
+        result shouldContainExactly listOf(
+            DataRow("max_value" to 3),
+            DataRow("max_value" to 3),
+        )
     }
 
     @Test

@@ -7,6 +7,8 @@ import io.mockk.mockk
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import rocks.frieler.kraftsql.dql.QuerySource
+import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.engine.Type
 import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.Array
@@ -25,6 +27,8 @@ import rocks.frieler.kraftsql.expressions.Min
 import rocks.frieler.kraftsql.expressions.Not
 import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
+import rocks.frieler.kraftsql.expressions.SubqueryExpression
+import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.expressions.GenericExpressionEvaluator
 import kotlin.reflect.typeOf
@@ -201,6 +205,17 @@ class GenericEngineSimulatorBuilderTemplateTest {
         val result = simulation.invoke(DataRow())
 
         result shouldBe DataRow("key" to 1, "value" to "foo")
+    }
+
+    @Test
+    fun `Wired ExpressionEvaluator can simulate a SubqueryExpression`() {
+        val subquery = Select<DummyEngine, DataRow>(source = QuerySource(ConstantData(DummyEngine.orm, DataRow("answer" to 42L))))
+        val subqueryExpression = SubqueryExpression<DummyEngine, Long>(subquery)
+
+        val simulation = context(state) { expressionEvaluator.simulateExpression(subqueryExpression) }
+        val result = simulation.invoke(DataRow())
+
+        result shouldBe 42L
     }
 
     @Test
