@@ -6,29 +6,28 @@ import rocks.frieler.kraftsql.expressions.ArrayLength
 import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Coalesce
 import rocks.frieler.kraftsql.expressions.Max
+import rocks.frieler.kraftsql.expressions.asExpression
 import rocks.frieler.kraftsql.expressions.knownNotNull
 import rocks.frieler.kraftsql.expressions.lessOrEqual
 import rocks.frieler.kraftsql.h2.dsl.Select
+import rocks.frieler.kraftsql.h2.engine.H2Engine
 import rocks.frieler.kraftsql.h2.engine.Types
 import rocks.frieler.kraftsql.h2.expressions.Column
 import rocks.frieler.kraftsql.h2.expressions.Constant
 import rocks.frieler.kraftsql.h2.expressions.SystemRange
 import rocks.frieler.kraftsql.h2.objects.Data
-import rocks.frieler.kraftsql.h2.objects.collect
 import rocks.frieler.kraftsql.objects.DataRow
-import kotlin.collections.single
 
 fun Data<*>.unnest(arrayColumn: String, elementColumn: String) : Data<DataRow> {
-    // TODO: allow single-valued Data as Expression instead of .collect() and Constant(...)
     val maxElements = Select<DataRow> {
         from(this@unnest)
-        column(Coalesce(Max(ArrayLength(Column(arrayColumn))), Constant(0)) `as` "_max_elements")
-    }.collect().single()["_max_elements"] as Int
+        column(Coalesce(Max(ArrayLength(Column(arrayColumn))), Constant(0)))
+    }
 
     val unnestedData = Select<DataRow> {
         from(this@unnest)
         val indizes = innerJoin(
-            Select<DataRow> { from(SystemRange(Constant(1L), Constant(maxElements.toLong()))) }) {
+            Select<DataRow> { from(SystemRange(Constant(1L), maxElements.asExpression<H2Engine, Long>().knownNotNull())) }) {
             this["X"] lessOrEqual ArrayLength(Column(arrayColumn))
         }
         for (column in this@unnest.selectableColumnNames) {
