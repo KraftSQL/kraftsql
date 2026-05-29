@@ -8,7 +8,7 @@ junit = "6.1.0"
 kotest = "6.1.11"
 mockito-core = "5.23.0"
 mockito = "6.3.0"
-mockk = "1.14.9"
+mockk = "1.14.11"
 kover = "0.9.8"
 
 [libraries]
