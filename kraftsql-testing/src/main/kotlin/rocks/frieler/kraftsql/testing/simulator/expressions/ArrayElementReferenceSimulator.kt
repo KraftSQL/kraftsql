@@ -4,6 +4,7 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.ArrayElementReference
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import kotlin.reflect.KClass
 
 /**
@@ -16,14 +17,14 @@ open class ArrayElementReferenceSimulator<E : Engine<E>, T> : ExpressionSimulato
     @Suppress("UNCHECKED_CAST")
     override val expression = ArrayElementReference::class as KClass<out ArrayElementReference<E, T>>
 
-    context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateExpression(expression: ArrayElementReference<E, T>): (DataRow) -> T? {
         val arrayExpression = subexpressionCallbacks.simulateExpression(expression.array)
         val indexExpression = subexpressionCallbacks.simulateExpression(expression.index)
         return { row -> simulate(arrayExpression(row), indexExpression(row)) }
     }
 
-    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: ArrayElementReference<E, T>): (List<DataRow>) -> T? {
         val arrayExpression = subexpressionCallbacks.simulateAggregation(expression.array)
         val indexExpression = subexpressionCallbacks.simulateAggregation(expression.index)

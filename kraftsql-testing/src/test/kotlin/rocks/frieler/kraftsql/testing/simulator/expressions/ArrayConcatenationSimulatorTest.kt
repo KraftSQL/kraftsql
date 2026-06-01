@@ -8,6 +8,7 @@ import rocks.frieler.kraftsql.expressions.ArrayConcatenation
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import kotlin.reflect.KClass
 
 class ArrayConcatenationSimulatorTest {
@@ -15,6 +16,7 @@ class ArrayConcatenationSimulatorTest {
     private val arrayConcatenationSimulator =
         ArrayConcatenationSimulator(ArrayConcatenation::class as KClass<out ArrayConcatenation<DummyEngine, Int>>)
 
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @Test
@@ -27,7 +29,7 @@ class ArrayConcatenationSimulatorTest {
             whenever(it.arguments).thenReturn(arrayOf(arrayExpression1, arrayExpression2))
         }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             arrayConcatenationSimulator.simulateExpression(arrayConcatenation)
         }
         val result = simulation(mock<DataRow>())
@@ -45,7 +47,7 @@ class ArrayConcatenationSimulatorTest {
             whenever(it.arguments).thenReturn(arrayOf(arrayExpression1, arrayExpression2))
         }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             arrayConcatenationSimulator.simulateExpression(arrayConcatenation)
         }
         val result = simulation(mock<DataRow>())
@@ -65,7 +67,7 @@ class ArrayConcatenationSimulatorTest {
             whenever(it.arguments).thenReturn(arrayOf(arrayExpression1, arrayExpression2))
         }
 
-        val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+        val simulation = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             arrayConcatenationSimulator.simulateAggregation(arrayConcatenation)
         }
         val result = simulation(listOf(mock<DataRow>()))

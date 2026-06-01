@@ -60,12 +60,13 @@ class GenericEngineSimulatorBuilderTemplateTest {
      * From here on, tests for common, pre-registered Expressions:
      * ***********************************************************/
     private val expressionEvaluator = builder.expressionEvaluatorExposed
+    private val state = mock<EngineState<DummyEngine>>()
 
     @Test
     fun `Wired ExpressionEvaluator can simulate a Constant expression`() {
         val constantExpression = Constant<DummyEngine, String>("foo")
 
-        val simulation = expressionEvaluator.simulateExpression(constantExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(constantExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe "foo"
@@ -75,7 +76,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate a Column expression`() {
         val columnExpression = Column<DummyEngine, String>("foo")
 
-        val simulation = expressionEvaluator.simulateExpression(columnExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(columnExpression) }
         val result = simulation.invoke(DataRow("foo" to "bar"))
 
         result shouldBe "bar"
@@ -86,7 +87,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
         val intType = mock<Type<DummyEngine, Int>> { whenever(it.naturalKType()).thenReturn(typeOf<Int>()) }
         val castExpression = Cast(Constant("123"), intType)
 
-        val simulation = expressionEvaluator.simulateExpression(castExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(castExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe 123
@@ -96,7 +97,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate the IS NOT NULL operator`() {
         val isNotNullExpression = IsNotNull<DummyEngine>(Constant(1))
 
-        val simulation = expressionEvaluator.simulateExpression(isNotNullExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(isNotNullExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe true
@@ -106,7 +107,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate the equals-operator`() {
         val equalsExpression = Equals<DummyEngine>(Constant(1), Constant(1))
 
-        val simulation = expressionEvaluator.simulateExpression(equalsExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(equalsExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe true
@@ -116,7 +117,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate the LessOrEqual-operator`() {
         val lessOrEqualExpression = LessOrEqual<DummyEngine>(Constant(1), Constant(2))
 
-        val simulation = expressionEvaluator.simulateExpression(lessOrEqualExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(lessOrEqualExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe true
@@ -126,7 +127,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate the NOT-operator`() {
         val notExpression = Not<DummyEngine>(Constant(true))
 
-        val simulation = expressionEvaluator.simulateExpression(notExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(notExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe false
@@ -136,7 +137,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate the AND-operator`() {
         val andExpression = And<DummyEngine>(Constant(true), Constant(false))
 
-        val simulation = expressionEvaluator.simulateExpression(andExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(andExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe false
@@ -146,7 +147,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate the OR-operator`() {
         val orExpression = Or<DummyEngine>(Constant(false), Constant(true))
 
-        val simulation = expressionEvaluator.simulateExpression(orExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(orExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe true
@@ -156,7 +157,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate the COALESCE function`() {
         val coalesceExpression = Coalesce<DummyEngine, Long?>(Constant(null), Constant(42L))
 
-        val simulation = expressionEvaluator.simulateExpression(coalesceExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(coalesceExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe 42L
@@ -166,7 +167,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate an Array expression`() {
         val arrayExpression = Array<DummyEngine, Int>(Constant(1), Constant(2))
 
-        val simulation = expressionEvaluator.simulateExpression(arrayExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(arrayExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe arrayOf(1, 2)
@@ -176,7 +177,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate an ArrayElementReference`() {
         val arrayElementReferenceExpression = ArrayElementReference<DummyEngine, Int>(Array(Constant(42)), Constant(1))
 
-        val simulation = expressionEvaluator.simulateExpression(arrayElementReferenceExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(arrayElementReferenceExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe 42
@@ -186,7 +187,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate an ArrayLength expression`() {
         val arrayLengthExpression = ArrayLength<DummyEngine>(Array(Constant(1), Constant(2)))
 
-        val simulation = expressionEvaluator.simulateExpression(arrayLengthExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(arrayLengthExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe 2
@@ -196,7 +197,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate a Row expression`() {
         val rowExpression = Row<DummyEngine, DataRow>(mapOf("key" to Constant(1), "value" to Constant("foo")))
 
-        val simulation = expressionEvaluator.simulateExpression(rowExpression)
+        val simulation = context(state) { expressionEvaluator.simulateExpression(rowExpression) }
         val result = simulation.invoke(DataRow())
 
         result shouldBe DataRow("key" to 1, "value" to "foo")
@@ -206,7 +207,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate a Count aggregation`() {
         val countExpression = Count<DummyEngine>()
 
-        val simulation = expressionEvaluator.simulateAggregation(countExpression, listOf(Constant(1)))
+        val simulation = context(state) { expressionEvaluator.simulateAggregation(countExpression, listOf(Constant(1))) }
         val result = simulation.invoke(listOf(DataRow()))
 
         result shouldBe 1
@@ -216,7 +217,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate a Min aggregation`() {
         val maxExpression = Min(Column<DummyEngine, Long>("value"))
 
-        val simulation = expressionEvaluator.simulateAggregation(maxExpression, listOf(Constant(1)))
+        val simulation = context(state) { expressionEvaluator.simulateAggregation(maxExpression, listOf(Constant(1))) }
         val result = simulation.invoke(listOf(DataRow("value" to 42L)))
 
         result shouldBe 42L
@@ -226,7 +227,7 @@ class GenericEngineSimulatorBuilderTemplateTest {
     fun `Wired ExpressionEvaluator can simulate a Max aggregation`() {
         val maxExpression = Max(Column<DummyEngine, Long>("value"))
 
-        val simulation = expressionEvaluator.simulateAggregation(maxExpression, listOf(Constant(1)))
+        val simulation = context(state) { expressionEvaluator.simulateAggregation(maxExpression, listOf(Constant(1))) }
         val result = simulation.invoke(listOf(DataRow("value" to 42L)))
 
         result shouldBe 42L

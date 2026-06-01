@@ -10,16 +10,18 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import java.math.BigDecimal
 import java.sql.SQLException
 
 class SumSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @Test
     fun `SumAsLongSimulator rejects simulation as Expression`() {
         shouldThrow<SQLException> {
-            context(subexpressionCallbacks) {
+            context(state, subexpressionCallbacks) {
                 SumAsLongSimulator<DummyEngine>().simulateExpression(mock())
             }
         }
@@ -41,7 +43,7 @@ class SumSimulatorTest {
                 else -> error("unexpected row")
             } }
 
-        val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+        val simulation = context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             SumAsLongSimulator<DummyEngine>().simulateAggregation(Sum(expressionToSum))
         }
         val result = simulation(listOf(rowWithByte, rowWithShort, rowWithInt, rowWithLong))
@@ -57,7 +59,7 @@ class SumSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToSum))
             .thenReturn { row -> if (row == rowWithValue) 1L else null }
 
-        val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+        val simulation = context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             SumAsLongSimulator<DummyEngine>().simulateAggregation(Sum(expressionToSum))
         }
         val result = simulation(listOf(rowWithValue, rowWithNull))
@@ -68,7 +70,7 @@ class SumSimulatorTest {
     @Test
     fun `SumAsDoubleSimulator rejects simulation as Expression`() {
         shouldThrow<SQLException> {
-            context(subexpressionCallbacks) {
+            context(state, subexpressionCallbacks) {
                 SumAsDoubleSimulator<DummyEngine>().simulateExpression(mock())
             }
         }
@@ -94,7 +96,7 @@ class SumSimulatorTest {
                 else -> error("")
             } }
 
-        val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+        val simulation = context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             SumAsDoubleSimulator<DummyEngine>().simulateAggregation(Sum(expressionToSum))
         }
         val result = simulation(listOf(rowWithByte, rowWithShort, rowWithInt, rowWithLong, rowWithFloat, rowWithDouble))
@@ -110,7 +112,7 @@ class SumSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToSum))
             .thenReturn { row -> if (row == rowWithValue) 1.0 else null }
 
-        val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+        val simulation = context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             SumAsDoubleSimulator<DummyEngine>().simulateAggregation(Sum(expressionToSum))
         }
         val result = simulation(listOf(rowWithValue, rowWithNull))
@@ -121,7 +123,7 @@ class SumSimulatorTest {
     @Test
     fun `SumAsBigDecimalSimulator rejects simulation as Expression`() {
         shouldThrow<SQLException> {
-            context(subexpressionCallbacks) {
+            context(state, subexpressionCallbacks) {
                 SumAsBigDecimalSimulator<DummyEngine>().simulateExpression(mock())
             }
         }
@@ -135,7 +137,7 @@ class SumSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToSum))
             .thenReturn { row -> if (row == row1) BigDecimal.ONE else if (row == row2) BigDecimal.TWO else error("unexpected row") }
 
-        val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+        val simulation = context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             SumAsBigDecimalSimulator<DummyEngine>().simulateAggregation(Sum(expressionToSum))
         }
         val result = simulation(listOf(row1, row2))
@@ -151,7 +153,7 @@ class SumSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToSum))
             .thenReturn { row -> if (row == rowWithValue) BigDecimal.ONE else null }
 
-        val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+        val simulation = context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             SumAsBigDecimalSimulator<DummyEngine>().simulateAggregation(Sum(expressionToSum))
         }
         val result = simulation(listOf(rowWithValue, rowWithNull))

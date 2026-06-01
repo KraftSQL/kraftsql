@@ -10,9 +10,12 @@ import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 
 class AndSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
+
     @ParameterizedTest
     @CsvSource(value = [
         "true, true, true",
@@ -30,7 +33,7 @@ class AndSimulatorTest {
         val leftHandSide = mock<Expression<DummyEngine, Boolean?>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> left} }
         val rightHandSide = mock<Expression<DummyEngine, Boolean?>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> right} }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             AndSimulator<DummyEngine>().simulateExpression(And(leftHandSide, rightHandSide))
         }
         val result = simulation(row)
@@ -49,7 +52,7 @@ class AndSimulatorTest {
             context(groupExpressions) { whenever(subexpressionCallbacks.simulateAggregation(it)) }.thenReturn { _ -> true}
         }
 
-        val simulation = context(groupExpressions, subexpressionCallbacks) {
+        val simulation = context(state, groupExpressions, subexpressionCallbacks) {
             AndSimulator<DummyEngine>().simulateAggregation(And(leftHandSide, rightHandSide))
         }
         val result = simulation(listOf(row))

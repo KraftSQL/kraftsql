@@ -11,10 +11,13 @@ import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import java.math.BigDecimal
 import kotlin.reflect.KClass
 
 class EqualsSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
+
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @ParameterizedTest
@@ -27,7 +30,7 @@ class EqualsSimulatorTest {
         val leftHandSide = mock<Expression<DummyEngine, String>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> left} }
         val rightHandSide = mock<Expression<DummyEngine, String>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> right} }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             EqualsSimulator<DummyEngine>().simulateExpression(Equals(leftHandSide, rightHandSide))
         }
         val result = simulation(row)
@@ -41,7 +44,7 @@ class EqualsSimulatorTest {
         val leftHandSide = mock<Expression<DummyEngine, *>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> null} }
         val rightHandSide = mock<Expression<DummyEngine, *>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> null} }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             EqualsSimulator<DummyEngine>().simulateExpression(Equals(leftHandSide, rightHandSide))
         }
         val result = simulation(row)
@@ -69,7 +72,7 @@ class EqualsSimulatorTest {
             val rightHandSide =
                 mock<Expression<DummyEngine, Number>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> 42.toNumberType(rightType) } }
 
-            val simulation = context(subexpressionCallbacks) {
+            val simulation = context(state, subexpressionCallbacks) {
                 EqualsSimulator<DummyEngine>().simulateExpression(Equals(leftHandSide, rightHandSide))
             }
             val result = simulation(row)
@@ -98,7 +101,7 @@ class EqualsSimulatorTest {
             val rightHandSide =
                 mock<Expression<DummyEngine, Number>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> 42F.toNumberType(rightType) } }
 
-            val simulation = context(subexpressionCallbacks) {
+            val simulation = context(state, subexpressionCallbacks) {
                 EqualsSimulator<DummyEngine>().simulateExpression(Equals(leftHandSide, rightHandSide))
             }
             val result = simulation(row)
@@ -120,7 +123,7 @@ class EqualsSimulatorTest {
             context(groupExpressions) { whenever(subexpressionCallbacks.simulateAggregation(it)) }.thenReturn { _ -> "right"}
         }
 
-        val simulation = context(groupExpressions, subexpressionCallbacks) {
+        val simulation = context(state, groupExpressions, subexpressionCallbacks) {
             EqualsSimulator<DummyEngine>().simulateAggregation(Equals(leftHandSide, rightHandSide))
         }
         val result = simulation(listOf(row))

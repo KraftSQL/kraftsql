@@ -66,7 +66,9 @@ open class GenericEngineSimulator<E : Engine<E>>(
             .getTable(insertInto.table.qualifiedName)
         val rows = insertInto.values.let { values ->
             when (values) {
-                is ConstantData -> values.items.map { item -> expressionEvaluator.simulateExpression(orm.serialize(item)).invoke(DataRow()) as DataRow }
+                is ConstantData -> context(getTopState(connection)) {
+                    values.items.map { item -> expressionEvaluator.simulateExpression(orm.serialize(item)).invoke(DataRow()) as DataRow }
+                }
                 else -> throw NotImplementedError("Inserting ${values::class.qualifiedName} is not implemented.")
             }
         }
@@ -88,7 +90,7 @@ open class GenericEngineSimulator<E : Engine<E>>(
             .also { (it as? TransactionStateOverlay<E>)?.ensureTableCopy(delete.table.qualifiedName) }
             .getTable(delete.table.qualifiedName)
         val tableSizeBefore = table.second.size
-        val condition = delete.condition?.let { expressionEvaluator.simulateExpression(it) }
+        val condition = delete.condition?.let { context(getTopState(connection)) { expressionEvaluator.simulateExpression(it) } }
         if (condition == null) {
             table.second.clear()
         } else {

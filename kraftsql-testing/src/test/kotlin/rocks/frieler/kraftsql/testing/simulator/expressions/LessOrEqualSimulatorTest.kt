@@ -7,11 +7,13 @@ import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 
 class LessOrEqualSimulatorTest {
     private val comparator = mock<ConvertingComparator>()
     private val simulator = LessOrEqualSimulator<DummyEngine>(comparator)
 
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @Test
@@ -27,7 +29,7 @@ class LessOrEqualSimulatorTest {
         }
         val lessOrEqual = LessOrEqual(expression1, expression2)
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             simulator.simulateExpression(lessOrEqual)
         }
         val result = simulation(mock())
@@ -50,7 +52,7 @@ class LessOrEqualSimulatorTest {
         }
         val lessOrEqual = LessOrEqual(expression1, expression2)
 
-        val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+        val simulation = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             simulator.simulateAggregation(lessOrEqual)
         }
         val result = simulation(listOf(mock()))

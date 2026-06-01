@@ -10,9 +10,11 @@ import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import java.sql.SQLSyntaxErrorException
 
 class ColumnSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @Test
@@ -21,7 +23,7 @@ class ColumnSimulatorTest {
             whenever(it["foo"]).thenReturn("bar")
         }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             ColumnSimulator<DummyEngine, String>().simulateExpression(Column("foo"))
         }
         val value = simulation(row)
@@ -36,7 +38,7 @@ class ColumnSimulatorTest {
             whenever(it["foo"]).thenReturn(null)
         }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             ColumnSimulator<DummyEngine, String?>().simulateExpression(Column("foo"))
         }
         val value = simulation(row)
@@ -53,7 +55,7 @@ class ColumnSimulatorTest {
         )
         val columnExpression = Column<DummyEngine, String>("group")
 
-        val simulation = context(listOf(columnExpression), subexpressionCallbacks) {
+        val simulation = context(state, listOf(columnExpression), subexpressionCallbacks) {
             ColumnSimulator<DummyEngine, String>().simulateAggregation(columnExpression)
         }
         val value = simulation(rows)
@@ -67,7 +69,7 @@ class ColumnSimulatorTest {
         val columnExpression = Column<DummyEngine, String>("foo")
 
         shouldThrow<SQLSyntaxErrorException> {
-            context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+            context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
                 ColumnSimulator<DummyEngine, String>().simulateAggregation(columnExpression)
             }
         }

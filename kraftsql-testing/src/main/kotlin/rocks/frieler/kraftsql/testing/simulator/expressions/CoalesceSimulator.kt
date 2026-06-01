@@ -4,6 +4,7 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Coalesce
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import kotlin.reflect.KClass
 
 /**
@@ -16,12 +17,12 @@ class CoalesceSimulator<E : Engine<E>, T> : ExpressionSimulator<E, T, Coalesce<E
     @Suppress("UNCHECKED_CAST")
     override val expression = Coalesce::class as KClass<out Coalesce<E, T>>
 
-    context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateExpression(expression: Coalesce<E, T>): (DataRow) -> T {
         val subexpressionSimulations = expression.expressions.map { subexpressionCallbacks.simulateExpression(it) }
         return { row -> simulate(subexpressionSimulations.map { it(row) }) } }
 
-    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: Coalesce<E, T>): (List<DataRow>) -> T {
         val subexpressionSimulations = expression.expressions.map { subexpressionCallbacks.simulateAggregation(it) }
         return { rows -> simulate(subexpressionSimulations.map { it(rows) }) }

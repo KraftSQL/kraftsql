@@ -8,13 +8,15 @@ import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 
 class ArraySimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @Test
     fun `ArraySimulator can simulate NULL constant`() {
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             ArraySimulator<DummyEngine, Any>().simulateExpression(Array(null))
         }
         val result = simulation(mock<DataRow>())
@@ -24,7 +26,7 @@ class ArraySimulatorTest {
 
     @Test
     fun `ArraySimulator can simulate Array() of multiple expressions`() {
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             ArraySimulator<DummyEngine, String>().simulateExpression(Array(
                 mock<Expression<DummyEngine, String>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> "foo"} },
                 mock<Expression<DummyEngine, String>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> "bar"} },
@@ -37,7 +39,7 @@ class ArraySimulatorTest {
 
     @Test
     fun `ArraySimulator creates Array of common supertype of the elements`() {
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             ArraySimulator<DummyEngine, Number>().simulateExpression(Array(
                 mock<Expression<DummyEngine, Int>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> 42} },
                 mock<Expression<DummyEngine, Double>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> 3.14} },
@@ -52,7 +54,7 @@ class ArraySimulatorTest {
 
     @Test
     fun `ArraySimulator can simulate Array() of multiple aggregations`() {
-        val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+        val simulation = context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             ArraySimulator<DummyEngine, String>().simulateAggregation(Array(
                 mock<Expression<DummyEngine, String>>().also { whenever(subexpressionCallbacks.simulateAggregation(it)).thenReturn { _ -> "foo"} },
                 mock<Expression<DummyEngine, String>>().also { whenever(subexpressionCallbacks.simulateAggregation(it)).thenReturn { _ -> "bar"} },

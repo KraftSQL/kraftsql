@@ -7,8 +7,10 @@ import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.expressions.Coalesce
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 
 class CoalesceSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
     private val coalesceSimulator = CoalesceSimulator<DummyEngine, Any?>()
 
@@ -27,7 +29,7 @@ class CoalesceSimulatorTest {
             whenever(coalesce.expressions).thenReturn(listOf(expression1, expression2, expression3))
         }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             coalesceSimulator.simulateExpression(coalesce)
         }
 
@@ -46,7 +48,7 @@ class CoalesceSimulatorTest {
             whenever(coalesce.expressions).thenReturn(listOf(expression1, expression2))
         }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             coalesceSimulator.simulateExpression(coalesce)
         }
 
@@ -66,7 +68,7 @@ class CoalesceSimulatorTest {
             whenever(coalesce.expressions).thenReturn(listOf(expression1, expression2))
         }
 
-        val simulation = context(subexpressionCallbacks, groupExpressions) {
+        val simulation = context(state, subexpressionCallbacks, groupExpressions) {
             coalesceSimulator.simulateAggregation(coalesce)
         }
 

@@ -9,15 +9,17 @@ import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import java.sql.SQLException
 
 class CountSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @Test
     fun `CountSimulator rejects simulation as Expression`() {
         shouldThrow<SQLException> {
-            context(subexpressionCallbacks) {
+            context(state, subexpressionCallbacks) {
                 CountSimulator<DummyEngine>().simulateExpression(mock())
             }
         }
@@ -25,7 +27,7 @@ class CountSimulatorTest {
 
     @Test
     fun `CountSimulator can simulate Count as aggregation over all rows`() {
-        val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+        val simulation = context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             CountSimulator<DummyEngine>().simulateAggregation(Count())
         }
         val result = simulation(listOf(mock(), mock()))
@@ -41,7 +43,7 @@ class CountSimulatorTest {
             whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn({ row: DataRow -> row.takeIf { it != rowWithNull } })
         }
 
-        val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+        val simulation = context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             CountSimulator<DummyEngine>().simulateAggregation(Count(expression))
         }
         val result = simulation(listOf(rowWithValue, rowWithNull))

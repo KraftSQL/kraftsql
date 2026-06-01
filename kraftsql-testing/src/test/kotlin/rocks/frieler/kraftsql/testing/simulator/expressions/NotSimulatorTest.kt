@@ -10,8 +10,10 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Not
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 
 class NotSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @ParameterizedTest
@@ -24,7 +26,7 @@ class NotSimulatorTest {
         val row = mock<DataRow>()
         val innerExpression = mock<Expression<DummyEngine, Boolean?>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> value} }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             NotSimulator<DummyEngine>().simulateExpression(Not(innerExpression))
         }
         val result = simulation(row)
@@ -40,7 +42,7 @@ class NotSimulatorTest {
             context(groupExpressions) { whenever(subexpressionCallbacks.simulateAggregation(it)) }.thenReturn { _ -> false}
         }
 
-        val simulation = context(groupExpressions, subexpressionCallbacks) {
+        val simulation = context(state, groupExpressions, subexpressionCallbacks) {
             NotSimulator<DummyEngine>().simulateAggregation(Not(innerExpression))
         }
         val result = simulation(listOf(row))

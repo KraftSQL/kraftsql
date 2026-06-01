@@ -12,10 +12,12 @@ import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import java.time.LocalDate
 import kotlin.reflect.typeOf
 
 class CastSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @ParameterizedTest
@@ -28,7 +30,7 @@ class CastSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToCast)).thenReturn { _ -> string }
         val booleanType = mock<Type<DummyEngine, Boolean>> { whenever(it.naturalKType()).thenReturn(typeOf<Boolean>()) }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             CastSimulator<DummyEngine, Boolean>().simulateExpression(Cast(expressionToCast, booleanType))
         }
         val result = simulation.invoke(mock<DataRow>())
@@ -42,7 +44,7 @@ class CastSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToCast)).thenReturn { _ -> null }
         val booleanType = mock<Type<DummyEngine, Boolean>> { whenever(it.naturalKType()).thenReturn(typeOf<Boolean>()) }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             CastSimulator<DummyEngine, Boolean?>().simulateExpression(Cast(expressionToCast, booleanType))
         }
         val result = simulation.invoke(mock<DataRow>())
@@ -56,7 +58,7 @@ class CastSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToCast)).thenReturn { _ -> "42" }
         val intType = mock<Type<DummyEngine, Int>> { whenever(it.naturalKType()).thenReturn(typeOf<Int>()) }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             CastSimulator<DummyEngine, Int>().simulateExpression(Cast(expressionToCast, intType))
         }
         val result = simulation.invoke(mock<DataRow>())
@@ -70,7 +72,7 @@ class CastSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToCast)).thenReturn { _ -> null }
         val intType = mock<Type<DummyEngine, Int>> { whenever(it.naturalKType()).thenReturn(typeOf<Int>()) }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             CastSimulator<DummyEngine, Int?>().simulateExpression(Cast(expressionToCast, intType))
         }
         val result = simulation.invoke(mock<DataRow>())
@@ -84,7 +86,7 @@ class CastSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToCast)).thenReturn { _ -> "42" }
         val longType = mock<Type<DummyEngine, Long>> { whenever(it.naturalKType()).thenReturn(typeOf<Long>()) }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             CastSimulator<DummyEngine, Long>().simulateExpression(Cast(expressionToCast, longType))
         }
         val result = simulation.invoke(mock<DataRow>())
@@ -98,7 +100,7 @@ class CastSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToCast)).thenReturn { _ -> null }
         val longType = mock<Type<DummyEngine, Long>> { whenever(it.naturalKType()).thenReturn(typeOf<Long>()) }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             CastSimulator<DummyEngine, Long?>().simulateExpression(Cast(expressionToCast, longType))
         }
         val result = simulation.invoke(mock<DataRow>())
@@ -112,7 +114,7 @@ class CastSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToCast)).thenReturn { _ -> true }
         val stringType = mock<Type<DummyEngine, String>> { whenever(it.naturalKType()).thenReturn(typeOf<String>()) }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             CastSimulator<DummyEngine, String>().simulateExpression(Cast(expressionToCast, stringType))
         }
         val result = simulation.invoke(mock<DataRow>())
@@ -126,7 +128,7 @@ class CastSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToCast)).thenReturn { _ -> 123 }
         val stringType = mock<Type<DummyEngine, String>> { whenever(it.naturalKType()).thenReturn(typeOf<String>()) }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             CastSimulator<DummyEngine, String>().simulateExpression(Cast(expressionToCast, stringType))
         }
         val result = simulation.invoke(mock<DataRow>())
@@ -140,7 +142,7 @@ class CastSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToCast)).thenReturn { _ -> "foo" }
         val stringType = mock<Type<DummyEngine, String>> { whenever(it.naturalKType()).thenReturn(typeOf<String>()) }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             CastSimulator<DummyEngine, String>().simulateExpression(Cast(expressionToCast, stringType))
         }
         val result = simulation.invoke(mock<DataRow>())
@@ -154,7 +156,7 @@ class CastSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToCast)).thenReturn { _ -> null }
         val stringType = mock<Type<DummyEngine, String>> { whenever(it.naturalKType()).thenReturn(typeOf<String>()) }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             CastSimulator<DummyEngine, String?>().simulateExpression(Cast(expressionToCast, stringType))
         }
         val result = simulation.invoke(mock<DataRow>())
@@ -168,7 +170,7 @@ class CastSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToCast)).thenReturn { _ -> "2022-01-29" }
         val dateType = mock<Type<DummyEngine, LocalDate>> { whenever(it.naturalKType()).thenReturn(typeOf<LocalDate>()) }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             CastSimulator<DummyEngine, LocalDate>().simulateExpression(Cast(expressionToCast, dateType))
         }
         val result = simulation.invoke(mock<DataRow>())
@@ -182,7 +184,7 @@ class CastSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expressionToCast)).thenReturn { _ -> object {} }
         val voidType = mock<Type<DummyEngine, Void>> { whenever(it.naturalKType()).thenReturn(typeOf<Void>()) }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             CastSimulator<DummyEngine, Void>().simulateExpression(Cast(expressionToCast, voidType))
         }
         shouldThrow<ClassCastException> {
@@ -197,7 +199,7 @@ class CastSimulatorTest {
             .thenReturn { _ -> "42" }
         val intType = mock<Type<DummyEngine, Int>> { whenever(it.naturalKType()).thenReturn(typeOf<Int>()) }
 
-        val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+        val simulation = context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             CastSimulator<DummyEngine, Int>().simulateAggregation(Cast(expressionToCast, intType))
         }
         val result = simulation.invoke(listOf(mock<DataRow>()))

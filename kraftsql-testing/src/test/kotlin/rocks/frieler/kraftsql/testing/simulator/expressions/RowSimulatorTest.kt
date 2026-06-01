@@ -8,13 +8,15 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 
 class RowSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @Test
     fun `RowSimulator can simulate NULL constant`() {
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             RowSimulator<DummyEngine>().simulateExpression(Row(null))
         }
         val result = simulation(mock())
@@ -24,7 +26,7 @@ class RowSimulatorTest {
 
     @Test
     fun `RowSimulator can simulate Row() of multiple expressions`() {
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             RowSimulator<DummyEngine>().simulateExpression(Row(mapOf(
                 "key" to mock { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> 1 }},
                 "value" to mock { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> "foo" }},
@@ -37,7 +39,7 @@ class RowSimulatorTest {
 
     @Test
     fun `RowSimulator can simulate Row() expression of multiple aggregations as aggregation`() {
-        val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+        val simulation = context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             RowSimulator<DummyEngine>().simulateAggregation(Row(mapOf(
                 "key" to mock { whenever(subexpressionCallbacks.simulateAggregation(it)).thenReturn { _ -> 1 }},
                 "value" to mock { whenever(subexpressionCallbacks.simulateAggregation(it)).thenReturn { _ -> "foo" }},

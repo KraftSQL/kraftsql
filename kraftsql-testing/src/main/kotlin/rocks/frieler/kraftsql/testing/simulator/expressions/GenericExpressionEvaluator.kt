@@ -3,6 +3,7 @@ package rocks.frieler.kraftsql.testing.simulator.expressions
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import kotlin.reflect.KClass
 
 /**
@@ -41,6 +42,7 @@ open class GenericExpressionEvaluator<E : Engine<E>> {
      * @param expression the [Expression] to simulate
      * @return a function that simulates the [Expression]
      */
+    context(state: EngineState<E>)
     open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T {
         context(
             object : ExpressionSimulator.SubexpressionCallbacks<E> {
@@ -68,6 +70,7 @@ open class GenericExpressionEvaluator<E : Engine<E>> {
      * @param groupExpressions the [Expression]s which evaluate to the same value for all [DataRow]s to aggregate over
      * @return a function that simulates the [Expression] as part of an aggregation
      */
+    context(state: EngineState<E>)
     open fun <T> simulateAggregation(expression: Expression<E, T>, groupExpressions: List<Expression<E, *>>): (List<DataRow>) -> T {
         context(
             groupExpressions,

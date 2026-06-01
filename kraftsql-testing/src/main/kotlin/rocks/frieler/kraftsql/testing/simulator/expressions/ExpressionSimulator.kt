@@ -3,6 +3,7 @@ package rocks.frieler.kraftsql.testing.simulator.expressions
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import kotlin.reflect.KClass
 
 /**
@@ -34,10 +35,11 @@ interface ExpressionSimulator<E : Engine<E>, out T, X : Expression<E, T>> {
      * Provides a Kotlin simulation of the given [Expression] to be applied to a [DataRow].
      *
      * @param expression the [Expression] to simulate
+     * @param state the [EngineState] to evaluate the [Expression] in
      * @param subexpressionCallbacks [SubexpressionCallbacks] to simulate sub-expressions in the current evaluation context
      * @return a function that simulates the [Expression]
      */
-    context(subexpressionCallbacks: SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, subexpressionCallbacks: SubexpressionCallbacks<E>)
     fun simulateExpression(expression: X): (DataRow) -> T
 
 
@@ -49,10 +51,11 @@ interface ExpressionSimulator<E : Engine<E>, out T, X : Expression<E, T>> {
      * sub-expressions.
      *
      * @param expression the [Expression] to simulate
+     * @param state the [EngineState] to evaluate the [Expression] in
      * @param groupExpressions the [Expression]s that define the group of [DataRow]s to aggregate over
      * @param subexpressionCallbacks [SubexpressionCallbacks] to simulate sub-expressions in the current evaluation context
      * @return a function that simulates the [Expression]
      */
-    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: SubexpressionCallbacks<E>)
     fun simulateAggregation(expression: X): (List<DataRow>) -> T
 }

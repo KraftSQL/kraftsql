@@ -150,7 +150,7 @@ class GenericQueryEvaluatorTest {
         }
         val dataExpressionSimulator = mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
             whenever(it.expression).thenReturn(dataExpression::class)
-            whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(dataExpression)) })
+            whenever(context(any<EngineState<DummyEngine>>(), any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(dataExpression)) })
                 .thenReturn { data }
         }
         val queryEvaluatorWithDataExpressionSimulator = GenericQueryEvaluator(
@@ -173,7 +173,7 @@ class GenericQueryEvaluatorTest {
         }
         val dataExpressionSimulator = mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
             whenever(it.expression).thenReturn(dataExpression::class)
-            whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(dataExpression)) })
+            whenever(context(any<EngineState<DummyEngine>>(), any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(dataExpression)) })
                 .thenReturn { data }
         }
         val queryEvaluatorWithDataExpressionSimulator = GenericQueryEvaluator(
@@ -426,7 +426,7 @@ class GenericQueryEvaluatorTest {
                 registerExpressionSimulator(ArraySimulator<DummyEngine, Int>())
                 registerExpressionSimulator(mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
                     whenever(it.expression).thenReturn(unnest::class)
-                    whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(unnest)) })
+                    whenever(context(any<EngineState<DummyEngine>>(), any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(unnest)) })
                         .thenReturn { row -> ConstantData(DummyEngine.orm, (row["values"] as Array<*>).map { element -> DataRow("" to element) }) }
                 })
             },
