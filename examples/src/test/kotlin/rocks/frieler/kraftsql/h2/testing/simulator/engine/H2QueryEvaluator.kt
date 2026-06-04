@@ -23,15 +23,15 @@ import rocks.frieler.kraftsql.h2.expressions.ArrayConcatenation
 import rocks.frieler.kraftsql.h2.expressions.Column
 import rocks.frieler.kraftsql.h2.expressions.SystemRange
 import rocks.frieler.kraftsql.h2.objects.Data
-import rocks.frieler.kraftsql.h2.testing.simulator.expressions.H2ExpressionEvaluator
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import rocks.frieler.kraftsql.testing.simulator.engine.GenericQueryEvaluator
+import rocks.frieler.kraftsql.testing.simulator.expressions.GenericExpressionEvaluator
 
-object H2QueryEvaluator : GenericQueryEvaluator<H2Engine>(
-    orm = H2SimulatorORMapping,
-    expressionEvaluator = H2ExpressionEvaluator,
-) {
+class H2QueryEvaluator(
+    orm: H2SimulatorORMapping,
+    expressionEvaluator: GenericExpressionEvaluator<H2Engine>,
+) : GenericQueryEvaluator<H2Engine>(orm = orm, expressionEvaluator = expressionEvaluator) {
 
     override fun makeColumnReference(columnName: String) = Column<Any?>(columnName)
 

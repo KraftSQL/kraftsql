@@ -31,13 +31,27 @@ import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.objects.HasColumns
 import rocks.frieler.kraftsql.objects.Table
+import rocks.frieler.kraftsql.testing.simulator.expressions.ArraySimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.ColumnSimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.ConstantSimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.CountSimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.EqualsSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.ExpressionSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.GenericExpressionEvaluator
+import rocks.frieler.kraftsql.testing.simulator.expressions.MinSimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.RowSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.SubexpressionCollector
 import java.sql.SQLNonTransientException
 
 class GenericQueryEvaluatorTest {
-    private val queryEvaluator = GenericQueryEvaluator<DummyEngine>()
+    private val expressionEvaluator = GenericExpressionEvaluator<DummyEngine>().apply {
+        // add support for essential Expressions to handle queries:
+        registerExpressionSimulator(ConstantSimulator<DummyEngine, Any?>())
+        registerExpressionSimulator(ColumnSimulator<DummyEngine, Any?>())
+        registerExpressionSimulator(EqualsSimulator<DummyEngine>())
+        registerExpressionSimulator(RowSimulator<DummyEngine>())
+    }
+    private val queryEvaluator = GenericQueryEvaluator<DummyEngine>(expressionEvaluator = expressionEvaluator)
 
     private val state = mock<EngineState<DummyEngine>>()
 
@@ -140,7 +154,7 @@ class GenericQueryEvaluatorTest {
                 .thenReturn { data }
         }
         val queryEvaluatorWithDataExpressionSimulator = GenericQueryEvaluator(
-            expressionEvaluator = GenericExpressionEvaluator<DummyEngine>().apply {
+            expressionEvaluator = expressionEvaluator.apply {
                 registerExpressionSimulator(dataExpressionSimulator)
             }
         )
@@ -163,7 +177,7 @@ class GenericQueryEvaluatorTest {
                 .thenReturn { data }
         }
         val queryEvaluatorWithDataExpressionSimulator = GenericQueryEvaluator(
-            expressionEvaluator = GenericExpressionEvaluator<DummyEngine>().apply {
+            expressionEvaluator = expressionEvaluator.apply {
                 registerExpressionSimulator(dataExpressionSimulator)
             }
         )
@@ -408,7 +422,8 @@ class GenericQueryEvaluatorTest {
             subexpressionCollector = mock<SubexpressionCollector<DummyEngine>> {
                 whenever(it.collectAllSubexpressions(unnest)).thenReturn(listOf(Column<DummyEngine, Int>("values")))
             },
-            expressionEvaluator = GenericExpressionEvaluator<DummyEngine>().apply {
+            expressionEvaluator = expressionEvaluator.apply {
+                registerExpressionSimulator(ArraySimulator<DummyEngine, Int>())
                 registerExpressionSimulator(mock<ExpressionSimulator<DummyEngine, Data<DummyEngine, *>, Expression<DummyEngine, Data<DummyEngine, *>>>> {
                     whenever(it.expression).thenReturn(unnest::class)
                     whenever(context(any<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()) { it.simulateExpression(eq(unnest)) })
@@ -518,6 +533,8 @@ class GenericQueryEvaluatorTest {
 
     @Test
     fun `GenericQueryEvaluator can simulate SELECT when grouping`() {
+        expressionEvaluator.registerExpressionSimulator(CountSimulator<DummyEngine>())
+
         val dummyData = ConstantData(
             DummyEngine.orm,
             DataRow("integer" to 42, "string" to "foo"),
@@ -556,6 +573,8 @@ class GenericQueryEvaluatorTest {
 
     @Test
     fun `GenericQueryEvaluator can simulate SELECT of a single row by aggregating over all data without grouping`() {
+        expressionEvaluator.registerExpressionSimulator(MinSimulator<DummyEngine, Comparable<Comparable<*>>>())
+
         val result = Select<DummyEngine, DataRow>(
             source = QuerySource(ConstantData(DummyEngine.orm, DataRow("value" to 1), DataRow("value" to 2))),
             columns = listOf(Projection(Min(Column<DummyEngine, Int>("value")), "min_value"))
