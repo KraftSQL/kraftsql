@@ -9,7 +9,7 @@ kotest = "6.2.2"
 mockito-core = "5.23.0"
 mockito = "6.3.0"
 mockk = "1.14.11"
-kover = "0.9.8"
+kover = "0.9.9"
 
 [libraries]
 maven-publish-plugin = { group = "com.vanniktech.maven.publish", name = "com.vanniktech.maven.publish.gradle.plugin", version.ref = "maven-publish-plugin" }
