@@ -8,8 +8,10 @@ import rocks.frieler.kraftsql.expressions.ArrayLength
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 
 class ArrayLengthSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @Test
@@ -21,7 +23,7 @@ class ArrayLengthSimulatorTest {
             whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> row["array"] as Array<*>? }
         }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             ArrayLengthSimulator<DummyEngine>().simulateExpression(ArrayLength(arrayExpression))
         }
 
@@ -37,7 +39,7 @@ class ArrayLengthSimulatorTest {
             whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> row["array"] as Array<*>? }
         }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             ArrayLengthSimulator<DummyEngine>().simulateExpression(ArrayLength(arrayExpression))
         }
 
@@ -54,7 +56,7 @@ class ArrayLengthSimulatorTest {
                 .thenReturn { _ -> row["array"] as Array<*>? }
         }
 
-        val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+        val simulation = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             ArrayLengthSimulator<DummyEngine>().simulateAggregation(ArrayLength(arrayExpression))
         }
 

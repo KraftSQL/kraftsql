@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import rocks.frieler.kraftsql.dql.Projection
+import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.ArrayConcatenation
 import rocks.frieler.kraftsql.expressions.ArrayElementReference
@@ -25,6 +27,7 @@ import rocks.frieler.kraftsql.expressions.Min
 import rocks.frieler.kraftsql.expressions.Not
 import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
+import rocks.frieler.kraftsql.expressions.SubqueryExpression
 import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
 
@@ -239,6 +242,30 @@ class SubexpressionCollectorTest {
         val subexpressions = subexpressionCollector.getSubexpressions(sum)
 
         subexpressions shouldContainExactlyInAnyOrder listOf(sum.expression)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect column expressions of SubqueryExpression`() {
+        val subqueryProjectionValue1 = mock<Expression<DummyEngine, Any?>>()
+        val subqueryProjectionValue2 = mock<Expression<DummyEngine, Any?>>()
+        val subquery = mock<Select<DummyEngine, Any>> {
+            whenever(it.columns).thenReturn(listOf(Projection(subqueryProjectionValue1), Projection(subqueryProjectionValue2)))
+        }
+        val subqueryExpression = SubqueryExpression<DummyEngine, Any?>(subquery)
+
+        val subexpressions = subexpressionCollector.getSubexpressions(subqueryExpression)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(subqueryProjectionValue1, subqueryProjectionValue2)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector returns empty list for SubqueryExpression without columns`() {
+        val subquery = mock<Select<DummyEngine, Any>> { whenever(it.columns).thenReturn(null) }
+        val subqueryExpression = SubqueryExpression<DummyEngine, Any?>(subquery)
+
+        val subexpressions = subexpressionCollector.getSubexpressions(subqueryExpression)
+
+        subexpressions.shouldBeEmpty()
     }
 
     @Test

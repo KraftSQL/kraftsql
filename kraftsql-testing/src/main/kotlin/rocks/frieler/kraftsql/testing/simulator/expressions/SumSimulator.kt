@@ -6,6 +6,7 @@ import rocks.frieler.kraftsql.expressions.Sum.Companion.SumAsBigDecimal
 import rocks.frieler.kraftsql.expressions.Sum.Companion.SumAsDouble
 import rocks.frieler.kraftsql.expressions.Sum.Companion.SumAsLong
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import java.math.BigDecimal
 import kotlin.reflect.KClass
 
@@ -19,7 +20,7 @@ class SumAsLongSimulator<E : Engine<E>> : AggregationSimulator<E, Long?, SumAsLo
     @Suppress("UNCHECKED_CAST")
     override val expression = SumAsLong::class as KClass<out SumAsLong<E>>
 
-    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: SumAsLong<E>): (List<DataRow>) -> Long? = { rows ->
         rows.mapNotNull { row -> (subexpressionCallbacks.simulateExpression(expression.expression)(row) as Number?)?.toLong() }
             .reduceOrNull { a, b -> a + b }
@@ -36,7 +37,7 @@ class SumAsDoubleSimulator<E : Engine<E>> : AggregationSimulator<E, Double?, Sum
     @Suppress("UNCHECKED_CAST")
     override val expression = SumAsDouble::class as KClass<out SumAsDouble<E>>
 
-    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: SumAsDouble<E>): (List<DataRow>) -> Double? = { rows ->
         rows.mapNotNull { row -> (subexpressionCallbacks.simulateExpression(expression.expression)(row) as Number?)?.toDouble() }
             .reduceOrNull { a, b -> a + b }
@@ -53,7 +54,7 @@ class SumAsBigDecimalSimulator<E : Engine<E>> : AggregationSimulator<E, BigDecim
     @Suppress("UNCHECKED_CAST")
     override val expression = SumAsBigDecimal::class as KClass<out SumAsBigDecimal<E>>
 
-    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: SumAsBigDecimal<E>): (List<DataRow>) -> BigDecimal? = { rows ->
         rows.mapNotNull { row -> subexpressionCallbacks.simulateExpression(expression.expression)(row) as BigDecimal? }
             .reduceOrNull(BigDecimal::plus)

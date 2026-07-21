@@ -22,11 +22,24 @@ import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.objects.Table
+import rocks.frieler.kraftsql.testing.simulator.expressions.ColumnSimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.ConstantSimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.EqualsSimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.GenericExpressionEvaluator
+import rocks.frieler.kraftsql.testing.simulator.expressions.RowSimulator
 
 class GenericEngineSimulatorTest {
-    private val simulator = object : GenericEngineSimulator<DummyEngine>() {
-        public override val persistentState = super.persistentState
-    }
+    private val persistentState = EngineState<DummyEngine>()
+    private val simulator = GenericEngineSimulator(
+        persistentState = persistentState,
+        expressionEvaluator = GenericExpressionEvaluator<DummyEngine>().apply {
+            // add support for essential Expressions to handle queries:
+            registerExpressionSimulator(ConstantSimulator<DummyEngine, Any?>())
+            registerExpressionSimulator(ColumnSimulator<DummyEngine, Any?>())
+            registerExpressionSimulator(EqualsSimulator())
+            registerExpressionSimulator(RowSimulator())
+        },
+    )
 
     private val connection = mock<Connection<DummyEngine>>()
 
@@ -62,25 +75,25 @@ class GenericEngineSimulatorTest {
 
         context(connection) { simulator.execute(CreateTable(table)) }
 
-        simulator.persistentState.findTable(table.qualifiedName) shouldNotBe null
+        persistentState.findTable(table.qualifiedName) shouldNotBe null
     }
 
     @Test
     fun `GenericEngineSimulator can simulate DropTable`() {
         val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
             rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT),
-        )).also { simulator.persistentState.addTable(it) }
+        )).also { persistentState.addTable(it) }
 
         context(connection) { simulator.execute(DropTable(table)) }
 
-        simulator.persistentState.findTable(table.qualifiedName) shouldBe null
+        persistentState.findTable(table.qualifiedName) shouldBe null
     }
 
     @Test
     fun `GenericEngineSimulator can simulate InsertInto`() {
         val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
             rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT),
-        )).also { simulator.persistentState.addTable(it) }
+        )).also { persistentState.addTable(it) }
         val testData = ConstantData(DummyEngine.orm, DataRow("c" to "foo"))
 
         val rows = context(connection) {
@@ -88,7 +101,7 @@ class GenericEngineSimulatorTest {
         }
 
         rows shouldBe 1
-        simulator.persistentState.getTable(table.qualifiedName).second.shouldContainAllInAnyOrder(testData.items.toList())
+        persistentState.getTable(table.qualifiedName).second.shouldContainAllInAnyOrder(testData.items.toList())
     }
 
     @Test
@@ -96,7 +109,7 @@ class GenericEngineSimulatorTest {
         val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
             rocks.frieler.kraftsql.objects.Column("c1", DummyEngine.Types.TEXT),
             rocks.frieler.kraftsql.objects.Column("c2", DummyEngine.Types.TEXT),
-        )).also { simulator.persistentState.addTable(it) }
+        )).also { persistentState.addTable(it) }
         val testData = ConstantData(DummyEngine.orm, DataRow("c1" to null, "col" to null))
 
         shouldThrow<IllegalArgumentException> {
@@ -108,7 +121,7 @@ class GenericEngineSimulatorTest {
     fun `GenericEngineSimulator rejects inserting NULL into non-nullable column`() {
         val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
             rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT, nullable = false),
-        )).also { simulator.persistentState.addTable(it) }
+        )).also { persistentState.addTable(it) }
         val testData = ConstantData(DummyEngine.orm, DataRow("c" to null))
 
         shouldThrow<IllegalArgumentException> {
@@ -121,8 +134,8 @@ class GenericEngineSimulatorTest {
         val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
             rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT, nullable = false),
         )).also {
-            simulator.persistentState.addTable(it)
-            simulator.persistentState.writeTable(it, listOf(DataRow("c" to "foo"), DataRow("c" to "bar")))
+            persistentState.addTable(it)
+            persistentState.writeTable(it, listOf(DataRow("c" to "foo"), DataRow("c" to "bar")))
         }
 
         val rowsDeleted = context(connection) {
@@ -130,7 +143,7 @@ class GenericEngineSimulatorTest {
         }
 
         rowsDeleted shouldBe 1
-        simulator.persistentState.getTable(table.qualifiedName).second.shouldHaveSize(1)
+        persistentState.getTable(table.qualifiedName).second.shouldHaveSize(1)
     }
 
     @Test
@@ -138,8 +151,8 @@ class GenericEngineSimulatorTest {
         val table = Table<DummyEngine, DataRow>("unit-tests", "test-data", "table", listOf(
             rocks.frieler.kraftsql.objects.Column("c", DummyEngine.Types.TEXT, nullable = false),
         )).also {
-            simulator.persistentState.addTable(it)
-            simulator.persistentState.writeTable(it, listOf(DataRow("c" to "foo"), DataRow("c" to "bar")))
+            persistentState.addTable(it)
+            persistentState.writeTable(it, listOf(DataRow("c" to "foo"), DataRow("c" to "bar")))
         }
 
         val rowsDeleted = context(connection) {
@@ -147,6 +160,6 @@ class GenericEngineSimulatorTest {
         }
 
         rowsDeleted shouldBe 2
-        simulator.persistentState.getTable(table.qualifiedName).second.shouldBeEmpty()
+        persistentState.getTable(table.qualifiedName).second.shouldBeEmpty()
     }
 }

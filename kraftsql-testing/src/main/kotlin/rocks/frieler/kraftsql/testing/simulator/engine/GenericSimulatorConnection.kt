@@ -8,20 +8,17 @@ import rocks.frieler.kraftsql.dml.Delete
 import rocks.frieler.kraftsql.dml.InsertInto
 import rocks.frieler.kraftsql.dml.RollbackTransaction
 import rocks.frieler.kraftsql.engine.Engine
-import rocks.frieler.kraftsql.objects.ConstantData
-import rocks.frieler.kraftsql.objects.DataRow
-import rocks.frieler.kraftsql.objects.Table
 import rocks.frieler.kraftsql.dql.Select
 import kotlin.reflect.KClass
 
 /**
- * Generic [SimulatorConnection], that "connects" to a [GenericEngineSimulator].
+ * Generic [SimulatorConnection], that "connects" to an arbitrary [EngineSimulator].
  *
  * @param E the [Engine] to simulate
- * @param engine the [GenericEngineSimulator] to "connect" to
+ * @param engine the [EngineSimulator] to "connect" to
  */
 open class GenericSimulatorConnection<E : Engine<E>>(
-    protected open val engine: GenericEngineSimulator<E> = GenericEngineSimulator(),
+    protected open val engine: EngineSimulator<E>,
 ) : SimulatorConnection<E> {
     override fun <T : Any> execute(select: Select<E, T>, type: KClass<T>): List<T> =
         engine.execute(select, type)

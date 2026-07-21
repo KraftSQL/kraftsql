@@ -14,6 +14,7 @@ import rocks.frieler.kraftsql.expressions.Aggregation
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Expression
+import rocks.frieler.kraftsql.expressions.SubqueryExpression
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.Data
 import rocks.frieler.kraftsql.objects.DataRow
@@ -286,6 +287,7 @@ open class GenericQueryEvaluator<E : Engine<E>>(
 
     private fun Expression<E, *>.isAggregating(includeConstants: Boolean = false) : Boolean = when (this) {
         is Constant -> includeConstants
+        is SubqueryExpression -> includeConstants // constant, as long as subqueries are not correlated
         is Aggregation -> true
         else -> subexpressionCollector.getSubexpressions(this).run { any { it.isAggregating(false) } && all { it.isAggregating(true) } }
     }

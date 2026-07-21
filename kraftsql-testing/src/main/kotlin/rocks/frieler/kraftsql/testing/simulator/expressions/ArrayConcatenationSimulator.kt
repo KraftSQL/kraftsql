@@ -4,6 +4,7 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.ArrayConcatenation
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import kotlin.reflect.KClass
 
 /**
@@ -21,13 +22,13 @@ import kotlin.reflect.KClass
 open class ArrayConcatenationSimulator<E : Engine<E>, T>(
     override val expression : KClass<out ArrayConcatenation<E, T>>
 ) : ExpressionSimulator<E, Array<T>?, ArrayConcatenation<E,T>> {
-    context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateExpression(expression: ArrayConcatenation<E, T>): (DataRow) -> Array<T>? {
         val argumentSimulations = expression.arguments.map { subexpressionCallbacks.simulateExpression(it) }
         return { row -> simulate(argumentSimulations.map { it(row) }) }
     }
 
-    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: ArrayConcatenation<E, T>): (List<DataRow>) -> Array<T>? {
         val argumentSimulations = expression.arguments.map { subexpressionCallbacks.simulateAggregation(it) }
         return { rows -> simulate(argumentSimulations.map { it(rows) }) }

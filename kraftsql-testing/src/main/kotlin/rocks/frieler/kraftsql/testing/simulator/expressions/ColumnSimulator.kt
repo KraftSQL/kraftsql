@@ -4,6 +4,7 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Column
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import java.sql.SQLSyntaxErrorException
 import kotlin.reflect.KClass
 
@@ -17,13 +18,13 @@ open class ColumnSimulator<E : Engine<E>, T> : ExpressionSimulator<E, T, Column<
     @Suppress("UNCHECKED_CAST")
     override val expression = Column::class as KClass<out Column<E, T>>
 
-    context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateExpression(expression: Column<E, T>): (DataRow) -> T = { row ->
         @Suppress("UNCHECKED_CAST")
         row[expression.qualifiedName] as T
     }
 
-    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: Column<E, T>): (List<DataRow>) -> T {
         if (expression in groupExpressions) {
             return { rows -> simulateExpression(expression)(rows.first()) }

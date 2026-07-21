@@ -3,6 +3,7 @@ package rocks.frieler.kraftsql.testing.simulator.expressions
 import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import kotlin.reflect.KClass
 
 /**
@@ -35,35 +36,13 @@ open class GenericExpressionEvaluator<E : Engine<E>> {
             throw NotImplementedError("Simulation of a ${expression::class.qualifiedName} is not implemented.")
         } as ExpressionSimulator<E, T, X>
 
-    init {
-        registerExpressionSimulator(ConstantSimulator<E, Any?>())
-        registerExpressionSimulator(ColumnSimulator<E, Any?>())
-        registerExpressionSimulator(CastSimulator<E, Any?>())
-        registerExpressionSimulator(IsNotNullSimulator())
-        registerExpressionSimulator(EqualsSimulator())
-        registerExpressionSimulator(LessOrEqualSimulator())
-        registerExpressionSimulator(NotSimulator())
-        registerExpressionSimulator(AndSimulator())
-        registerExpressionSimulator(OrSimulator())
-        registerExpressionSimulator(CoalesceSimulator<E, Any?>())
-        registerExpressionSimulator(ArraySimulator<E, Any>())
-        registerExpressionSimulator(ArrayElementReferenceSimulator<E, Any?>())
-        registerExpressionSimulator(ArrayLengthSimulator())
-        registerExpressionSimulator(RowSimulator())
-        registerExpressionSimulator(CountSimulator())
-        registerExpressionSimulator(MinSimulator<E, Comparable<Comparable<*>>>())
-        registerExpressionSimulator(MaxSimulator<E, Comparable<Comparable<*>>>())
-        registerExpressionSimulator(SumAsLongSimulator())
-        registerExpressionSimulator(SumAsDoubleSimulator())
-        registerExpressionSimulator(SumAsBigDecimalSimulator())
-    }
-
     /**
      * Builds a function that simulates the given [Expression] on a [DataRow].
      *
      * @param expression the [Expression] to simulate
      * @return a function that simulates the [Expression]
      */
+    context(state: EngineState<E>)
     open fun <T> simulateExpression(expression: Expression<E, T>): (DataRow) -> T {
         context(
             object : ExpressionSimulator.SubexpressionCallbacks<E> {
@@ -91,6 +70,7 @@ open class GenericExpressionEvaluator<E : Engine<E>> {
      * @param groupExpressions the [Expression]s which evaluate to the same value for all [DataRow]s to aggregate over
      * @return a function that simulates the [Expression] as part of an aggregation
      */
+    context(state: EngineState<E>)
     open fun <T> simulateAggregation(expression: Expression<E, T>, groupExpressions: List<Expression<E, *>>): (List<DataRow>) -> T {
         context(
             groupExpressions,

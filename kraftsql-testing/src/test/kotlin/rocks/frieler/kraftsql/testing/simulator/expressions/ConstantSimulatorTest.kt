@@ -8,15 +8,17 @@ import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 
 class ConstantSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @Test
     fun `simulateExpression() returns function that returns the Constant's value`() {
         val row = mock<DataRow>()
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             ConstantSimulator<DummyEngine, Long>().simulateExpression(Constant(42L))
         }
         val value = simulation(row)
@@ -29,7 +31,7 @@ class ConstantSimulatorTest {
     fun `simulateExpression() returns function that returns the value of NULL Constant`() {
         val row = mock<DataRow>()
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             ConstantSimulator<DummyEngine, Long?>().simulateExpression(Constant(null))
         }
         val value = simulation(row)
@@ -42,7 +44,7 @@ class ConstantSimulatorTest {
     fun `simulateAggregation() returns function that returns the Constant's value`() {
         val rows = listOf(mock<DataRow>())
 
-        val simulation = context(emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
+        val simulation = context(state, emptyList<Expression<DummyEngine, *>>(), subexpressionCallbacks) {
             ConstantSimulator<DummyEngine, Long>().simulateAggregation(Constant(42L))
         }
         val value = simulation(rows)

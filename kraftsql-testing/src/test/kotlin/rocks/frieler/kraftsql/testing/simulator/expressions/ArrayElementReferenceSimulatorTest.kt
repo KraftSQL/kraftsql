@@ -9,10 +9,12 @@ import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.expressions.ArrayElementReference
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 
 class ArrayElementReferenceSimulatorTest {
     private val arrayElementReferenceSimulator = ArrayElementReferenceSimulator<DummyEngine, Any>()
 
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @Test
@@ -22,7 +24,7 @@ class ArrayElementReferenceSimulatorTest {
         val indexExpression = mock<Expression<DummyEngine, Int>>()
         whenever(subexpressionCallbacks.simulateExpression(indexExpression)).thenReturn { _ -> 2 }
 
-        val simulatedArrayElementReference = context(subexpressionCallbacks) {
+        val simulatedArrayElementReference = context(state, subexpressionCallbacks) {
             arrayElementReferenceSimulator.simulateExpression(ArrayElementReference(arrayExpression, indexExpression))
         }
         val result = simulatedArrayElementReference(mock())
@@ -37,7 +39,7 @@ class ArrayElementReferenceSimulatorTest {
         val indexExpression = mock<Expression<DummyEngine, Int>>()
         whenever(subexpressionCallbacks.simulateExpression(indexExpression)).thenReturn { _ -> 1 }
 
-        val simulatedArrayElementReference = context(subexpressionCallbacks) {
+        val simulatedArrayElementReference = context(state, subexpressionCallbacks) {
             arrayElementReferenceSimulator.simulateExpression(ArrayElementReference(arrayExpression, indexExpression))
         }
         val result = simulatedArrayElementReference(mock())
@@ -54,7 +56,7 @@ class ArrayElementReferenceSimulatorTest {
         whenever(context(any<List<Expression<DummyEngine, *>>>()) { subexpressionCallbacks.simulateAggregation(eq(indexExpression)) })
             .thenReturn { _ -> 2 }
 
-        val simulatedArrayElementReference = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+        val simulatedArrayElementReference = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             arrayElementReferenceSimulator.simulateAggregation(ArrayElementReference(arrayExpression, indexExpression))
         }
         val result = simulatedArrayElementReference(listOf(mock()))

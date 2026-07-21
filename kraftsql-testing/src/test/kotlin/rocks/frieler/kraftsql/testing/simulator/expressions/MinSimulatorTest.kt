@@ -9,9 +9,11 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Min
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import java.sql.SQLException
 
 class MinSimulatorTest {
+    private val state = mockk<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mockk<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     private val minSimulator = MinSimulator<DummyEngine, Comparable<Comparable<*>>>()
@@ -19,7 +21,7 @@ class MinSimulatorTest {
     @Test
     fun `MinSimulator rejects simulation as Expression`() {
         shouldThrow<SQLException> {
-            context(subexpressionCallbacks) { minSimulator.simulateExpression(Min(mockk())) }
+            context(state, subexpressionCallbacks) { minSimulator.simulateExpression(Min(mockk())) }
         }
     }
 
@@ -32,7 +34,7 @@ class MinSimulatorTest {
         val row2 = mockk<DataRow>().also { every { expressionSimulation.invoke(it) } returns 2 }
         @Suppress("UNCHECKED_CAST") val min = Min(expression) as Min<DummyEngine, Comparable<Comparable<*>>>
 
-        val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+        val simulation = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             minSimulator.simulateAggregation(min)
         }
         val result = simulation(listOf(row1, row2))
@@ -49,7 +51,7 @@ class MinSimulatorTest {
         val rowWithNull = mockk<DataRow>().also { every { expressionSimulation.invoke(it) } returns null }
         @Suppress("UNCHECKED_CAST") val min = Min(expression) as Min<DummyEngine, Comparable<Comparable<*>>>
 
-        val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+        val simulation = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             minSimulator.simulateAggregation(min)
         }
         val result = simulation(listOf(rowWithValue, rowWithNull))
@@ -66,7 +68,7 @@ class MinSimulatorTest {
         val row2 = mockk<DataRow>().also { every { expressionSimulation.invoke(it) } returns null }
         @Suppress("UNCHECKED_CAST") val min = Min(expression) as Min<DummyEngine, Comparable<Comparable<*>>>
 
-        val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+        val simulation = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             minSimulator.simulateAggregation(min)
         }
         val result = simulation(listOf(row1, row2))
@@ -81,7 +83,7 @@ class MinSimulatorTest {
         every { subexpressionCallbacks.simulateExpression(expression) } returns expressionSimulation
         @Suppress("UNCHECKED_CAST") val min = Min(expression) as Min<DummyEngine, Comparable<Comparable<*>>>
 
-        val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+        val simulation = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             minSimulator.simulateAggregation(min)
         }
         val result = simulation(emptyList())

@@ -10,9 +10,11 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import kotlin.context
 
 class IsNotNullSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @ParameterizedTest
@@ -26,7 +28,7 @@ class IsNotNullSimulatorTest {
         val expression =
             mock<Expression<DummyEngine, String?>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> expression } }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             IsNotNullSimulator<DummyEngine>().simulateExpression(IsNotNull(expression))
         }
         val result = simulation(row)
@@ -43,7 +45,7 @@ class IsNotNullSimulatorTest {
             context(groupExpressions) { whenever(subexpressionCallbacks.simulateAggregation(it)) }.thenReturn { _ -> "foo"}
         }
 
-        val simulation = context(groupExpressions, subexpressionCallbacks) {
+        val simulation = context(state, groupExpressions, subexpressionCallbacks) {
             IsNotNullSimulator<DummyEngine>().simulateAggregation(IsNotNull(expression))
         }
         val result = simulation(listOf(row))

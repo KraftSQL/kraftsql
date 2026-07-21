@@ -5,17 +5,18 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import rocks.frieler.kraftsql.engine.Connection
 import rocks.frieler.kraftsql.engine.DefaultConnection
 import rocks.frieler.kraftsql.h2.engine.H2Engine
-import rocks.frieler.kraftsql.h2.testing.simulator.engine.H2SimulatorConnection
+import rocks.frieler.kraftsql.h2.testing.simulator.engine.H2SimulatorBuilder
 import rocks.frieler.kraftsql.testing.simulator.SimulatorTestExtension
+import rocks.frieler.kraftsql.testing.simulator.engine.GenericSimulatorConnection
 import rocks.frieler.kraftsql.testing.simulator.engine.SimulatorConnection
 
 class H2SimulatorTestExtension(
-    connectionProvider : (ExtensionContext) -> SimulatorConnection<H2Engine> = { H2SimulatorConnection() },
+    connectionProvider : (ExtensionContext) -> SimulatorConnection<H2Engine> = { GenericSimulatorConnection(H2SimulatorBuilder().build()) },
     defaultConnectionToConfigure: DefaultConnection<H2Engine, Connection<H2Engine>>? = H2Engine.DefaultConnection,
 ) : SimulatorTestExtension<H2Engine, Connection<H2Engine>, SimulatorConnection<H2Engine>>(connectionProvider, defaultConnectionToConfigure) {
 
     class Builder(
-        connectionProvider : () -> SimulatorConnection<H2Engine> = { H2SimulatorConnection() },
+        connectionProvider : () -> SimulatorConnection<H2Engine> = { GenericSimulatorConnection(H2SimulatorBuilder().build()) },
     ) : SimulatorTestExtension.Builder<H2Engine, Connection<H2Engine>, SimulatorConnection<H2Engine>>(connectionProvider) {
 
         init {

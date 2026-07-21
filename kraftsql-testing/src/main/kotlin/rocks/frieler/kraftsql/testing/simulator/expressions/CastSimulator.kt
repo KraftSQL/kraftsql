@@ -4,6 +4,7 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Cast
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import java.time.LocalDate
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
@@ -21,14 +22,14 @@ class CastSimulator<E : Engine<E>, T> : ExpressionSimulator<E, T, Cast<E, T>> {
     @Suppress("UNCHECKED_CAST")
     override val expression = Cast::class as KClass<out Cast<E, T>>
 
-    context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateExpression(expression: Cast<E, T>): (DataRow) -> T = { row ->
         val value = subexpressionCallbacks.simulateExpression(expression.expression)(row)
         val targetType = expression.type.naturalKType()
         simulate(value, targetType)
     }
 
-    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: Cast<E, T>): (List<DataRow>) -> T = { rows ->
         val value = subexpressionCallbacks.simulateAggregation(expression.expression)(rows)
         val targetType = expression.type.naturalKType()

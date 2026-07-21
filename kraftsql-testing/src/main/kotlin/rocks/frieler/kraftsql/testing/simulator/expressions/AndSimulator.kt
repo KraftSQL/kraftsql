@@ -4,6 +4,7 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import kotlin.reflect.KClass
 
 /**
@@ -15,7 +16,7 @@ open class AndSimulator<E : Engine<E>> : ExpressionSimulator<E, Boolean?, And<E>
     @Suppress("UNCHECKED_CAST")
     override val expression = And::class as KClass<And<E>>
 
-    context(subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateExpression(expression: And<E>): (DataRow) -> Boolean? {
         return { row -> simulate(
             subexpressionCallbacks.simulateExpression(expression.left)(row),
@@ -23,7 +24,7 @@ open class AndSimulator<E : Engine<E>> : ExpressionSimulator<E, Boolean?, And<E>
         }
     }
 
-    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: And<E>): (List<DataRow>) -> Boolean? {
         return { rows -> simulate(
             subexpressionCallbacks.simulateAggregation(expression.left)(rows),

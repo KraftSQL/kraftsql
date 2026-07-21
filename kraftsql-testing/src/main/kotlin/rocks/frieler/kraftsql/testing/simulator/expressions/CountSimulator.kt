@@ -4,6 +4,7 @@ import rocks.frieler.kraftsql.engine.Engine
 import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.objects.DataRow
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import kotlin.reflect.KClass
 
 /**
@@ -15,7 +16,7 @@ class CountSimulator<E : Engine<E>> : AggregationSimulator<E, Long, Count<E>>("C
     @Suppress("UNCHECKED_CAST")
     override val expression = Count::class as KClass<out Count<E>>
 
-    context(groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
+    context(state: EngineState<E>, groupExpressions: List<Expression<E, *>>, subexpressionCallbacks: ExpressionSimulator.SubexpressionCallbacks<E>)
     override fun simulateAggregation(expression: Count<E>): (List<DataRow>) -> Long {
         val expressionToCount = expression.expression?.let { subexpressionCallbacks.simulateExpression(it) }
         return if (expressionToCount != null) { rows ->

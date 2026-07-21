@@ -10,8 +10,10 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 
 class OrSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @ParameterizedTest
@@ -31,7 +33,7 @@ class OrSimulatorTest {
         val leftHandSide = mock<Expression<DummyEngine, Boolean?>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> left} }
         val rightHandSide = mock<Expression<DummyEngine, Boolean?>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> right} }
 
-        val simulation = context(subexpressionCallbacks) {
+        val simulation = context(state, subexpressionCallbacks) {
             OrSimulator<DummyEngine>().simulateExpression(Or(leftHandSide, rightHandSide))
         }
         val result = simulation(row)
@@ -50,7 +52,7 @@ class OrSimulatorTest {
             context(groupExpressions) { whenever(subexpressionCallbacks.simulateAggregation(it)) }.thenReturn { _ -> false}
         }
 
-        val simulation = context(groupExpressions, subexpressionCallbacks) {
+        val simulation = context(state, groupExpressions, subexpressionCallbacks) {
             OrSimulator<DummyEngine>().simulateAggregation(Or(leftHandSide, rightHandSide))
         }
         val result = simulation(listOf(row))

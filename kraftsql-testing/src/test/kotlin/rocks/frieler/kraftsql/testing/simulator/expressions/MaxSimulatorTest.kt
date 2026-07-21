@@ -9,9 +9,11 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
+import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
 import java.sql.SQLException
 
 class MaxSimulatorTest {
+    private val state = mock<EngineState<DummyEngine>>()
     private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     private val maxSimulator = MaxSimulator<DummyEngine, Comparable<Comparable<*>>>()
@@ -19,7 +21,7 @@ class MaxSimulatorTest {
     @Test
     fun `MaxSimulator rejects simulation as Expression`() {
         shouldThrow<SQLException> {
-            context(subexpressionCallbacks) { maxSimulator.simulateExpression(Max(mock())) }
+            context(state, subexpressionCallbacks) { maxSimulator.simulateExpression(Max(mock())) }
         }
     }
 
@@ -31,7 +33,7 @@ class MaxSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expression)).thenReturn { row -> if (row == row1) 1 else if (row == row2) 2 else error("unexpected row") }
         @Suppress("UNCHECKED_CAST") val max = Max(expression) as Max<DummyEngine, Comparable<Comparable<*>>>
 
-        val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+        val simulation = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             maxSimulator.simulateAggregation(max)
         }
         val result = simulation(listOf(row1, row2))
@@ -47,7 +49,7 @@ class MaxSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expression)).thenReturn { row -> if (row == rowWithValue) 1 else null }
         @Suppress("UNCHECKED_CAST") val max = Max(expression) as Max<DummyEngine, Comparable<Comparable<*>>>
 
-        val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+        val simulation = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             maxSimulator.simulateAggregation(max)
         }
         val result = simulation(listOf(rowWithValue, rowWithNull))
@@ -63,7 +65,7 @@ class MaxSimulatorTest {
         val row2 = mock<DataRow>()
         @Suppress("UNCHECKED_CAST") val max = Max(expression) as Max<DummyEngine, Comparable<Comparable<*>>>
 
-        val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+        val simulation = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             maxSimulator.simulateAggregation(max)
         }
         val result = simulation(listOf(row1, row2))
@@ -77,7 +79,7 @@ class MaxSimulatorTest {
         whenever(subexpressionCallbacks.simulateExpression(expression)).thenReturn { _ -> null }
         @Suppress("UNCHECKED_CAST") val max = Max(expression) as Max<DummyEngine, Comparable<Comparable<*>>>
 
-        val simulation = context(subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+        val simulation = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
             maxSimulator.simulateAggregation(max)
         }
         val result = simulation(emptyList())
