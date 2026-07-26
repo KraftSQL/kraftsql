@@ -25,6 +25,7 @@ import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Min
 import rocks.frieler.kraftsql.expressions.Not
+import rocks.frieler.kraftsql.expressions.NotEquals
 import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.expressions.SubqueryExpression
@@ -115,6 +116,16 @@ class GenericEngineSimulatorBuilderTemplateTest {
         val result = simulation.invoke(DataRow())
 
         result shouldBe true
+    }
+
+    @Test
+    fun `Wired ExpressionEvaluator can simulate the not-equals-operator`() {
+        val notEqualsExpression = NotEquals<DummyEngine>(Constant(1), Constant(1))
+
+        val simulation = context(state) { expressionEvaluator.simulateExpression(notEqualsExpression) }
+        val result = simulation.invoke(DataRow())
+
+        result shouldBe false
     }
 
     @Test
