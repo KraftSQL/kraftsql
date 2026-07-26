@@ -1,133 +1,69 @@
 package rocks.frieler.kraftsql.testing.simulator.expressions
 
-import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
-import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
 import rocks.frieler.kraftsql.testing.simulator.engine.EngineState
-import java.math.BigDecimal
-import kotlin.reflect.KClass
 
 class EqualsSimulatorTest {
-    private val state = mock<EngineState<DummyEngine>>()
+    private val comparator = mockk<ConvertingComparator>()
+    private val simulator = EqualsSimulator<DummyEngine>(comparator)
 
-    private val subexpressionCallbacks = mock<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
+    private val state = mockk<EngineState<DummyEngine>>()
+    private val subexpressionCallbacks = mockk<ExpressionSimulator.SubexpressionCallbacks<DummyEngine>>()
 
     @ParameterizedTest
     @CsvSource(
-        "'foo', 'foo', true",
-        "'foo', 'bar', false",
+        "-1, false",
+        "0, true",
+        "1, false",
+        "NULL, false",
+        nullValues = ["NULL"]
     )
-    fun `EqualsSimulator can simulate equals-operator to compare two expressions`(left: String, right: String, equals: Boolean) {
-        val row = mock<DataRow>()
-        val leftHandSide = mock<Expression<DummyEngine, String>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> left} }
-        val rightHandSide = mock<Expression<DummyEngine, String>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> right} }
+    fun `EqualSimulator can simulate Equals expression`(comparisonResult: Int?, expectedEquality: Boolean) {
+        val value1 = mockk<Any>()
+        val value2 = mockk<Any>()
+        every { comparator.compare(value1, value2) } returns(comparisonResult)
+        val left = mockk<Expression<DummyEngine, *>>().also {
+            every { subexpressionCallbacks.simulateExpression(it) } returns { _ -> value1 }
+        }
+        val right = mockk<Expression<DummyEngine, *>>().also {
+            every { subexpressionCallbacks.simulateExpression(it) } returns { _ -> value2 }
+        }
+        val equals = Equals(left, right)
 
         val simulation = context(state, subexpressionCallbacks) {
-            EqualsSimulator<DummyEngine>().simulateExpression(Equals(leftHandSide, rightHandSide))
+            simulator.simulateExpression(equals)
         }
-        val result = simulation(row)
+        val result = simulation(mockk())
 
-        result shouldBe equals
+        result shouldBe expectedEquality
     }
 
     @Test
-    fun `EqualsSimulator returns false when comparing to NULL`() {
-        val row = mock<DataRow>()
-        val leftHandSide = mock<Expression<DummyEngine, *>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> null} }
-        val rightHandSide = mock<Expression<DummyEngine, *>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> null} }
-
-        val simulation = context(state, subexpressionCallbacks) {
-            EqualsSimulator<DummyEngine>().simulateExpression(Equals(leftHandSide, rightHandSide))
+    fun `EqualSimulator can simulate Equals expression of aggregations`() {
+        val value1 = mockk<Any>()
+        val value2 = mockk<Any>()
+        every { comparator.compare(value1, value2) } returns(0)
+        val left = mockk<Expression<DummyEngine, *>>().also {
+            every { context(emptyList<Expression<DummyEngine, *>>()) { subexpressionCallbacks.simulateAggregation(it) } } returns { _ -> value1 }
         }
-        val result = simulation(row)
-
-        result shouldBe false
-    }
-
-    @Test
-    fun `EqualsSimulator returns true for equal integer numbers of different types`() {
-        val numberTypes = listOf(Byte::class, Short::class, Int::class, Long::class, BigDecimal::class)
-        fun Int.toNumberType(type: KClass<out Number>) =
-            when (type) {
-                Byte::class -> toByte()
-                Short::class -> toShort()
-                Int::class -> this
-                Long::class -> toLong()
-                BigDecimal::class -> toBigDecimal()
-                else -> throw IllegalArgumentException("unknown type $type")
-            }
-        for (leftType in numberTypes) for (rightType in numberTypes) if (leftType != rightType) {
-
-            val row = mock<DataRow>()
-            val leftHandSide =
-                mock<Expression<DummyEngine, Number>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> 42.toNumberType(leftType) } }
-            val rightHandSide =
-                mock<Expression<DummyEngine, Number>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> 42.toNumberType(rightType) } }
-
-            val simulation = context(state, subexpressionCallbacks) {
-                EqualsSimulator<DummyEngine>().simulateExpression(Equals(leftHandSide, rightHandSide))
-            }
-            val result = simulation(row)
-
-            withClue("comparing $leftType and $rightType:") {
-                result shouldBe true
-            }
+        val right = mockk<Expression<DummyEngine, *>>().also {
+            every { context(emptyList<Expression<DummyEngine, *>>()) { subexpressionCallbacks.simulateAggregation(it) } } returns { _ -> value2 }
         }
-    }
+        val equals = Equals(left, right)
 
-    @Test
-    fun `EqualsSimulator returns true for equal floating point numbers of different types`() {
-        val numberTypes = listOf(Float::class, Double::class, BigDecimal::class)
-        fun Float.toNumberType(type: KClass<out Number>) =
-            when (type) {
-                Float::class -> toFloat()
-                Double::class -> toDouble()
-                BigDecimal::class -> this
-                else -> throw IllegalArgumentException("unknown type $type")
-            }
-        for (leftType in numberTypes) for (rightType in numberTypes) if (leftType != rightType) {
-
-            val row = mock<DataRow>()
-            val leftHandSide =
-                mock<Expression<DummyEngine, Number>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> 42F.toNumberType(leftType) } }
-            val rightHandSide =
-                mock<Expression<DummyEngine, Number>>().also { whenever(subexpressionCallbacks.simulateExpression(it)).thenReturn { _ -> 42F.toNumberType(rightType) } }
-
-            val simulation = context(state, subexpressionCallbacks) {
-                EqualsSimulator<DummyEngine>().simulateExpression(Equals(leftHandSide, rightHandSide))
-            }
-            val result = simulation(row)
-
-            withClue("comparing $leftType and $rightType:") {
-                result shouldBe true
-            }
+        val simulation = context(state, subexpressionCallbacks, emptyList<Expression<DummyEngine, *>>()) {
+            simulator.simulateAggregation(equals)
         }
-    }
+        val result = simulation(listOf(mockk()))
 
-    @Test
-    fun `EqualsSimulator can simulate Equals wrapping two aggregations`() {
-        val groupExpressions = emptyList<Expression<DummyEngine, *>>()
-        val row = mock<DataRow>()
-        val leftHandSide = mock<Expression<DummyEngine, String>>().also {
-            context(groupExpressions) { whenever(subexpressionCallbacks.simulateAggregation(it)) }.thenReturn { _ -> "left"}
-        }
-        val rightHandSide = mock<Expression<DummyEngine, String>>().also {
-            context(groupExpressions) { whenever(subexpressionCallbacks.simulateAggregation(it)) }.thenReturn { _ -> "right"}
-        }
-
-        val simulation = context(state, groupExpressions, subexpressionCallbacks) {
-            EqualsSimulator<DummyEngine>().simulateAggregation(Equals(leftHandSide, rightHandSide))
-        }
-        val result = simulation(listOf(row))
-
-        result shouldBe false
+        result shouldBe true
     }
 }
