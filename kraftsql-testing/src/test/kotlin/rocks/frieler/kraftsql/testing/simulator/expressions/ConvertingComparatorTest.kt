@@ -45,13 +45,22 @@ class ConvertingComparatorTest {
 
     @Test
     fun `compare can compare any two Numbers`() {
-        val numbersOfAllTypes = listOf(0.toByte(), 0.toShort(), 0, 0L, BigInteger.ZERO, 0f, 0.0, BigDecimal.ZERO)
+        val zeroOfAllNumberTypes = listOf(0.toByte(), 0.toShort(), 0, 0L, BigInteger.ZERO, 0f, 0.0, BigDecimal.ZERO)
+        val oneOfAllNumberTypes = listOf(1.toByte(), 1.toShort(), 1, 1L, BigInteger.ONE, 1f, 1.0, BigDecimal.ONE)
 
-        for (number1 in numbersOfAllTypes) {
-            for (number2 in numbersOfAllTypes) {
-                comparator.compare(number1, number2) shouldNotBe null
+        for (zero in zeroOfAllNumberTypes) {
+            for (alsoZero in zeroOfAllNumberTypes) {
+                comparator.compare(zero, alsoZero) shouldBe 0
+            }
+            for (one in oneOfAllNumberTypes) {
+                comparator.compare(zero, one) shouldNotBeNull { this shouldBeLessThan 0 }
             }
         }
+    }
+
+    @Test
+    fun `compare properly compares floating point numbers`() {
+        comparator.compare(0.1f, 0.2f) shouldNotBeNull { this shouldBeLessThan 0 }
     }
 
     @Test
