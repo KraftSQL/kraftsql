@@ -11,6 +11,7 @@ import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
+import rocks.frieler.kraftsql.expressions.IsNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Min
@@ -57,6 +58,7 @@ class H2QueryEvaluator(
         is Constant -> sql()
         is Count -> "COUNT(${expression?.defaultColumnName() ?: "*"})"
         is Equals -> "${left.defaultColumnName()} = ${right.defaultColumnName()}"
+        is IsNull -> "${expression.defaultColumnName()}_IS_NULL"
         is IsNotNull -> "${expression.defaultColumnName()}_IS_NOT_NULL"
         is LessOrEqual -> "${left.defaultColumnName()}<=${right.defaultColumnName()}"
         is Max<H2Engine, *> -> "MAX(${expression.defaultColumnName()})"
