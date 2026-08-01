@@ -14,6 +14,7 @@ import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
+import rocks.frieler.kraftsql.expressions.IsNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Min
@@ -58,6 +59,7 @@ open class GenericSubexpressionCollector<E : Engine<E>> : SubexpressionCollector
             is Constant<E, *> -> emptyList()
             is Column<E, *> -> emptyList()
             is Cast<E, *> -> listOf(expression.expression)
+            is IsNull<E> -> listOf(expression.expression)
             is IsNotNull<E> -> listOf(expression.expression)
             is Equals<E> -> listOf(expression.left, expression.right)
             is NotEquals<E> -> listOf(expression.left, expression.right)

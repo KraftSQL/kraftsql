@@ -3,6 +3,7 @@ package rocks.frieler.kraftsql.testing.simulator.expressions
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.mockk.mockk
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
@@ -21,6 +22,7 @@ import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
+import rocks.frieler.kraftsql.expressions.IsNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Min
@@ -69,6 +71,15 @@ class SubexpressionCollectorTest {
         val subexpressions = subexpressionCollector.getSubexpressions(isNotNull)
 
         subexpressions shouldContainExactlyInAnyOrder listOf(isNotNull.expression)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect expression of IsNull`() {
+        val isNull = IsNull(mockk<Expression<DummyEngine, Any?>>())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(isNull)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(isNull.expression)
     }
 
     @Test

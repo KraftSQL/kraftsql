@@ -21,6 +21,7 @@ import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.IsNotNull
+import rocks.frieler.kraftsql.expressions.IsNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Min
@@ -96,6 +97,16 @@ class GenericEngineSimulatorBuilderTemplateTest {
         val result = simulation.invoke(DataRow())
 
         result shouldBe 123
+    }
+
+    @Test
+    fun `Wired ExpressionEvaluator can simulate the IS NULL operator`() {
+        val isNullExpression = IsNull<DummyEngine>(Constant(1))
+
+        val simulation = context(state) { expressionEvaluator.simulateExpression(isNullExpression) }
+        val result = simulation.invoke(DataRow())
+
+        result shouldBe false
     }
 
     @Test
