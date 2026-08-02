@@ -23,6 +23,7 @@ import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.IsNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
+import rocks.frieler.kraftsql.expressions.LessThan
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Min
 import rocks.frieler.kraftsql.expressions.Not
@@ -137,6 +138,16 @@ class GenericEngineSimulatorBuilderTemplateTest {
         val result = simulation.invoke(DataRow())
 
         result shouldBe false
+    }
+
+    @Test
+    fun `Wired ExpressionEvaluator can simulate the LessThan-operator`() {
+        val lessThanExpression = LessThan<DummyEngine>(Constant(1), Constant(2))
+
+        val simulation = context(state) { expressionEvaluator.simulateExpression(lessThanExpression) }
+        val result = simulation.invoke(DataRow())
+
+        result shouldBe true
     }
 
     @Test
