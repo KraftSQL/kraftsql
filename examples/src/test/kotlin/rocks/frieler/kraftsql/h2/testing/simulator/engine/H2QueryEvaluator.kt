@@ -13,6 +13,7 @@ import rocks.frieler.kraftsql.expressions.Expression
 import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.IsNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
+import rocks.frieler.kraftsql.expressions.LessThan
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Min
 import rocks.frieler.kraftsql.expressions.Not
@@ -60,6 +61,7 @@ class H2QueryEvaluator(
         is Equals -> "${left.defaultColumnName()} = ${right.defaultColumnName()}"
         is IsNull -> "${expression.defaultColumnName()}_IS_NULL"
         is IsNotNull -> "${expression.defaultColumnName()}_IS_NOT_NULL"
+        is LessThan -> "${left.defaultColumnName()}<${right.defaultColumnName()}"
         is LessOrEqual -> "${left.defaultColumnName()}<=${right.defaultColumnName()}"
         is Max<H2Engine, *> -> "MAX(${expression.defaultColumnName()})"
         is Min<H2Engine, *> -> "MIN(${expression.defaultColumnName()})"
