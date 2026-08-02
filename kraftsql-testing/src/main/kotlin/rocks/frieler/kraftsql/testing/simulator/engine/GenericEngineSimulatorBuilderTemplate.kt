@@ -12,6 +12,7 @@ import rocks.frieler.kraftsql.testing.simulator.expressions.ConstantSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.CountSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.EqualsSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.GenericExpressionEvaluator
+import rocks.frieler.kraftsql.testing.simulator.expressions.GreaterThanSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.IsNotNullSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.IsNullSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.LessOrEqualSimulator
@@ -70,6 +71,7 @@ abstract class GenericEngineSimulatorBuilderTemplate<E : Engine<E>, S : GenericE
             registerExpressionSimulator(NotEqualsSimulator())
             registerExpressionSimulator(LessThanSimulator())
             registerExpressionSimulator(LessOrEqualSimulator())
+            registerExpressionSimulator(GreaterThanSimulator())
             registerExpressionSimulator(NotSimulator())
             registerExpressionSimulator(AndSimulator())
             registerExpressionSimulator(OrSimulator())

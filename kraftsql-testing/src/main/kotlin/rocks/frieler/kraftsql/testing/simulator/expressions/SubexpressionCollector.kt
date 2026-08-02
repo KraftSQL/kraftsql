@@ -13,6 +13,7 @@ import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
+import rocks.frieler.kraftsql.expressions.GreaterThan
 import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.IsNull
 import rocks.frieler.kraftsql.expressions.LessOrEqual
@@ -66,6 +67,7 @@ open class GenericSubexpressionCollector<E : Engine<E>> : SubexpressionCollector
             is NotEquals<E> -> listOf(expression.left, expression.right)
             is LessThan<E> -> listOf(expression.left, expression.right)
             is LessOrEqual<E> -> listOf(expression.left, expression.right)
+            is GreaterThan<E> -> listOf(expression.left, expression.right)
             is Not<E> -> listOf(expression.expression)
             is And<E> -> listOf(expression.left, expression.right)
             is Or<E> -> listOf(expression.left, expression.right)
