@@ -21,6 +21,7 @@ import rocks.frieler.kraftsql.expressions.Constant
 import rocks.frieler.kraftsql.expressions.Count
 import rocks.frieler.kraftsql.expressions.Equals
 import rocks.frieler.kraftsql.expressions.Expression
+import rocks.frieler.kraftsql.expressions.GreaterOrEqual
 import rocks.frieler.kraftsql.expressions.GreaterThan
 import rocks.frieler.kraftsql.expressions.IsNotNull
 import rocks.frieler.kraftsql.expressions.IsNull
@@ -127,6 +128,15 @@ class SubexpressionCollectorTest {
         val subexpressions = subexpressionCollector.getSubexpressions(greaterThan)
 
         subexpressions shouldContainExactlyInAnyOrder listOf(greaterThan.left, greaterThan.right)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect expression of GreaterOrEqual`() {
+        val greaterOrEqual = GreaterOrEqual(mock<Expression<DummyEngine, *>>(), mock<Expression<DummyEngine, *>>())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(greaterOrEqual)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(greaterOrEqual.left, greaterOrEqual.right)
     }
 
     @Test
