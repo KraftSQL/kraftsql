@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.sql.SQLException
+import java.time.LocalDate
 import kotlin.time.Instant
 
 class ConvertingComparatorTest {
@@ -83,6 +84,11 @@ class ConvertingComparatorTest {
     @Test
     fun `compare can compare two Instants`() {
         comparator.compare(Instant.DISTANT_PAST, Instant.DISTANT_FUTURE) shouldNotBe null
+    }
+
+    @Test
+    fun `compare can compare two LocalDates`() {
+        comparator.compare(LocalDate.of(2026, 8, 3), LocalDate.of(2025, 12, 24)) shouldNotBe null
     }
 
     @Test

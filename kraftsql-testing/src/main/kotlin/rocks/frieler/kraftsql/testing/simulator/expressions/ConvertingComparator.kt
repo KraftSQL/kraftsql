@@ -3,6 +3,7 @@ package rocks.frieler.kraftsql.testing.simulator.expressions
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.sql.SQLException
+import java.time.LocalDate
 import kotlin.time.Instant
 
 /**
@@ -19,6 +20,7 @@ open class ConvertingComparator {
                 value1.toString().compareTo(value2.toString())
             }
             value1 is Instant && value2 is Instant -> value1.compareTo(value2)
+            value1 is LocalDate && value2 is LocalDate -> value1.compareTo(value2)
             else -> throw SQLException("$value1 and $value2 are not compatible for comparison.")
         }
 
