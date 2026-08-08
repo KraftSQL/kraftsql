@@ -79,7 +79,7 @@ abstract class JdbcORMapping<E : JdbcEngine<E>>(
                                 .map { (name, valueColumnType) -> name to
                                     when {
                                         valueColumnType == typeOf<Boolean>() -> queryResult.getBoolean(name)
-                                        valueColumnType == typeOf<Int>() -> queryResult.getInt(name)
+                                        valueColumnType == typeOf<Int>() -> queryResult.getInt(name).takeUnless { queryResult.wasNull() }
                                         valueColumnType == typeOf<Long>() -> queryResult.getLong(name)
                                         valueColumnType == typeOf<BigDecimal>() -> queryResult.getBigDecimal(name).stripTrailingZeros()
                                         valueColumnType == typeOf<String>() -> queryResult.getString(name)

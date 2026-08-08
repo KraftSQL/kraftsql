@@ -8,6 +8,28 @@ import java.math.BigDecimal
 
 class JdbcORMappingTest {
     @Test
+    fun `deserializeQueryResult can deserialize Integer into DataRow`() {
+        val rows = TestableJdbcEngine.openConnection().use { connection ->
+            val queryResult = connection.createStatement().executeQuery("SELECT CAST(42 AS INTEGER) AS `number`")
+
+            TestableJdbcEngine.orm.deserializeQueryResult(queryResult, DataRow::class)
+        }
+
+        rows.single()["number"] shouldBe 42
+    }
+
+    @Test
+    fun `deserializeQueryResult can deserialize NULL as Integer into DataRow`() {
+        val rows = TestableJdbcEngine.openConnection().use { connection ->
+            val queryResult = connection.createStatement().executeQuery("SELECT CAST(NULL AS INTEGER) AS `number`")
+
+            TestableJdbcEngine.orm.deserializeQueryResult(queryResult, DataRow::class)
+        }
+
+        rows.single()["number"] shouldBe null
+    }
+
+    @Test
     fun `deserializeQueryResult can deserialize BigDecimal into DataRow`() {
         val rows = TestableJdbcEngine.openConnection().use { connection ->
             val queryResult = connection.createStatement().executeQuery("SELECT 1.23 AS `number`")
