@@ -10,6 +10,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.dql.Projection
 import rocks.frieler.kraftsql.dql.Select
+import rocks.frieler.kraftsql.expressions.Addition
 import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.ArrayConcatenation
 import rocks.frieler.kraftsql.expressions.ArrayElementReference
@@ -164,6 +165,15 @@ class SubexpressionCollectorTest {
         val subexpressions = subexpressionCollector.getSubexpressions(or)
 
         subexpressions shouldContainExactlyInAnyOrder listOf(or.left, or.right)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect left and right side of Addition`() {
+        val addition = Addition(mock<Expression<DummyEngine, Long?>>(), mock<Expression<DummyEngine, Long?>>())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(addition)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(addition.left, addition.right)
     }
 
     @Test
