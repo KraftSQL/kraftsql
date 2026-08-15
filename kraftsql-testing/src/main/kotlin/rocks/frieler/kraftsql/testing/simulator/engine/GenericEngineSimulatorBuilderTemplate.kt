@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.testing.simulator.engine
 
 import rocks.frieler.kraftsql.engine.Engine
+import rocks.frieler.kraftsql.testing.simulator.expressions.AdditionSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.AndSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.ArrayElementReferenceSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.ArrayLengthSimulator
@@ -77,6 +78,7 @@ abstract class GenericEngineSimulatorBuilderTemplate<E : Engine<E>, S : GenericE
             registerExpressionSimulator(NotSimulator())
             registerExpressionSimulator(AndSimulator())
             registerExpressionSimulator(OrSimulator())
+            registerExpressionSimulator(AdditionSimulator())
             registerExpressionSimulator(CoalesceSimulator<E, Any?>())
             registerExpressionSimulator(ArraySimulator<E, Any>())
             registerExpressionSimulator(ArrayElementReferenceSimulator<E, Any?>())

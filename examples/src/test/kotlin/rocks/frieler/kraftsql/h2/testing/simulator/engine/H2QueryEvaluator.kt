@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.h2.testing.simulator.engine
 
+import rocks.frieler.kraftsql.expressions.Addition
 import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.ArrayElementReference
@@ -71,6 +72,7 @@ class H2QueryEvaluator(
         is Min<H2Engine, *> -> "MIN(${expression.defaultColumnName()})"
         is Not -> "NOT_${expression.defaultColumnName()}"
         is Or -> "${left.defaultColumnName()}_OR_${right.defaultColumnName()}"
+        is Addition -> "\"${left.defaultColumnName()}\" + \"${right.defaultColumnName()}\""
         is Row<H2Engine, *> -> values?.entries?.joinToString(",") { (key, value) -> "$key:${value.defaultColumnName()}" } ?: "NULL"
         is Sum<H2Engine, *> -> "SUM(${expression.defaultColumnName()})"
         else -> throw NotImplementedError("Generating a column name for ${this::class.qualifiedName} is not implemented.")

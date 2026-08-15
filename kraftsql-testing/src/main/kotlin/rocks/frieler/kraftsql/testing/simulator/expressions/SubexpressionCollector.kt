@@ -1,6 +1,7 @@
 package rocks.frieler.kraftsql.testing.simulator.expressions
 
 import rocks.frieler.kraftsql.engine.Engine
+import rocks.frieler.kraftsql.expressions.Addition
 import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.ArrayConcatenation
@@ -73,6 +74,7 @@ open class GenericSubexpressionCollector<E : Engine<E>> : SubexpressionCollector
             is Not<E> -> listOf(expression.expression)
             is And<E> -> listOf(expression.left, expression.right)
             is Or<E> -> listOf(expression.left, expression.right)
+            is Addition<E, *> -> listOf(expression.left, expression.right)
             is Coalesce<E, *> -> expression.expressions
             is Array<E, *> -> (expression.elements ?: emptyArray()).toList()
             is ArrayElementReference<E, *> -> listOf(expression.array, expression.index)

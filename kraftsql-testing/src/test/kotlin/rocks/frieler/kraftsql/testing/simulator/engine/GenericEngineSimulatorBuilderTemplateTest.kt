@@ -10,6 +10,7 @@ import org.mockito.kotlin.whenever
 import rocks.frieler.kraftsql.dql.QuerySource
 import rocks.frieler.kraftsql.dql.Select
 import rocks.frieler.kraftsql.engine.Type
+import rocks.frieler.kraftsql.expressions.Addition
 import rocks.frieler.kraftsql.expressions.And
 import rocks.frieler.kraftsql.expressions.Array
 import rocks.frieler.kraftsql.expressions.ArrayElementReference
@@ -210,6 +211,16 @@ class GenericEngineSimulatorBuilderTemplateTest {
         val result = simulation.invoke(DataRow())
 
         result shouldBe true
+    }
+
+    @Test
+    fun `Wired ExpressionEvaluator can simulate the addition operator`() {
+        val additionExpression = Addition<DummyEngine>(Constant(1L), Constant(2L))
+
+        val simulation = context(state) { expressionEvaluator.simulateExpression(additionExpression) }
+        val result = simulation.invoke(DataRow())
+
+        result shouldBe 3L
     }
 
     @Test
