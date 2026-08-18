@@ -34,6 +34,7 @@ import rocks.frieler.kraftsql.expressions.NotEquals
 import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.expressions.SubqueryExpression
+import rocks.frieler.kraftsql.expressions.Subtraction
 import rocks.frieler.kraftsql.objects.ConstantData
 import rocks.frieler.kraftsql.objects.DataRow
 import rocks.frieler.kraftsql.testing.simulator.expressions.GenericExpressionEvaluator
@@ -221,6 +222,16 @@ class GenericEngineSimulatorBuilderTemplateTest {
         val result = simulation.invoke(DataRow())
 
         result shouldBe 3L
+    }
+
+    @Test
+    fun `Wired ExpressionEvaluator can simulate the subtraction operator`() {
+        val subtractionExpression = Subtraction<DummyEngine>(Constant(3L), Constant(2L))
+
+        val simulation = context(state) { expressionEvaluator.simulateExpression(subtractionExpression) }
+        val result = simulation.invoke(DataRow())
+
+        result shouldBe 1L
     }
 
     @Test

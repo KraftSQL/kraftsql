@@ -35,6 +35,7 @@ import rocks.frieler.kraftsql.expressions.NotEquals
 import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.expressions.SubqueryExpression
+import rocks.frieler.kraftsql.expressions.Subtraction
 import rocks.frieler.kraftsql.expressions.Sum
 import rocks.frieler.kraftsql.testing.simulator.engine.DummyEngine
 
@@ -174,6 +175,15 @@ class SubexpressionCollectorTest {
         val subexpressions = subexpressionCollector.getSubexpressions(addition)
 
         subexpressions shouldContainExactlyInAnyOrder listOf(addition.left, addition.right)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect left and right side of Subtraction`() {
+        val subtraction = Subtraction(mock<Expression<DummyEngine, Long?>>(), mock<Expression<DummyEngine, Long?>>())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(subtraction)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(subtraction.left, subtraction.right)
     }
 
     @Test

@@ -27,6 +27,7 @@ import rocks.frieler.kraftsql.expressions.NotEquals
 import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
 import rocks.frieler.kraftsql.expressions.SubqueryExpression
+import rocks.frieler.kraftsql.expressions.Subtraction
 import rocks.frieler.kraftsql.expressions.Sum
 
 /**
@@ -75,6 +76,7 @@ open class GenericSubexpressionCollector<E : Engine<E>> : SubexpressionCollector
             is And<E> -> listOf(expression.left, expression.right)
             is Or<E> -> listOf(expression.left, expression.right)
             is Addition<E, *> -> listOf(expression.left, expression.right)
+            is Subtraction<E, *> -> listOf(expression.left, expression.right)
             is Coalesce<E, *> -> expression.expressions
             is Array<E, *> -> (expression.elements ?: emptyArray()).toList()
             is ArrayElementReference<E, *> -> listOf(expression.array, expression.index)
