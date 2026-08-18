@@ -26,6 +26,7 @@ import rocks.frieler.kraftsql.testing.simulator.expressions.NotSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.OrSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.RowSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.SubqueryExpressionSimulator
+import rocks.frieler.kraftsql.testing.simulator.expressions.SubtractionSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.SumAsBigDecimalSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.SumAsDoubleSimulator
 import rocks.frieler.kraftsql.testing.simulator.expressions.SumAsLongSimulator
@@ -79,6 +80,7 @@ abstract class GenericEngineSimulatorBuilderTemplate<E : Engine<E>, S : GenericE
             registerExpressionSimulator(AndSimulator())
             registerExpressionSimulator(OrSimulator())
             registerExpressionSimulator(AdditionSimulator())
+            registerExpressionSimulator(SubtractionSimulator())
             registerExpressionSimulator(CoalesceSimulator<E, Any?>())
             registerExpressionSimulator(ArraySimulator<E, Any>())
             registerExpressionSimulator(ArrayElementReferenceSimulator<E, Any?>())
