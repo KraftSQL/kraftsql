@@ -30,6 +30,7 @@ import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.LessThan
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Min
+import rocks.frieler.kraftsql.expressions.Multiplication
 import rocks.frieler.kraftsql.expressions.Not
 import rocks.frieler.kraftsql.expressions.NotEquals
 import rocks.frieler.kraftsql.expressions.Or
@@ -184,6 +185,15 @@ class SubexpressionCollectorTest {
         val subexpressions = subexpressionCollector.getSubexpressions(subtraction)
 
         subexpressions shouldContainExactlyInAnyOrder listOf(subtraction.left, subtraction.right)
+    }
+
+    @Test
+    fun `GenericSubexpressionCollector can collect left and right side of Multiplication`() {
+        val multiplication = Multiplication(mock<Expression<DummyEngine, Long?>>(), mock<Expression<DummyEngine, Long?>>())
+
+        val subexpressions = subexpressionCollector.getSubexpressions(multiplication)
+
+        subexpressions shouldContainExactlyInAnyOrder listOf(multiplication.left, multiplication.right)
     }
 
     @Test
