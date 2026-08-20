@@ -19,6 +19,7 @@ import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.LessThan
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Min
+import rocks.frieler.kraftsql.expressions.Multiplication
 import rocks.frieler.kraftsql.expressions.Not
 import rocks.frieler.kraftsql.expressions.Or
 import rocks.frieler.kraftsql.expressions.Row
@@ -75,6 +76,7 @@ class H2QueryEvaluator(
         is Or -> "${left.defaultColumnName()}_OR_${right.defaultColumnName()}"
         is Addition -> "\"${left.defaultColumnName()}\" + \"${right.defaultColumnName()}\""
         is Subtraction -> "\"${left.defaultColumnName()}\" - \"${right.defaultColumnName()}\""
+        is Multiplication -> "\"${left.defaultColumnName()}\" * \"${right.defaultColumnName()}\""
         is Row<H2Engine, *> -> values?.entries?.joinToString(",") { (key, value) -> "$key:${value.defaultColumnName()}" } ?: "NULL"
         is Sum<H2Engine, *> -> "SUM(${expression.defaultColumnName()})"
         else -> throw NotImplementedError("Generating a column name for ${this::class.qualifiedName} is not implemented.")

@@ -22,6 +22,7 @@ import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.LessThan
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Min
+import rocks.frieler.kraftsql.expressions.Multiplication
 import rocks.frieler.kraftsql.expressions.Not
 import rocks.frieler.kraftsql.expressions.NotEquals
 import rocks.frieler.kraftsql.expressions.Or
@@ -77,6 +78,7 @@ open class GenericSubexpressionCollector<E : Engine<E>> : SubexpressionCollector
             is Or<E> -> listOf(expression.left, expression.right)
             is Addition<E, *> -> listOf(expression.left, expression.right)
             is Subtraction<E, *> -> listOf(expression.left, expression.right)
+            is Multiplication<E, *> -> listOf(expression.left, expression.right)
             is Coalesce<E, *> -> expression.expressions
             is Array<E, *> -> (expression.elements ?: emptyArray()).toList()
             is ArrayElementReference<E, *> -> listOf(expression.array, expression.index)

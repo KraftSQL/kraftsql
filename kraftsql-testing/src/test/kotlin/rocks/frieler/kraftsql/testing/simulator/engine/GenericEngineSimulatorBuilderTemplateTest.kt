@@ -29,6 +29,7 @@ import rocks.frieler.kraftsql.expressions.LessOrEqual
 import rocks.frieler.kraftsql.expressions.LessThan
 import rocks.frieler.kraftsql.expressions.Max
 import rocks.frieler.kraftsql.expressions.Min
+import rocks.frieler.kraftsql.expressions.Multiplication
 import rocks.frieler.kraftsql.expressions.Not
 import rocks.frieler.kraftsql.expressions.NotEquals
 import rocks.frieler.kraftsql.expressions.Or
@@ -232,6 +233,16 @@ class GenericEngineSimulatorBuilderTemplateTest {
         val result = simulation.invoke(DataRow())
 
         result shouldBe 1L
+    }
+
+    @Test
+    fun `Wired ExpressionEvaluator can simulate the multiplication operator`() {
+        val multiplicationExpression = Multiplication<DummyEngine>(Constant(3L), Constant(2L))
+
+        val simulation = context(state) { expressionEvaluator.simulateExpression(multiplicationExpression) }
+        val result = simulation.invoke(DataRow())
+
+        result shouldBe 6L
     }
 
     @Test
