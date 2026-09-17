@@ -1,6 +1,8 @@
 plugins {
     id(libs.plugins.kotlin.jvm.get().pluginId)
     application
+    idea
+    id("integration-testing")
 }
 
 java {
@@ -21,4 +23,10 @@ dependencies {
     testImplementation(libs.mockk)
     testRuntimeOnly(libs.junit.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
+
+    "integrationTestImplementation"(libs.junit.platform.suite)
+    "integrationTestRuntimeOnly"(project(":examples"))
+    "integrationTestRuntimeOnly"(project(":kraftsql")) {
+        capabilities { requireCapability("${group}:kraftsql-reference-test:${version}") }
+    }
 }
