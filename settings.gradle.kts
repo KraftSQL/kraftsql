@@ -1,2 +1,2 @@
 rootProject.name = "KraftSQL"
-include("kraftsql", "examples")
+include("kraftsql", "kraftsql-local", "examples")
