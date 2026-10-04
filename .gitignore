@@ -1,8 +1,2 @@
-.gradle/
-build/
-
-.kotlin/
-
 .idea/
 *.iml
-.claude/
