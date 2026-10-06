@@ -27,6 +27,23 @@ interface Type {
         val NULLABLE_INTEGER = object : Type { override fun toString() = "Int?" }
 
         /**
+         * A non-nullable character [String] of arbitrary length.
+         *
+         * A constant String containing characters which the SQL engine does not support, e.g. the NUL character, makes
+         * the [Engine][rocks.frieler.kraftsql.engine.Engine] fail with a [RuntimeException].
+         *
+         * Connectors map it to the native character string type of their SQL engine, e.g. `VARCHAR`.
+         */
+        val STRING = object : Type { override fun toString() = "String" }
+
+        /**
+         * A nullable [String] of characters.
+         *
+         * Like [STRING], but additionally allows `null`, which is distinct from the empty string.
+         */
+        val NULLABLE_STRING = object : Type { override fun toString() = "String?" }
+
+        /**
          * Returns the [Type] corresponding to the given [KType].
          *
          * @param kType a Kotlin type
@@ -35,6 +52,8 @@ interface Type {
         fun get(kType: KType) = when (kType) {
             typeOf<Int>() -> INTEGER
             typeOf<Int?>() -> NULLABLE_INTEGER
+            typeOf<String>() -> STRING
+            typeOf<String?>() -> NULLABLE_STRING
             else -> throw IllegalStateException("Unsupported type $kType")
         }
 
@@ -47,6 +66,7 @@ interface Type {
          */
         fun get(kClass: KClass<*>, nullable: Boolean = false) = when (kClass) {
             Int::class -> if (nullable) NULLABLE_INTEGER else INTEGER
+            String::class -> if (nullable) NULLABLE_STRING else STRING
             else -> throw IllegalStateException("Unsupported type $kClass")
         }
     }

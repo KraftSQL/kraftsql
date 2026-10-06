@@ -42,4 +42,19 @@ class KraftSqlLocalEngineTest {
 
         collectedData shouldContainExactly listOf(DataRow("answer" to 42))
     }
+
+    @Test
+    fun `collect() can collect values of all supported types`() {
+        data class AllTypes(val int: Int, val nullableInt: Int?, val string: String, val nullableString: String?)
+        val items = listOf(
+            AllTypes(42, 42, "foo", "foo"),
+            AllTypes(0, null, "", ""),
+            AllTypes(-1, 0, "it's \"quoted\"", null),
+        )
+        val data = mockk<ConstantData<AllTypes>> { every { this@mockk.items } returns items }
+
+        val collectedData = engine.collect(data, AllTypes::class)
+
+        collectedData shouldContainExactly items
+    }
 }

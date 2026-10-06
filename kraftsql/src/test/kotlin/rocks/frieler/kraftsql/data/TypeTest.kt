@@ -16,4 +16,16 @@ class TypeTest {
         Type.get(typeOf<Int?>()) shouldBe Type.NULLABLE_INTEGER
         Type.get(Int::class, true) shouldBe Type.NULLABLE_INTEGER
     }
+
+    @Test
+    fun `KraftSQL supports non-nullable String`() {
+        Type.get(typeOf<String>()) shouldBe Type.STRING
+        Type.get(String::class, false) shouldBe Type.STRING
+    }
+
+    @Test
+    fun `KraftSQL supports nullable String`() {
+        Type.get(typeOf<String?>()) shouldBe Type.NULLABLE_STRING
+        Type.get(String::class, true) shouldBe Type.NULLABLE_STRING
+    }
 }
