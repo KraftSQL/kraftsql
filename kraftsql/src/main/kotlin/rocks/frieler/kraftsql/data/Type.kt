@@ -11,6 +11,11 @@ import kotlin.reflect.typeOf
  * SQL engine.
  */
 interface Type {
+    /**
+     * Indicates, whether this [Type] can hold `null` values.
+     */
+    val nullable: Boolean get() = toString().endsWith("?")
+
     override fun toString(): String
 
     companion object {
