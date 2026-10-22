@@ -3,8 +3,10 @@ package rocks.frieler.kraftsql.local.engine
 import rocks.frieler.kraftsql.data.ConstantData
 import rocks.frieler.kraftsql.data.Data
 import rocks.frieler.kraftsql.data.DataRow
+import rocks.frieler.kraftsql.data.Selection
 import rocks.frieler.kraftsql.engine.DataClassSerDe
 import rocks.frieler.kraftsql.engine.Engine
+import rocks.frieler.kraftsql.expressions.Column
 import kotlin.reflect.KClass
 
 /**
@@ -15,10 +17,16 @@ import kotlin.reflect.KClass
  */
 class KraftSqlLocalEngine : Engine {
     override fun <T : Any> collect(data: Data<T>, type: KClass<T>): List<T> {
-        return when {
-            data is ConstantData<T> -> data.items
+        return rows(data)
+            .map { @Suppress("UNCHECKED_CAST") if (type != DataRow::class) DataClassSerDe.deserialize(it, type) else it as T }
+    }
+
+    private fun rows(data: Data<*>): List<DataRow> {
+        return when (data) {
+            is ConstantData<*> -> data.items
                 .map { if (it !is DataRow) DataClassSerDe.serialize(it) else it }
-                .map { @Suppress("UNCHECKED_CAST") if (type != DataRow::class) DataClassSerDe.deserialize(it, type) else it as T }
+            is Selection -> rows(data.source)
+                .map { row -> DataRow(data.expressions.map { column -> (column as Column<*>).name to row[column.name] }) }
             else -> throw NotImplementedError("Collecting $data is not implemented.")
         }
     }
