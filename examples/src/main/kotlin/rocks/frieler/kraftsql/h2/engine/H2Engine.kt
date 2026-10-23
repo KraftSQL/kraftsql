@@ -1,86 +1,54 @@
 package rocks.frieler.kraftsql.h2.engine
 
 import rocks.frieler.kraftsql.data.Column
-import rocks.frieler.kraftsql.data.ConstantData
 import rocks.frieler.kraftsql.data.Data
 import rocks.frieler.kraftsql.data.DataRow
-import rocks.frieler.kraftsql.data.Selection
 import rocks.frieler.kraftsql.data.Type
 import rocks.frieler.kraftsql.engine.DataClassSerDe
 import rocks.frieler.kraftsql.engine.Engine
+import java.sql.Connection
 import java.sql.DriverManager
-import java.sql.JDBCType
+import java.sql.ResultSet
 import kotlin.reflect.KClass
 
 /**
  * [Engine] implementation for the [h2 database](https://h2database.com/html/main.html) for experimentation and demo
  * purposes.
  *
- * KraftSQL's [rocks.frieler.kraftsql.data.Type]s are mapped to H2's native types as follows:
- * - [Int][rocks.frieler.kraftsql.data.Type.INTEGER] to `INTEGER`
- * - [String][rocks.frieler.kraftsql.data.Type.STRING] to `VARCHAR` (without a length limit)
+ * KraftSQL's [Type]s are mapped to H2's native types as defined by [Type.native][native].
+ *
+ * @constructor Creates an [H2Engine] that executes all queries on the given [Connection].
+ * @param connection the JDBC [Connection] to the H2 database to execute queries on; defaults to an in-memory database
+ * @param sqlGenerator the [H2SqlGenerator] to generate SQL; only extracted and configurable for testing
  */
-class H2Engine : Engine {
+class H2Engine(
     // TODO: Derive database name from environment variables
-    private val connection = DriverManager.getConnection("jdbc:h2:mem:examples;DATABASE_TO_UPPER=FALSE")
-
-    private class NativeType(val jdbcType: JDBCType, val javaClass: Class<*>)
-
-    private val Type.native get() = when (this) {
-        Type.INTEGER, Type.NULLABLE_INTEGER -> NativeType(JDBCType.INTEGER, Int::class.javaObjectType)
-        Type.STRING, Type.NULLABLE_STRING -> NativeType(JDBCType.VARCHAR, String::class.java)
-        else -> throw IllegalStateException("Unsupported type $this")
-    }
-
-    override fun <T : Any> collect(data: Data<T>, type: KClass<T>): List<T> {
-        val (query, parameters) = query(data)
-        val result = mutableListOf<DataRow>()
-        @Suppress("SqlSourceToSinkFlow")
-        connection.prepareStatement(query).use { statement ->
-            parameters.forEachIndexed { index, (value, column) ->
-                when (value) {
-                    null -> statement.setNull(index + 1, column.type.native.jdbcType.vendorTypeNumber)
-                    else -> statement.setObject(index + 1, value)
-                }
-            }
-            val resultSet = statement.executeQuery()
-            // TODO: Encapsulate handling of JDBC ResultSet.
-            while (resultSet.next()) {
-                result.add(DataRow(data.schema.map { column ->
-                    column.name to resultSet.getObject(column.name, column.type.native.javaClass)
-                }))
-            }
-        }
-        return result
-            .map { @Suppress("UNCHECKED_CAST") if (type != DataRow::class) DataClassSerDe.deserialize(it, type) else it as T }
-            .toList()
-    }
+    private val connection: Connection = DriverManager.getConnection("jdbc:h2:mem:examples;DATABASE_TO_UPPER=FALSE"),
+    private val sqlGenerator: H2SqlGenerator = H2SqlGenerator,
+) : Engine {
 
     /**
-     * Generates the SQL query for the [Data], with its positional parameters and their [Column]s.
+     * Collects [Data] by querying it from H2.
+     *
+     * @param data the [Data] to collect
+     * @param type the Kotlin type of the data
+     * @return the data as a list of Kotlin objects
      */
-    private fun query(data: Data<*>): Pair<String, List<Pair<Any?, Column>>> {
-        return when (data) {
-            is ConstantData<*> -> {
-                val rows = data.items.map { if (it !is DataRow) DataClassSerDe.serialize(it) else it }
-                val query = rows.joinToString(" UNION ALL ") {
-                    data.schema.joinToString(
-                        prefix = "SELECT ",
-                        separator = ","
-                    ) { column -> "CAST(? AS ${column.type.native.jdbcType.name}) AS `${column.name}`" }
-                }
-                query to rows.flatMap { row -> data.schema.map { column -> row[column.name] to column } }
+    override fun <T : Any> collect(data: Data<T>, type: KClass<T>): List<T> {
+        val rows = connection.createStatement().use { statement ->
+            @Suppress("SqlSourceToSinkFlow")
+            statement.executeQuery(sqlGenerator.makeSQL(data)).use { resultSet ->
+                generateSequence { if (resultSet.next()) DataRow(data.schema.map { column -> column.name to resultSet.value(column) }) else null }
+                    .toList()
             }
-            is Selection -> {
-                val (sourceQuery, sourceParameters) = query(data.source)
-                val query = data.schema.joinToString(
-                    prefix = "SELECT ",
-                    separator = ",",
-                    postfix = " FROM ($sourceQuery) AS `source`"
-                ) { column -> "`${column.name}`" }
-                query to sourceParameters
-            }
-            else -> throw NotImplementedError("Collecting $data is not implemented.")
         }
+
+        return rows.map { @Suppress("UNCHECKED_CAST") if (type == DataRow::class) it as T else DataClassSerDe.deserialize(it, type) }
+    }
+
+    private fun ResultSet.value(column: Column) = when (column.type) {
+        Type.INTEGER, Type.NULLABLE_INTEGER -> getObject(column.name, Int::class.javaObjectType)
+        Type.STRING, Type.NULLABLE_STRING -> getString(column.name)
+        else -> throw NotImplementedError("Collecting ${column.type} is not implemented.")
     }
 }

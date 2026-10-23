@@ -1,19 +1,27 @@
 package rocks.frieler.kraftsql.h2.engine
 
 import io.kotest.matchers.collections.shouldContainExactly
-import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.runs
 import org.junit.jupiter.api.Test
 import rocks.frieler.kraftsql.data.Column
 import rocks.frieler.kraftsql.data.ConstantData
 import rocks.frieler.kraftsql.data.Data
 import rocks.frieler.kraftsql.data.DataRow
-import rocks.frieler.kraftsql.data.Selection
 import rocks.frieler.kraftsql.data.Type
+import rocks.frieler.kraftsql.engine.DataClassSerDe
+import java.sql.Connection
+import java.sql.ResultSet
 
 class H2EngineTest {
-    private val engine = H2Engine()
+    private val connection = mockk<Connection>()
+    private val sqlGenerator = mockk<H2SqlGenerator>()
+    private val engine = H2Engine(
+        connection = connection,
+        sqlGenerator = sqlGenerator,
+    )
 
     @Test
     fun `collect() can collect ConstantData of DataRows as DataRows`() {
@@ -22,6 +30,10 @@ class H2EngineTest {
             every { this@mockk.items } returns items
             every { schema } returns listOf(Column("id", Type.INTEGER))
         }
+
+        val query = "<SQL statement for $data>"
+        every { sqlGenerator.makeSQL(data) } returns query
+        mockQueryResult(query, data)
 
         val collectedData = engine.collect(data, DataRow::class)
 
@@ -37,6 +49,10 @@ class H2EngineTest {
             every { schema } returns listOf(Column("answer", Type.INTEGER))
         } as Data<Answer>
 
+        val query = "<SQL statement for $data>"
+        every { sqlGenerator.makeSQL(data) } returns query
+        mockQueryResult(query, data as ConstantData<Answer>)
+
         val collectedData = engine.collect(data, Answer::class)
 
         collectedData shouldContainExactly listOf(Answer(42))
@@ -51,6 +67,10 @@ class H2EngineTest {
             every { schema } returns listOf(Column("answer", Type.INTEGER))
         } as Data<DataRow>
 
+        val query = "<SQL statement for $data>"
+        every { sqlGenerator.makeSQL(data) } returns query
+        mockQueryResult(query, data as ConstantData<DataRow>)
+
         val collectedData = engine.collect(data, DataRow::class)
 
         collectedData shouldContainExactly listOf(DataRow("answer" to 42))
@@ -60,19 +80,42 @@ class H2EngineTest {
     fun `collect() can collect values of all supported types`() {
         val items = listOf(DataRow(
             "int" to 1,
-            "null_as_int" to null,
             "string" to "KraftSQL",
-            "null_as_string" to null,
         ))
         val data = mockk<ConstantData<DataRow>> {
             every { this@mockk.items } returns items
             every { schema } returns listOf(
                 Column("int", Type.INTEGER),
-                Column("null_as_int", Type.NULLABLE_INTEGER),
                 Column("string", Type.STRING),
-                Column("null_as_string", Type.NULLABLE_STRING),
             )
         }
+
+        val query = "<SQL statement for $data>"
+        every { sqlGenerator.makeSQL(data) } returns query
+        mockQueryResult(query, data)
+
+        val collectedData = engine.collect(data, DataRow::class)
+
+        collectedData shouldContainExactly items
+    }
+
+    @Test
+    fun `collect() can collect nulls and values from nullable columns`() {
+        val items = listOf(
+            DataRow("nullable_int" to 1, "nullable_string" to "KraftSQL"),
+            DataRow("nullable_int" to null, "nullable_string" to null),
+        )
+        val data = mockk<ConstantData<DataRow>> {
+            every { this@mockk.items } returns items
+            every { schema } returns listOf(
+                Column("nullable_int", Type.NULLABLE_INTEGER),
+                Column("nullable_string", Type.NULLABLE_STRING),
+            )
+        }
+
+        val query = "<SQL statement for $data>"
+        every { sqlGenerator.makeSQL(data) } returns query
+        mockQueryResult(query, data)
 
         val collectedData = engine.collect(data, DataRow::class)
 
@@ -93,24 +136,27 @@ class H2EngineTest {
             )
         }
 
+        val query = "<SQL statement for $data>"
+        every { sqlGenerator.makeSQL(data) } returns query
+        mockQueryResult(query, data)
+
         val collectedData = engine.collect(data, DataRow::class)
 
         collectedData shouldContainExactly items
     }
 
-    @Test
-    fun `collect() can collect a Selection of columns`() {
-        val source = ConstantData(
-            DataRow("id" to 1, "name" to "foo", "category" to "bar"),
-            DataRow("id" to 2, "name" to "baz", "category" to "qux"),
-        )
-        val selection = Selection(source, listOf(source.get<String>("category"), source.get<Int>("id")))
-
-        val collectedData = engine.collect(selection, DataRow::class)
-
-        collectedData shouldContainExactlyInAnyOrder listOf(
-            DataRow("category" to "bar", "id" to 1),
-            DataRow("category" to "qux", "id" to 2),
-        )
+    private fun mockQueryResult(query: String, data: ConstantData<*>) {
+        val rows = data.items.map { item -> item as? DataRow ?: DataClassSerDe.serialize(item) }
+        var cursor = -1
+        val resultSet = mockk<ResultSet> {
+            every { next() } answers { ++cursor < rows.size }
+            every { getObject(any<String>(), any<Class<Any>>()) } answers { rows[cursor][firstArg()] }
+            every { getString(any<String>()) } answers { rows[cursor][firstArg()] as String? }
+            every { close() } just runs
+        }
+        every { connection.createStatement() } returns mockk {
+            every { executeQuery(query) } returns resultSet
+            every { close() } just runs
+        }
     }
 }
