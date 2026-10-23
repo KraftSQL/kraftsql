@@ -2,6 +2,7 @@ package rocks.frieler.kraftsql.data
 
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import rocks.frieler.kraftsql.data.Type.Companion.makeNullable
 import kotlin.reflect.typeOf
 
 class TypeTest {
@@ -10,6 +11,7 @@ class TypeTest {
         Type.INTEGER.nullable shouldBe false
         Type.get(typeOf<Int>()) shouldBe Type.INTEGER
         Type.get(Int::class, false) shouldBe Type.INTEGER
+        Type.INTEGER.makeNullable() shouldBe Type.NULLABLE_INTEGER
     }
 
     @Test
@@ -17,6 +19,7 @@ class TypeTest {
         Type.NULLABLE_INTEGER.nullable shouldBe true
         Type.get(typeOf<Int?>()) shouldBe Type.NULLABLE_INTEGER
         Type.get(Int::class, true) shouldBe Type.NULLABLE_INTEGER
+        Type.NULLABLE_INTEGER.makeNullable() shouldBe Type.NULLABLE_INTEGER
     }
 
     @Test
@@ -24,6 +27,7 @@ class TypeTest {
         Type.STRING.nullable shouldBe false
         Type.get(typeOf<String>()) shouldBe Type.STRING
         Type.get(String::class, false) shouldBe Type.STRING
+        Type.STRING.makeNullable() shouldBe Type.NULLABLE_STRING
     }
 
     @Test
@@ -31,5 +35,6 @@ class TypeTest {
         Type.NULLABLE_STRING.nullable shouldBe true
         Type.get(typeOf<String?>()) shouldBe Type.NULLABLE_STRING
         Type.get(String::class, true) shouldBe Type.NULLABLE_STRING
+        Type.NULLABLE_STRING.makeNullable() shouldBe Type.NULLABLE_STRING
     }
 }

@@ -1,5 +1,6 @@
 package rocks.frieler.kraftsql.data
 
+import rocks.frieler.kraftsql.data.Type.Companion.makeNullable
 import rocks.frieler.kraftsql.engine.DataClassSerDe
 
 /**
@@ -7,6 +8,7 @@ import rocks.frieler.kraftsql.engine.DataClassSerDe
  *
  * @param T the Kotlin type of the [ConstantData]'s items, either a data class or generically [DataRow]
  */
+// TODO: Support empty Data.
 open class ConstantData<T : Any> protected constructor(
     /**
      * The items - or rows - in this data.
@@ -18,7 +20,9 @@ open class ConstantData<T : Any> protected constructor(
     /**
      * Creates a new [ConstantData] with the given items.
      *
-     * The items must not be empty and all be of the same type, either a data-class or [DataRow].
+     * The schema will be inferred from the items. Hence, the items must not be empty and all be of the same type,
+     * either a data-class or [DataRow]. In case of [DataRow]s they must all have the same fields with compatible
+     * values each.
      *
      * @param items the rows
      */
@@ -34,13 +38,42 @@ open class ConstantData<T : Any> protected constructor(
                 }
             }
         },
-        // FIXME: Handle empty Data.
-        items.first().let { item -> // FIXME: Look at all items.
-            if (item is DataRow) item.entries.map { (name, value) -> Column(name, Type.get(value!!::class)) } // FIXME: Watch for null.
-            else if (item::class.isData) DataClassSerDe.getSchemaFor(item::class)
-            else throw TODO()
-        }
+        inferSchema(items)
     )
 
     constructor(vararg items: T) : this(items.toList())
+
+    companion object {
+        private fun <T :Any>inferSchema(items: Iterable<T>) : List<Column> {
+            check(items.iterator().hasNext()) { "Cannot infer schema from zero items." }
+            return items.first().let { firstItem ->
+
+                if (firstItem is DataRow) {
+                    @Suppress("UNCHECKED_CAST") val rows = items as Iterable<DataRow> // because all items are checked to be of the same type
+                    data class ColumnTypeInformation(var type: Type? = null, var nullable: Boolean = false)
+                    val schemaInformation = firstItem.fieldNames.associateWith { ColumnTypeInformation() }
+                    rows.forEach { row -> row.entries.forEach { entry ->
+                        if (entry.second == null) {
+                            with(schemaInformation[entry.first]!!) {
+                                nullable = true
+                                type = type?.makeNullable()
+                            }
+                        } else {
+                            with(schemaInformation[entry.first]!!) {
+                                if (type == null) {
+                                    type = Type.get(entry.second!!::class, nullable)
+                                }
+                                // FIXME: Reject values of different types.
+                            }
+                        }
+                    } }
+                    schemaInformation.map { (name, type) -> Column(name, type.type ?: TODO()) } // FIXME: Handle null values only.
+                }
+
+                else if (firstItem::class.isData) DataClassSerDe.getSchemaFor(firstItem::class)
+
+                else TODO()
+            }
+        }
+    }
 }

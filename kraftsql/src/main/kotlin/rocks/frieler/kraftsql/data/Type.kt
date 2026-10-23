@@ -74,5 +74,19 @@ interface Type {
             String::class -> if (nullable) NULLABLE_STRING else STRING
             else -> throw IllegalStateException("Unsupported type $kClass")
         }
+
+        /**
+         * Obtains the nullable variant of this [Type].
+         *
+         * If this [Type] is already nullable, it is returned as is.
+         *
+         * @return the nullable variant of this [Type]
+         */
+        fun Type.makeNullable(): Type = when {
+            this.nullable -> this
+            this == INTEGER -> NULLABLE_INTEGER
+            this == STRING -> NULLABLE_STRING
+            else -> throw NotImplementedError("Nullable variant of $this is not supported.")
+        }
     }
 }
