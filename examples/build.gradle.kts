@@ -21,6 +21,7 @@ dependencies {
     testImplementation(libs.junit.api)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.mockk)
+    testImplementation(project(":kraftsql-testing"))
     testRuntimeOnly(libs.junit.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
 
